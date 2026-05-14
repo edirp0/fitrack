@@ -3444,6 +3444,7 @@ input:focus, textarea:focus, select:focus {
 
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  window._ftAuth = auth; // esposto globalmente per logout
   const provider = new GoogleAuthProvider();
   const appleProvider = new OAuthProvider('apple.com');
   appleProvider.addScope('email');
@@ -4197,13 +4198,14 @@ html, body {
   background: rgba(17,17,31,0.72);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 28px;
-  padding: 36px 28px 32px;
+  padding: 36px 24px 32px;
   backdrop-filter: blur(32px) saturate(160%);
   -webkit-backdrop-filter: blur(32px) saturate(160%);
   box-shadow: 0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   animation: fadeUp .45s cubic-bezier(.22,1,.36,1);
+  box-sizing: border-box;
 }
 .auth-glass-card::before {
   content: '';
@@ -4329,11 +4331,8 @@ html, body {
 #apple-signin-btn:active { transform: scale(.98); }
 </style>
 
-<div id="scr-google-login" class="screen" style="
-  align-items:center; justify-content:center;
-  overflow-y:auto; padding:24px 16px;
-">
-  <div style="width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px 0 40px;box-sizing:border-box;">
+<div id="scr-google-login" class="screen" style="align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;">
+  <div style="width:100%;max-width:400px;margin:0 auto;display:flex;flex-direction:column;align-items:center;padding:calc(28px + env(safe-area-inset-top,0px)) 20px calc(48px + env(safe-area-inset-bottom,0px));box-sizing:border-box;">
 
     <div class="auth-glass-card">
 
@@ -5767,6 +5766,38 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
               <span style="font-size:18px">🗑</span>
             </div>
 
+          </div>
+
+          <!-- Logout Button -->
+          <div style="padding:0 16px 16px;">
+            <button onclick="window.fittrackLogout()" style="
+              width:100%;
+              padding:15px 20px;
+              background:rgba(255,92,106,0.12);
+              border:1.5px solid rgba(255,92,106,0.35);
+              border-radius:var(--r-lg);
+              color:var(--red);
+              font-family:'Syne',sans-serif;
+              font-size:14px;
+              font-weight:800;
+              cursor:pointer;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              gap:10px;
+              transition:all .2s ease;
+              letter-spacing:.02em;
+            "
+            onmouseover="this.style.background='rgba(255,92,106,0.2)';this.style.borderColor='rgba(255,92,106,0.6)'"
+            onmouseout="this.style.background='rgba(255,92,106,0.12)';this.style.borderColor='rgba(255,92,106,0.35)'"
+            onmousedown="this.style.transform='scale(0.98)'"
+            onmouseup="this.style.transform='scale(1)'"
+            ontouchstart="this.style.background='rgba(255,92,106,0.2)'"
+            ontouchend="this.style.background='rgba(255,92,106,0.12)';this.style.transform='scale(1)'"
+            >
+              <span style="font-size:18px">🚪</span>
+              <span>Esci dall'account</span>
+            </button>
           </div>
 
           <!-- ═══ PANNELLO IMPOSTAZIONI INLINE ═══ -->
@@ -20706,127 +20737,385 @@ function renderSettingsPanelV21(){
   const ph = profile.physique||{};
   const m  = profile.macros||{p:180,c:280,g:70};
 
-  const mkLvl = () => ['beginner','intermediate','advanced','athlete']
-    .map(v=>`<option value="${v}" ${profile.level===v?'selected':''}>${T('sp_'+v)}</option>`).join('');
-  const mkGoal = () => ['cut','bulk','maintain']
-    .map(v=>`<option value="${v}" ${g.goalType===v?'selected':''}>${T('sp_'+v)}</option>`).join('');
+  const mkOpt = (arr, cur) => arr.map(([v,l]) => `<option value="${v}" ${cur==v?'selected':''}>${l}</option>`).join('');
+  const lvlOpts  = [['beginner','Principiante'],['intermediate','Intermedio'],['advanced','Avanzato'],['athlete','Atleta']];
+  const goalOpts = [['cut','🔥 Dimagrimento'],['bulk','💪 Massa Muscolare'],['maintain','⚖️ Mantenimento']];
+  const actOpts  = [['1.2','Sedentario'],['1.375','Leggermente attivo'],['1.55','Moderatamente attivo'],['1.725','Molto attivo'],['1.9','Estremamente attivo']];
+  const dayOpts  = [2,3,4,5,6].map(v=>[v,`${v} giorni/settimana`]);
+  const wgOpts   = [1,2,3,4,5,6,7].map(v=>[v,`${v} allenamenti/sett.`]);
   const mkPresets = () => {
     const data = (typeof PRESETS_DATA!=='undefined'?PRESETS_DATA:[]);
-    return [`<option value="" ${!profile.recPreset?'selected':''}>${T('sp_none')}</option>`]
+    return [`<option value="" ${!profile.recPreset?'selected':''}>— Nessuno —</option>`]
       .concat(data.map(p=>`<option value="${p.id}" ${profile.recPreset===p.id?'selected':''}>${p.icon||''} ${p.name}</option>`))
       .join('');
   };
-  const mkDays = () => [2,3,4,5,6].map(v=>`<option value="${v}" ${(profile.days==v)?'selected':''}>${v} ${T('sp_days_pw')}</option>`).join('');
-  const mkAct = () => [
-    ['1.2','sp_sedentary'],['1.375','sp_light_act'],['1.55','sp_moderate'],
-    ['1.725','sp_intense'],['1.9','sp_very_intense'],
-  ].map(([v,k])=>`<option value="${v}" ${String(ph.activity)===v?'selected':''}>${T(k)}</option>`).join('');
-  const mkWg = () => [1,2,3,4,5,6,7].map(v=>`<option value="${v}" ${(profile.weeklyWorkoutsTarget==v)?'selected':''}>${v} ${T('sp_workouts_pw')}</option>`).join('');
+
+  // ── CSS iniettato una volta sola ──
+  if (!document.getElementById('sp-v2-style')) {
+    const s = document.createElement('style');
+    s.id = 'sp-v2-style';
+    s.textContent = `
+      .spv2-wrap { display:flex; flex-direction:column; gap:0; padding:0 0 24px; }
+      .spv2-section { margin:0 16px 6px; }
+      .spv2-section-hd {
+        display:flex; align-items:center; gap:8px;
+        padding:18px 0 10px;
+        font-size:10px; font-weight:800; letter-spacing:.12em;
+        text-transform:uppercase; color:var(--text3);
+        border-bottom:1px solid var(--border);
+        margin-bottom:2px;
+      }
+      .spv2-section-hd-ico {
+        width:24px; height:24px; border-radius:7px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:13px;
+      }
+      .spv2-card {
+        background:var(--bg2); border:1px solid var(--border);
+        border-radius:16px; overflow:hidden; margin-bottom:10px;
+      }
+      .spv2-row {
+        display:flex; align-items:center; justify-content:space-between;
+        padding:13px 16px; border-bottom:1px solid var(--border);
+        gap:12px; min-height:52px;
+      }
+      .spv2-row:last-child { border-bottom:none; }
+      .spv2-row-left { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+      .spv2-row-ico {
+        width:32px; height:32px; border-radius:9px; flex-shrink:0;
+        display:flex; align-items:center; justify-content:center; font-size:15px;
+      }
+      .spv2-row-info { flex:1; min-width:0; }
+      .spv2-row-lbl { font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; }
+      .spv2-row-sub { font-size:11px; color:var(--text3); margin-top:1px; }
+      .spv2-inp {
+        background:var(--bg4); border:1.5px solid var(--border2);
+        border-radius:10px; padding:8px 12px;
+        font-size:14px; font-weight:700; color:var(--text);
+        font-family:'DM Mono',monospace;
+        outline:none; text-align:right;
+        width:110px; flex-shrink:0;
+        transition:border-color .15s;
+      }
+      .spv2-inp:focus { border-color:rgba(200,245,60,.5); }
+      .spv2-sel {
+        background:var(--bg4); border:1.5px solid var(--border2);
+        border-radius:10px; padding:8px 12px;
+        font-size:13px; font-weight:600; color:var(--text);
+        font-family:'Syne',sans-serif;
+        outline:none; max-width:160px; flex-shrink:0;
+        transition:border-color .15s;
+      }
+      .spv2-sel:focus { border-color:rgba(200,245,60,.5); }
+
+      /* Macro card */
+      .spv2-macro-card {
+        background:var(--bg2); border:1px solid var(--border);
+        border-radius:16px; padding:16px; margin-bottom:10px;
+      }
+      .spv2-macro-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+      .spv2-mtab {
+        padding:6px 14px; border-radius:20px; font-size:11px; font-weight:800;
+        cursor:pointer; border:1.5px solid var(--border2);
+        background:var(--bg4); color:var(--text2);
+        font-family:'Syne',sans-serif; transition:all .15s;
+      }
+      .spv2-mtab.active { background:var(--acc3); border-color:rgba(200,245,60,.4); color:var(--acc); }
+      .spv2-kcal-row {
+        display:flex; align-items:center; justify-content:space-between;
+        background:var(--bg3); border-radius:12px; padding:12px 14px;
+        margin-bottom:12px;
+      }
+      .spv2-kcal-lbl { font-size:12px; font-weight:700; color:var(--text2); }
+      .spv2-kcal-val { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--acc); line-height:1; }
+      .spv2-kcal-unit { font-size:11px; color:var(--text3); margin-top:2px; }
+      .spv2-slider-wrap { display:flex; flex-direction:column; gap:14px; }
+      .spv2-slider-row { display:flex; flex-direction:column; gap:6px; }
+      .spv2-slider-hd { display:flex; justify-content:space-between; align-items:center; }
+      .spv2-slider-nm { font-size:12px; font-weight:700; }
+      .spv2-slider-vals { display:flex; align-items:center; gap:8px; }
+      .spv2-slider-g { font-size:12px; color:var(--text3); font-family:'DM Mono',monospace; }
+      .spv2-slider-pct { font-size:13px; font-weight:800; font-family:'DM Mono',monospace; min-width:38px; text-align:right; }
+      .spv2-pct-total {
+        display:flex; justify-content:space-between; align-items:center;
+        padding-top:10px; margin-top:4px; border-top:1px solid var(--border);
+        font-size:12px; font-weight:700; color:var(--text3);
+      }
+      .spv2-gram-row { display:flex; gap:8px; margin-top:12px; }
+      .spv2-gram-item { flex:1; display:flex; flex-direction:column; gap:5px; }
+      .spv2-gram-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+      .spv2-gram-inp {
+        background:var(--bg4); border:1.5px solid var(--border2);
+        border-radius:10px; padding:9px 10px;
+        font-size:14px; font-weight:700; color:var(--text);
+        font-family:'DM Mono',monospace; outline:none; width:100%;
+        text-align:center; transition:border-color .15s;
+      }
+      .spv2-gram-inp:focus { border-color:rgba(200,245,60,.5); }
+
+      /* Save button */
+      .spv2-save-wrap { padding:8px 16px 0; }
+      .spv2-save-btn {
+        width:100%; padding:16px 24px;
+        background:var(--acc); color:#080810;
+        border:none; border-radius:16px;
+        font-family:'Syne',sans-serif; font-size:15px; font-weight:900;
+        cursor:pointer; letter-spacing:.04em;
+        display:flex; align-items:center; justify-content:center; gap:10px;
+        box-shadow:0 4px 24px rgba(200,245,60,.3), 0 1px 0 rgba(255,255,255,.2) inset;
+        transition:all .15s;
+        position:relative; overflow:hidden;
+      }
+      .spv2-save-btn:hover { background:var(--acc2); transform:translateY(-1px); box-shadow:0 8px 32px rgba(200,245,60,.4); }
+      .spv2-save-btn:active { transform:scale(.98); }
+      .spv2-save-ico { font-size:20px; }
+      .spv2-save-txt { display:flex; flex-direction:column; align-items:flex-start; }
+      .spv2-save-main { font-size:15px; font-weight:900; line-height:1.1; }
+      .spv2-save-sub { font-size:11px; font-weight:600; opacity:.7; letter-spacing:.03em; }
+    `;
+    document.head.appendChild(s);
+  }
 
   wrap.innerHTML = `
-  <div class="sp-section-title">${T('sp_personal')}</div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_name')}</label><input class="sp-inp" id="sp-name" value="${profile.name||''}" maxlength="20"></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_sex')}</label>
-    <select class="sp-inp" id="sp-sex">
-      <option value="m" ${ph.sex!=='f'?'selected':''}>${T('sp_male')}</option>
-      <option value="f" ${ph.sex==='f'?'selected':''}>${T('sp_female')}</option>
-    </select></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_age')}</label><input class="sp-inp" id="sp-age" type="number" min="13" max="90" value="${ph.age||''}"></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_height')}</label><input class="sp-inp" id="sp-height" type="number" min="100" max="250" value="${ph.height||''}"></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_weight')}</label><input class="sp-inp" id="sp-weight" type="number" step="0.5" min="20" max="400" value="${ph.weight||''}"></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_level')}</label><select class="sp-inp" id="sp-level">${mkLvl()}</select></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_activity')}</label><select class="sp-inp" id="sp-activity">${mkAct()}</select></div>
+  <div class="spv2-wrap">
 
-  <div class="sp-section-title" style="margin-top:20px">${T('sp_goals')}</div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_goal_type')}</label><select class="sp-inp" id="sp-goaltype">${mkGoal()}</select></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_goal_weight')}</label><input class="sp-inp" id="sp-goalweight" type="number" step="0.5" min="30" max="300" value="${g.weight||ph.weight||''}"></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_kcal')}</label><input class="sp-inp" id="sp-kcal" type="number" step="50" min="1000" max="8000" value="${g.calories||profile.kcalTarget||2500}"></div>
-  <div class="sp-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
-    <label class="sp-lbl">Macronutrienti giornalieri</label>
-
-    <!-- Preset bottoni statici - attivati da JS -->
-    <div id="sp-presets-wrap" style="display:flex;gap:6px;width:100%;flex-wrap:wrap">
-      <button type="button" onclick="spSelectPreset('cut')"      id="sp-pre-cut"      style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2)">Cut</button>
-      <button type="button" onclick="spSelectPreset('bulk')"     id="sp-pre-bulk"     style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2)">Bulk</button>
-      <button type="button" onclick="spSelectPreset('maintain')" id="sp-pre-maintain" style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2)">Mantenimento</button>
-      <button type="button" onclick="spSelectPreset('recomp')"   id="sp-pre-recomp"   style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2)">Recomp</button>
-      <button type="button" onclick="spSelectPreset('custom')"   id="sp-pre-custom"   style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;border:1.5px solid var(--border);background:var(--bg4);color:var(--text2)">Custom</button>
+    <!-- ── PROFILO PERSONALE ── -->
+    <div class="spv2-section">
+      <div class="spv2-section-hd">
+        <div class="spv2-section-hd-ico" style="background:rgba(200,245,60,.1)">👤</div>
+        Profilo personale
+      </div>
     </div>
-
-    <!-- Slider % compatti: solo percentuale + label + grammi risultanti -->
-    <div style="width:100%;display:flex;flex-direction:column;gap:12px;background:var(--bg3);border-radius:12px;padding:12px 14px">
-      <!-- Proteine -->
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:700;color:var(--green)">Proteine</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span id="sp-g-p" style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">0g</span>
-            <span id="sp-pct-p" style="font-size:13px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green);min-width:36px;text-align:right">30%</span>
+    <div class="spv2-section">
+      <div class="spv2-card">
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(200,245,60,.1)">✏️</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Nome</div><div class="spv2-row-sub">Come ti chiamiamo</div></div>
           </div>
+          <input class="spv2-inp" id="sp-name" value="${profile.name||''}" maxlength="20" style="font-family:'Syne',sans-serif;text-align:right;">
         </div>
-        <input type="range" id="sp-range-p" min="10" max="70" step="1" value="30"
-          oninput="spOnRange('p')" style="width:100%;accent-color:var(--green);height:5px;cursor:pointer">
-      </div>
-      <!-- Carbs -->
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:700;color:var(--blue)">Carbs</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span id="sp-g-c" style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">0g</span>
-            <span id="sp-pct-c" style="font-size:13px;font-weight:800;font-family:'DM Mono',monospace;color:var(--blue);min-width:36px;text-align:right">45%</span>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(91,156,239,.12)">⚧</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Sesso</div></div>
           </div>
+          <select class="spv2-sel" id="sp-sex">
+            <option value="m" ${ph.sex!=='f'?'selected':''}>Maschio</option>
+            <option value="f" ${ph.sex==='f'?'selected':''}>Femmina</option>
+          </select>
         </div>
-        <input type="range" id="sp-range-c" min="10" max="70" step="1" value="45"
-          oninput="spOnRange('c')" style="width:100%;accent-color:var(--blue);height:5px;cursor:pointer">
-      </div>
-      <!-- Grassi -->
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-          <span style="font-size:12px;font-weight:700;color:var(--orange)">Grassi</span>
-          <div style="display:flex;align-items:center;gap:10px">
-            <span id="sp-g-g" style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">0g</span>
-            <span id="sp-pct-g" style="font-size:13px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange);min-width:36px;text-align:right">25%</span>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(168,126,248,.12)">🎂</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Età</div><div class="spv2-row-sub">anni</div></div>
           </div>
+          <input class="spv2-inp" id="sp-age" type="number" min="13" max="90" value="${ph.age||''}">
         </div>
-        <input type="range" id="sp-range-g" min="10" max="70" step="1" value="25"
-          oninput="spOnRange('g')" style="width:100%;accent-color:var(--orange);height:5px;cursor:pointer">
-      </div>
-      <!-- Totale % + check -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;border-top:1px solid var(--border)">
-        <span id="sp-pct-total" style="font-size:12px;font-weight:700;color:var(--text2)">Totale: 100%</span>
-        <span id="sp-macro-check" style="font-size:11px;color:var(--text2)"></span>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(62,223,138,.1)">📏</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Altezza</div><div class="spv2-row-sub">cm</div></div>
+          </div>
+          <input class="spv2-inp" id="sp-height" type="number" min="100" max="250" value="${ph.height||''}">
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(255,154,60,.12)">⚖️</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Peso attuale</div><div class="spv2-row-sub">kg</div></div>
+          </div>
+          <input class="spv2-inp" id="sp-weight" type="number" step="0.5" min="20" max="400" value="${ph.weight||''}">
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(62,207,207,.12)">🏅</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Livello</div><div class="spv2-row-sub">Esperienza fitness</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-level">${mkOpt(lvlOpts, profile.level)}</select>
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(255,92,106,.1)">🔥</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Livello attività</div><div class="spv2-row-sub">Vita quotidiana</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-activity" style="max-width:140px;">${mkOpt(actOpts, ph.activity)}</select>
+        </div>
       </div>
     </div>
 
-    <!-- Grammi risultanti (read-only display, modificabili manualmente) -->
-    <div style="display:flex;gap:8px;width:100%">
-      <div style="flex:1"><div class="sp-macro-lbl" style="color:var(--green)">${T('home_protein')} g</div><input class="sp-inp" id="sp-prot" type="number" min="0" max="500" value="${m.p||180}" oninput="spGramsChange()"></div>
-      <div style="flex:1"><div class="sp-macro-lbl" style="color:var(--blue)">${T('home_carbs')} g</div><input class="sp-inp" id="sp-carbs" type="number" min="0" max="800" value="${m.c||280}" oninput="spGramsChange()"></div>
-      <div style="flex:1"><div class="sp-macro-lbl" style="color:var(--orange)">${T('home_fats')} g</div><input class="sp-inp" id="sp-fats" type="number" min="0" max="300" value="${m.g||70}" oninput="spGramsChange()"></div>
+    <!-- ── OBIETTIVI ── -->
+    <div class="spv2-section">
+      <div class="spv2-section-hd">
+        <div class="spv2-section-hd-ico" style="background:rgba(255,92,106,.1)">🎯</div>
+        Obiettivi
+      </div>
     </div>
-  </div>
+    <div class="spv2-section">
+      <div class="spv2-card">
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(255,92,106,.1)">🎯</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Obiettivo</div><div class="spv2-row-sub">Cosa vuoi raggiungere</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-goaltype">${mkOpt(goalOpts, g.goalType)}</select>
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(62,223,138,.1)">🏁</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Peso obiettivo</div><div class="spv2-row-sub">kg</div></div>
+          </div>
+          <input class="spv2-inp" id="sp-goalweight" type="number" step="0.5" min="30" max="300" value="${g.weight||ph.weight||''}">
+        </div>
+      </div>
+    </div>
 
-    <div class="sp-section-title" style="margin-top:20px">${T('sp_workout')}</div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_days')}</label><select class="sp-inp" id="sp-days">${mkDays()}</select></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_weekly_goal')}</label><select class="sp-inp" id="sp-wgtarget">${mkWg()}</select></div>
-  <div class="sp-row"><label class="sp-lbl">${T('sp_preset')}</label><select class="sp-inp" id="sp-preset">${mkPresets()}</select></div>
+    <!-- ── NUTRIZIONE ── -->
+    <div class="spv2-section">
+      <div class="spv2-section-hd">
+        <div class="spv2-section-hd-ico" style="background:rgba(62,223,138,.1)">🥗</div>
+        Nutrizione & Macros
+      </div>
+    </div>
+    <div class="spv2-section">
+      <div class="spv2-macro-card">
+        <!-- Kcal target -->
+        <div class="spv2-kcal-row">
+          <div>
+            <div class="spv2-kcal-lbl">Calorie giornaliere target</div>
+            <div class="spv2-kcal-unit">Modifica per aggiornare i macro</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <input id="sp-kcal" type="number" step="50" min="1000" max="8000"
+                value="${g.calories||profile.kcalTarget||2500}"
+                style="background:transparent;border:none;font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--acc);width:90px;text-align:right;outline:none;padding:0;">
+              <span style="font-size:13px;color:var(--text3);font-weight:600;">kcal</span>
+            </div>
+          </div>
+        </div>
 
-  <button onclick="applySettings()"
-    style="width:100%;padding:15px;margin-top:20px;background:var(--acc);color:#080810;
-      border:none;border-radius:var(--r-lg);font-family:'Syne',sans-serif;
-      font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.03em;
-      transition:background .15s;"
-    onmouseover="this.style.background='var(--acc2)'"
-    onmouseout="this.style.background='var(--acc)'">${T('sp_save')}</button>`;
+        <!-- Preset macro tabs -->
+        <div class="spv2-macro-tabs">
+          <button type="button" onclick="spSelectPreset('cut')"      id="sp-pre-cut"      class="spv2-mtab">✂️ Cut</button>
+          <button type="button" onclick="spSelectPreset('bulk')"     id="sp-pre-bulk"     class="spv2-mtab">💪 Bulk</button>
+          <button type="button" onclick="spSelectPreset('maintain')" id="sp-pre-maintain" class="spv2-mtab">⚖️ Mant.</button>
+          <button type="button" onclick="spSelectPreset('recomp')"   id="sp-pre-recomp"   class="spv2-mtab">🔄 Recomp</button>
+          <button type="button" onclick="spSelectPreset('custom')"   id="sp-pre-custom"   class="spv2-mtab">🎛 Custom</button>
+        </div>
 
-  // V21: Live kcal→macro + slider support
+        <!-- Sliders -->
+        <div class="spv2-slider-wrap">
+          <div class="spv2-slider-row">
+            <div class="spv2-slider-hd">
+              <span class="spv2-slider-nm" style="color:var(--green)">🥩 Proteine</span>
+              <div class="spv2-slider-vals">
+                <span id="sp-g-p" class="spv2-slider-g">0g</span>
+                <span id="sp-pct-p" class="spv2-slider-pct" style="color:var(--green)">30%</span>
+              </div>
+            </div>
+            <input type="range" id="sp-range-p" min="10" max="70" step="1" value="30"
+              oninput="spOnRange('p')" style="width:100%;accent-color:var(--green);height:5px;cursor:pointer">
+          </div>
+          <div class="spv2-slider-row">
+            <div class="spv2-slider-hd">
+              <span class="spv2-slider-nm" style="color:var(--blue)">🍞 Carboidrati</span>
+              <div class="spv2-slider-vals">
+                <span id="sp-g-c" class="spv2-slider-g">0g</span>
+                <span id="sp-pct-c" class="spv2-slider-pct" style="color:var(--blue)">45%</span>
+              </div>
+            </div>
+            <input type="range" id="sp-range-c" min="10" max="70" step="1" value="45"
+              oninput="spOnRange('c')" style="width:100%;accent-color:var(--blue);height:5px;cursor:pointer">
+          </div>
+          <div class="spv2-slider-row">
+            <div class="spv2-slider-hd">
+              <span class="spv2-slider-nm" style="color:var(--orange)">🥑 Grassi</span>
+              <div class="spv2-slider-vals">
+                <span id="sp-g-g" class="spv2-slider-g">0g</span>
+                <span id="sp-pct-g" class="spv2-slider-pct" style="color:var(--orange)">25%</span>
+              </div>
+            </div>
+            <input type="range" id="sp-range-g" min="10" max="70" step="1" value="25"
+              oninput="spOnRange('g')" style="width:100%;accent-color:var(--orange);height:5px;cursor:pointer">
+          </div>
+          <div class="spv2-pct-total">
+            <span id="sp-pct-total">Totale: 100%</span>
+            <span id="sp-macro-check"></span>
+          </div>
+        </div>
+
+        <!-- Grammi manuali -->
+        <div class="spv2-gram-row">
+          <div class="spv2-gram-item">
+            <div class="spv2-gram-lbl" style="color:var(--green)">Proteine g</div>
+            <input class="spv2-gram-inp" id="sp-prot" type="number" min="0" max="500" value="${m.p||180}" oninput="spGramsChange()">
+          </div>
+          <div class="spv2-gram-item">
+            <div class="spv2-gram-lbl" style="color:var(--blue)">Carbs g</div>
+            <input class="spv2-gram-inp" id="sp-carbs" type="number" min="0" max="800" value="${m.c||280}" oninput="spGramsChange()">
+          </div>
+          <div class="spv2-gram-item">
+            <div class="spv2-gram-lbl" style="color:var(--orange)">Grassi g</div>
+            <input class="spv2-gram-inp" id="sp-fats" type="number" min="0" max="300" value="${m.g||70}" oninput="spGramsChange()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALLENAMENTO ── -->
+    <div class="spv2-section">
+      <div class="spv2-section-hd">
+        <div class="spv2-section-hd-ico" style="background:rgba(200,245,60,.1)">🏋️</div>
+        Allenamento
+      </div>
+    </div>
+    <div class="spv2-section">
+      <div class="spv2-card">
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(200,245,60,.1)">📅</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Giorni allenamento</div><div class="spv2-row-sub">Per settimana</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-days">${mkOpt(dayOpts, profile.days)}</select>
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(91,156,239,.12)">🎯</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Obiettivo settimanale</div><div class="spv2-row-sub">Target sessioni</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-wgtarget">${mkOpt(wgOpts, profile.weeklyWorkoutsTarget)}</select>
+        </div>
+        <div class="spv2-row">
+          <div class="spv2-row-left">
+            <div class="spv2-row-ico" style="background:rgba(168,126,248,.12)">⚡</div>
+            <div class="spv2-row-info"><div class="spv2-row-lbl">Programma attivo</div><div class="spv2-row-sub">Preset selezionato</div></div>
+          </div>
+          <select class="spv2-sel" id="sp-preset" style="max-width:130px;">${mkPresets()}</select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SALVA ── -->
+    <div class="spv2-save-wrap">
+      <button class="spv2-save-btn" onclick="applySettings()">
+        <span class="spv2-save-ico">💾</span>
+        <span class="spv2-save-txt">
+          <span class="spv2-save-main">Salva impostazioni</span>
+          <span class="spv2-save-sub">Tutti i dati vengono aggiornati</span>
+        </span>
+      </button>
+    </div>
+
+  </div>`;
+
+  // Live listeners
   const _spKcalEl2 = document.getElementById('sp-kcal');
   const _spGoalEl2 = document.getElementById('sp-goaltype');
   if(_spKcalEl2) _spKcalEl2.addEventListener('input', spKcalChanged);
   if(_spGoalEl2) _spGoalEl2.addEventListener('change', () => { spSelectPreset(_spGoalEl2.value); });
-  // Init sliders with current macro values
   spInitSliders();
 }
+
 
 /* ── Patch showToast with i18n messages ── */
 (function patchToast(){
@@ -33722,6 +34011,38 @@ window.getSuggestedWeight = function(exerciseId){
   const completedAll=sets.every(s=>(parseFloat(s.r)||0)>=(parseFloat(lastEx.r)||8));
   const suggested=completedAll?Math.round(avgW*1.025*2)/2:avgW;
   return { lastWeight:avgW, suggested, shouldIncrease:completedAll };
+};
+
+/* ── LOGOUT UNIVERSALE ──────────────────────────────────── */
+window.fittrackLogout = async function() {
+  if (!confirm('Vuoi davvero uscire dall\'account?')) return;
+  // 1. Firebase signOut usando l'istanza auth globale
+  try {
+    if (window._ftAuth) {
+      const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      await signOut(window._ftAuth);
+    }
+  } catch(e) { /* ignora errori Firebase */ }
+  // 2. Pulizia completa localStorage — TUTTE le chiavi auth
+  ['ft_firebase_user','ft_google_user','ft_skip_google','ft_google_token',
+   'ft_user_email','ft_user_uid','ft_auth_token','ft_firebase_uid']
+  .forEach(k => localStorage.removeItem(k));
+  window._firebaseUser = null;
+  // 3. Mostra schermata di login senza ricaricare la pagina
+  const loginScreen = document.getElementById('scr-google-login');
+  const appScreen   = document.getElementById('scr-app');
+  const onboard     = document.getElementById('scr-onboard');
+  const splash      = document.getElementById('scr-splash');
+  if (appScreen)   appScreen.classList.remove('active');
+  if (onboard)     onboard.classList.remove('active');
+  if (splash)      splash.classList.remove('active');
+  if (loginScreen) {
+    loginScreen.classList.add('active');
+    if (typeof showToast === 'function') showToast('✅ Disconnesso');
+    return;
+  }
+  // 4. Fallback: ricarica (boot mostrerà login perché chiavi rimosse)
+  location.reload();
 };
 
 </script>
