@@ -34351,5 +34351,28 @@ window.ftLogoutAndGoLogin = function() {
 })();
 
 </script>
+   <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDDUoIkszKgK_9Yu5wHlqZ9IifIQWnhvv0",
+    authDomain: "fittrack-fb939.firebaseapp.com",
+    projectId: "fittrack-fb939",
+    storageBucket: "fittrack-fb939.firebasestorage.app",
+    messagingSenderId: "828892951236",
+    appId: "1:828892951236:web:76016843ffab72d4ae0f91",
+    measurementId: "G-9RKZ9TMT6S"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+   </script>
 </body>
 </html>
