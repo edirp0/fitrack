@@ -3428,7 +3428,8 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import {
-    getAuth, signInWithPopup, GoogleAuthProvider, OAuthProvider,
+    getAuth, signInWithRedirect, getRedirectResult,
+    GoogleAuthProvider,
     onAuthStateChanged, signOut,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
     updateProfile, sendPasswordResetEmail
@@ -3447,30 +3448,7 @@ input:focus, textarea:focus, select:focus {
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const provider = new GoogleAuthProvider();
-  const appleProvider = new OAuthProvider('apple.com');
-  appleProvider.addScope('email');
-  appleProvider.addScope('name');
-
-  // ── APPLE LOGIN ──
-  window.firebaseAppleSignIn = async function() {
-    const btn = document.getElementById('apple-signin-btn');
-    if (btn) btn.disabled = true;
-    document.getElementById('auth-error-msg') && (document.getElementById('auth-error-msg').style.display = 'none');
-    try {
-      const result = await signInWithPopup(auth, appleProvider);
-      _onLoginSuccess(result.user);
-    } catch(e) {
-      console.error('Apple login error:', e);
-      const msgs = {
-        'auth/popup-closed-by-user': 'Popup chiuso. Riprova.',
-        'auth/cancelled-popup-request': 'Richiesta annullata.',
-        'auth/popup-blocked': 'Popup bloccato. Abilita i popup per questo sito.',
-        'auth/network-request-failed': 'Errore di rete. Controlla la connessione.'
-      };
-      _showAuthError(msgs[e.code] || 'Errore Apple: ' + e.message);
-      if (btn) btn.disabled = false;
-    }
-  };
+  provider.setCustomParameters({ prompt: 'select_account' });
 
   // Helper: salva utente localmente e entra nell'app
   function _onLoginSuccess(user) {
@@ -3500,26 +3478,44 @@ input:focus, textarea:focus, select:focus {
     if (btnG) btnG.disabled = false;
   }
 
-  // ── GOOGLE LOGIN ──
+  // ── GOOGLE LOGIN (redirect — funziona su GitHub Pages) ──
   window.firebaseSignIn = async function() {
     const btnG = document.getElementById('google-signin-btn');
-    if (btnG) btnG.disabled = true;
+    if (btnG) { btnG.disabled = true; btnG.textContent = 'Reindirizzamento…'; }
     document.getElementById('auth-loading') && (document.getElementById('auth-loading').style.display = 'block');
     document.getElementById('auth-error-msg') && (document.getElementById('auth-error-msg').style.display = 'none');
     try {
-      const result = await signInWithPopup(auth, provider);
-      _onLoginSuccess(result.user);
+      // Salva stato prima del redirect
+      localStorage.setItem('ft_pending_google_login', '1');
+      await signInWithRedirect(auth, provider);
+      // La pagina si ricarica — il risultato viene gestito da getRedirectResult sotto
     } catch(e) {
       console.error('Google login error:', e);
       const msgs = {
-        'auth/popup-closed-by-user': 'Popup chiuso. Riprova.',
-        'auth/cancelled-popup-request': 'Richiesta annullata.',
-        'auth/popup-blocked': 'Popup bloccato dal browser. Abilita i popup per questo sito.',
-        'auth/network-request-failed': 'Errore di rete. Controlla la connessione.'
+        'auth/network-request-failed': 'Errore di rete. Controlla la connessione.',
+        'auth/cancelled-popup-request': 'Richiesta annullata. Riprova.',
+        'auth/unauthorized-domain': 'Dominio non autorizzato in Firebase Console.'
       };
       _showAuthError(msgs[e.code] || 'Errore Google: ' + e.message);
+      if (btnG) { btnG.disabled = false; btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill=\"#EA4335\" d=\"M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z\"/><path fill=\"#4285F4\" d=\"M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z\"/><path fill=\"#FBBC05\" d=\"M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z\"/><path fill=\"#34A853\" d=\"M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z\"/></svg> Continua con Google'; }
     }
   };
+
+  // ── GESTIONE RISULTATO REDIRECT (chiamata al caricamento pagina) ──
+  (async function handleRedirectResult() {
+    try {
+      const result = await getRedirectResult(auth);
+      if (result && result.user) {
+        localStorage.removeItem('ft_pending_google_login');
+        _onLoginSuccess(result.user);
+      }
+    } catch(e) {
+      if (e.code !== 'auth/no-current-user') {
+        console.error('Redirect result error:', e);
+        _showAuthError('Errore accesso Google: ' + (e.message || e.code));
+      }
+    }
+  })();
 
   // ── EMAIL/PASSWORD LOGIN ──
   window.firebaseEmailLogin = async function() {
@@ -3935,18 +3931,12 @@ input:focus, textarea:focus, select:focus {
   max-width: 100% !important;
   box-sizing: border-box !important;
 }
-#google-signin-btn:hover, #apple-signin-btn:hover {
-  background: var(--bg3) !important;
-  border-color: var(--text3) !important;
-  transform: translateY(-1px);
-}
+#google-signin-btn:hover, 
 #auth-email-btn:hover {
   opacity: .9;
   transform: translateY(-1px);
 }
-#auth-email-btn:active, #google-signin-btn:active, #apple-signin-btn:active {
-  transform: translateY(0);
-}
+#auth-email-btn:active, #google-signin-btn:active, 
 
 /* 27. AUTH TABS — non escono dal viewport */
 #auth-tabs {
@@ -4317,23 +4307,9 @@ html, body {
 #google-signin-btn:active { transform: scale(.98); }
 
 /* Apple — sfondo nero brand-compliant */
-#apple-signin-btn {
-  width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 13px 20px;
-  background: #000000;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 50px;
-  font-family: -apple-system, 'Syne', sans-serif;
-  font-size: 14px; font-weight: 600;
-  color: #ffffff;
-  cursor: pointer;
-  transition: all .2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  box-sizing: border-box;
-}
-#apple-signin-btn:hover { background: #111; box-shadow: 0 4px 14px rgba(0,0,0,0.6); }
-#apple-signin-btn:active { transform: scale(.98); }
+
+
+
 
 /* ══ FINAL OVERRIDE: login screen always scrollable ══ */
 #scr-google-login {
@@ -4392,13 +4368,7 @@ html, body {
           Continua con Google
         </button>
 
-        <!-- Apple — non disponibile su GitHub Pages -->
-        <button id="apple-signin-btn" onclick="(function(){if(typeof showToast==='function')showToast('⚠️ Apple Sign-In non disponibile. Usa Google o Email.');var e=document.getElementById('auth-error-msg');if(e){e.style.display='block';e.textContent='Apple Sign-In richiede un dominio Apple registrato. Usa Google o Email/Password.'}})()" style="opacity:0.45;cursor:not-allowed;">
-          <svg width="18" height="18" viewBox="0 0 814 1000" fill="#ffffff" style="flex-shrink:0;">
-            <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.8-155.5-127.4C46 790.2 0 665.7 0 542.3c0-190.2 124.5-290.7 247.2-290.7 66.5 0 121.8 43.4 163.4 43.4 39.5 0 101.9-46.1 176.2-46.1 28.4 0 130.9 2.6 198.3 99zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/>
-          </svg>
-          Continua con Apple
-        </button>
+
       </div>
 
       <!-- Separatore elegante "oppure continua con la mail" -->
@@ -4675,6 +4645,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
       <div class="ob-prog-seg" id="seg13"></div>
       <div class="ob-prog-seg" id="seg14"></div>
       <div class="ob-prog-seg" id="seg15"></div>
+      <div class="ob-prog-seg" id="seg16"></div>
     </div>
 
     <!-- ── STEP 0: Nome ── -->
@@ -5140,7 +5111,108 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
           <div style="font-size:14px;color:var(--text2);line-height:1.7">Questa sezione è per il ciclo mestruale.<br>Procedi al passo successivo per il tuo programma.</div>
         </div>
       </div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button><button class="btn btn-acc" onclick="obNext(15)">Continua →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button><button class="btn btn-acc" onclick="obNext(14.5)">Continua →</button></div>
+    </div>
+
+    <!-- ── STEP 14.5: Nutrizione & Intolleranze ── -->
+    <div class="ob-step" id="ob_s14_5">
+      <div class="ob-eyebrow">Passo 15½ di 17 — Nutrizione</div>
+      <div class="ob-ttl">Le tue preferenze alimentari</div>
+      <div class="ob-sub">Personalizziamo le ricette e i consigli nutrizionali in base a quello che mangi davvero.</div>
+
+      <!-- Preferenza proteica -->
+      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Fonte proteica principale</div>
+      <div class="ob-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:18px;">
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','meat')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🥩</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Carne</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','fish')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🐟</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Pesce</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','eggs')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🥚</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Uova</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','legumes')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🫘</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Legumi</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','dairy')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🧀</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Latticini</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'protSource','whey')" style="text-align:center;padding:18px 8px">
+          <span class="ob-card-ico" style="font-size:28px">🥛</span>
+          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Integratori</div>
+        </div>
+      </div>
+
+      <!-- Dieta -->
+      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Stile alimentare</div>
+      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
+        <div class="ob-card" onclick="obPickNutri(this,'diet','omnivore')">
+          <span class="ob-card-ico">🍽️</span><div class="ob-card-nm">Onnivoro</div><div class="ob-card-sub">Mangio tutto</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','vegetarian')">
+          <span class="ob-card-ico">🌿</span><div class="ob-card-nm">Vegetariano</div><div class="ob-card-sub">No carne/pesce</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','vegan')">
+          <span class="ob-card-ico">🌱</span><div class="ob-card-nm">Vegano</div><div class="ob-card-sub">Solo vegetale</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','keto')">
+          <span class="ob-card-ico">🥑</span><div class="ob-card-nm">Keto / Low-carb</div><div class="ob-card-sub">Sotto 50g carbs</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','mediterranean')">
+          <span class="ob-card-ico">🫒</span><div class="ob-card-nm">Mediterranea</div><div class="ob-card-sub">Pesce, verdure, olio</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','flexible')">
+          <span class="ob-card-ico">🎲</span><div class="ob-card-nm">Flessibile / IIFYM</div><div class="ob-card-sub">Se rientra nei macro, va bene</div>
+        </div>
+      </div>
+
+      <!-- Intolleranze -->
+      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Intolleranze e allergie</div>
+      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_glutine')">
+          <span class="ob-card-ico">🌾</span><div class="ob-card-nm">Glutine</div><div class="ob-card-sub">Celiachia o sensibilità</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_lattosio')">
+          <span class="ob-card-ico">🥛</span><div class="ob-card-nm">Lattosio</div><div class="ob-card-sub">Latte e derivati</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_fruttasecca')">
+          <span class="ob-card-ico">🥜</span><div class="ob-card-nm">Frutta secca</div><div class="ob-card-sub">Arachidi, noci, mandorle</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_uova')">
+          <span class="ob-card-ico">🥚</span><div class="ob-card-nm">Uova</div><div class="ob-card-sub">Albume o tuorlo</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_pesce')">
+          <span class="ob-card-ico">🐟</span><div class="ob-card-nm">Pesce / Crostacei</div><div class="ob-card-sub">Allergia ittica</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_soia')">
+          <span class="ob-card-ico">🌱</span><div class="ob-card-nm">Soia</div><div class="ob-card-sub">Tofu, tempeh, edamame</div>
+        </div>
+        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_none')" style="border-color:rgba(200,245,60,.3)">
+          <span class="ob-card-ico">✅</span><div class="ob-card-nm">Nessuna</div><div class="ob-card-sub">Mangio tutto senza problemi</div>
+        </div>
+      </div>
+
+      <!-- Budget spesa -->
+      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Budget settimanale spesa</div>
+      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:4px;">
+        <div class="ob-card" onclick="obPickNutri(this,'budget','low')">
+          <span class="ob-card-ico">💰</span><div class="ob-card-nm">Economico</div><div class="ob-card-sub">Sotto €30/sett.</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'budget','medium')">
+          <span class="ob-card-ico">💰💰</span><div class="ob-card-nm">Moderato</div><div class="ob-card-sub">€30–60/sett.</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'budget','high')">
+          <span class="ob-card-ico">💎</span><div class="ob-card-nm">Flessibile</div><div class="ob-card-sub">Oltre €60/sett.</div>
+        </div>
+      </div>
+
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14)">← Indietro</button><button class="btn btn-acc" onclick="obSaveNutriPrefs();obNext(15)">Continua →</button></div>
     </div>
 
     <!-- ── STEP 15: Scheda generata ── -->
@@ -5150,7 +5222,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
       <div class="ob-sub">Basata su livello, obiettivi, massimali e giorni di allenamento. Si evolve automaticamente ogni settimana man mano che migliori.</div>
       <div id="ob-generated-plan" style="margin-bottom:16px"></div>
       <div id="ob-preset-rec" style="display:none;margin-bottom:16px" class="preset-rec"></div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14)">← Indietro</button><button class="btn btn-acc btn-full" id="ob-finish-btn" onclick="finishOnboard()">Inizia →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14.5)">← Indietro</button><button class="btn btn-acc btn-full" id="ob-finish-btn" onclick="finishOnboard()">Inizia →</button></div>
     </div>
 
   </div>
@@ -5207,6 +5279,17 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
             <div class="cal-subtitle" id="cal-prog-name">—</div>
           </div>
           <div class="cal-nav">
+<script>
+// Guard: calShiftWeek may be called before main script loads
+if (typeof calShiftWeek === 'undefined') {
+  window.calShiftWeek = function(d) {
+    // Store intent and retry after load
+    window._pendingCalShift = d;
+  };
+}
+if (typeof renderWoExs === 'undefined') window.renderWoExs = function() {};
+if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = function() { return null; };
+</script>
             <button class="cal-nav-btn" onclick="calShiftWeek(-1)" title="Settimana precedente">‹</button>
             <span class="cal-week-label" id="cal-week-label">—</span>
             <button class="cal-nav-btn" onclick="calShiftWeek(+1)" title="Settimana successiva">›</button>
@@ -5448,7 +5531,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
         <div><div class="nutr-title">Nutrizione</div><div style="font-size:11px;color:var(--text2);margin-top:2px" id="nutr-dt"></div></div>
         <div style="display:flex;gap:8px;align-items:center;">
           <button onclick="goPage('ricette')" style="background:var(--acc3);border:1px solid rgba(200,245,60,0.25);color:var(--acc);border-radius:99px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap;">🍽️ Ricette</button>
-          <button class="btn btn-ghost btn-sm" onclick="openNutrGoals()">⚙️</button>
+          <button onclick="(function(){var fn=window.openNutrGoals||openNutrGoals;if(typeof fn==='function'){var old=document.getElementById('ngs-modal');if(old)old.remove();fn();}else{alert('Impostazioni non disponibili');}})();" style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;">⚙️</button>
         </div>
       </div>
       <div class="riepilogo">
@@ -5654,7 +5737,19 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
       <div class="ricette-page-head">
         <div class="ricette-title">Ricette Fit</div>
       </div>
+      <!-- Search bar -->
+      <div style="padding:0 16px 10px;">
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;">&#x1F50D;</span>
+          <input id="ricette-search" type="text" placeholder="Cerca ricetta per nome&#x2026;"
+            oninput="ricettaSearch()"
+            style="width:100%;background:var(--bg3);border:1.5px solid var(--border2);border-radius:99px;padding:10px 14px 10px 36px;font-size:13px;font-family:'Syne',sans-serif;color:var(--text);outline:none;">
+        </div>
+      </div>
+      <!-- Category filters -->
       <div class="ricette-filters" id="ricette-filters"></div>
+      <!-- Ingredient filter panel -->
+      <div id="ricette-ing-filters" style="padding:0 16px 10px;"></div>
       <div id="ricette-list"></div>
     </div>
 
@@ -6176,6 +6271,14 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
 </div>
 
 <script>
+// ── Safety guards for race conditions ──
+if (typeof EX_DB === 'undefined') window.EX_DB = [];
+if (typeof FOOD_DB === 'undefined') window.FOOD_DB = [];
+if (typeof PRESETS_DATA === 'undefined') window.PRESETS_DATA = [];
+if (typeof renderWoExs === 'undefined') window.renderWoExs = function() {};
+if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = function() { return null; };
+if (typeof calShiftWeek === 'undefined') window.calShiftWeek = function(d) { console.log('[guard] calShiftWeek called before init'); };
+
 // #region agent log
 // #endregion
 window.addEventListener('unhandledrejection', function(e){
@@ -10597,6 +10700,72 @@ function buildPresetRec() {
   window._recPresetId = pid;
 }
 
+// ── NUTRIZIONE ONBOARDING ──
+var obNutriSel = { protSource: '', diet: '', intolleranze: [], budget: '' };
+
+function obPickNutri(el, key, val) {
+  // Deseleziona altri nella stessa categoria
+  const parent = el.closest('.ob-grid') || el.parentElement;
+  parent.querySelectorAll('.ob-card').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  obNutriSel[key] = val;
+}
+
+function obMultiNutri(el, val) {
+  el.classList.toggle('on');
+  const idx = obNutriSel.intolleranze.indexOf(val);
+  if (idx >= 0) obNutriSel.intolleranze.splice(idx, 1);
+  else obNutriSel.intolleranze.push(val);
+  // Se selezionano "nessuna", deseleziona tutto il resto
+  if (val === 'intoll_none') {
+    el.closest('.ob-grid').querySelectorAll('.ob-card').forEach(function(c) {
+      if (!c.getAttribute('onclick').includes('intoll_none')) c.classList.remove('on');
+    });
+    obNutriSel.intolleranze = ['intoll_none'];
+  } else {
+    // Rimuovi "nessuna" se selezionano altro
+    const noneIdx = obNutriSel.intolleranze.indexOf('intoll_none');
+    if (noneIdx >= 0) obNutriSel.intolleranze.splice(noneIdx, 1);
+    el.closest('.ob-grid').querySelectorAll('[onclick*="intoll_none"]').forEach(function(c) { c.classList.remove('on'); });
+  }
+}
+
+function obSaveNutriPrefs() {
+  profile.nutriPrefs = {
+    protSource: obNutriSel.protSource || 'omnivore',
+    diet: obNutriSel.diet || 'omnivore',
+    intolleranze: [...obNutriSel.intolleranze],
+    budget: obNutriSel.budget || 'medium',
+  };
+  // Stress già salvato nel TDEE step, aggiunge anche qui
+  const stressEl = document.getElementById('ob-stress');
+  if (stressEl) {
+    const sv = parseInt(stressEl.value) || 0;
+    profile.stressLevel = sv >= 200 ? 'high' : sv >= 100 ? 'medium' : 'low';
+  }
+  const sleepEl = document.getElementById('ob-sleep');
+  if (sleepEl) {
+    const sv = parseInt(sleepEl.value) || 0;
+    profile.sleepQuality = sv <= -100 ? 'poor' : sv <= -50 ? 'fair' : sv >= 50 ? 'great' : 'good';
+  }
+  if (typeof saveAll === 'function') saveAll();
+}
+
+// Intercetta obNext per gestire step 14.5 (id="ob_s14_5")
+var _origObNext = window.obNext;
+window.obNext = function(n) {
+  if (n === 14.5) {
+    // Nascondi tutti gli step
+    document.querySelectorAll('.ob-step').forEach(function(s){ s.classList.remove('active'); });
+    var el = document.getElementById('ob_s14_5');
+    if (el) el.classList.add('active');
+    // Progress bar: seg 15
+    document.querySelectorAll('.ob-prog-seg').forEach(function(s,i){ s.classList.toggle('on', i<=15); });
+    return;
+  }
+  if (typeof _origObNext === 'function') _origObNext(n);
+};
+
 async function finishOnboard() {
   const btn = document.getElementById('ob-finish-btn');
   if(btn){ btn.disabled=true; btn.textContent='⏳ Salvataggio...'; }
@@ -10666,6 +10835,9 @@ async function finishOnboard() {
     generatedPlan: (typeof obGeneratedPlan !== 'undefined' ? obGeneratedPlan : null) || window.obGeneratedPlan || null,
     // Maximal strength data
     maxStrength: window._obMaximals || {},
+    nutriPrefs: profile.nutriPrefs || { protSource:'omnivore', diet:'omnivore', intolleranze:[], budget:'medium' },
+    stressLevel: profile.stressLevel || 'low',
+    sleepQuality: profile.sleepQuality || 'good',
   };
 
   await saveAll();
@@ -12726,6 +12898,7 @@ function openNutrGoals(){
   ngsRefresh();
   ngsLoadRepeat();
 }
+window.openNutrGoals = openNutrGoals;
 
 /* ── Helpers NGS ───────────────────────────────────────────────── */
 window.ngsSetKcal = function(v){
@@ -14137,9 +14310,171 @@ var RICETTE=[
    desc:'Il classico veloce e bilanciato. Con pasta proteica arrivi a 40g di proteine per porzione.',
    ingredienti:['90g pasta integrale o proteica','160g tonno al naturale','150g pomodorini ciliegino','2 spicchi aglio','Basilico fresco','10ml olio EVO','Peperoncino a piacere','Sale'],
    steps:['Cuoci la pasta in acqua salata.','Rosola l\'aglio in olio, aggiungi i pomodorini e cuoci 5 min finché scoppiettano.','Aggiungi il tonno sgocciolato, mescola e spegni il fuoco.','Scola la pasta tenendo 2 cucchiai d\'acqua. Condisci con il sugo. Aggiungi basilico fresco.']},
+,
+  {id:'nx1',name:'Pollo Teriyaki con Riso',ico:'🍱',tags:['massa','cena','pranzo'],time:'25 min',kcal:510,p:46,c:52,g:8,diff:'Facile',alimenti:['pollo','riso','salsa di soia','zenzero','aglio','miele'],desc:'Il classico giapponese adattato al fitness. La salsa teriyaki homemade è superiore.',ingredienti:['180g petto di pollo a cubetti','120g riso basmati cotto','3 cucchiai salsa di soia','1 cucchiaio miele','Zenzero fresco 1cm grattugiato','2 spicchi aglio','1 cucchiaino amido di mais','Sesamo e cipollotto'],steps:['Mescola salsa di soia, miele, aglio, zenzero e amido. Marina il pollo 10 min.','Cuoci il riso.','Rosola il pollo 5-6 min finché caramellato.','Aggiungi la marinata e cuoci 2 min a glassa.','Servi su riso con sesamo e cipollotto.']},
+  {id:'nx2',name:'Pollo al Curry e Yogurt',ico:'🍛',tags:['cena','definizione'],time:'30 min',kcal:350,p:44,c:12,g:10,diff:'Facile',alimenti:['pollo','yogurt greco','curry','pomodori','cipolla','aglio'],desc:'Versione light del curry. Lo yogurt al posto della panna taglia metà dei grassi.',ingredienti:['200g petto di pollo a cubetti','150g yogurt greco 0%','1 cipolla','2 spicchi aglio','Curry 2 cucchiaini','200g pomodori pelati','Coriandolo','Sale, olio EVO'],steps:['Rosola cipolla e aglio 3 min.','Aggiungi curry e tosta 1 min.','Unisci pollo e cuoci 5 min.','Aggiungi pomodori e cuoci 15 min.','Spegni, aggiungi yogurt. Non far bollire.']},
+  {id:'nx3',name:'Caesar Wrap Proteico',ico:'🌯',tags:['pranzo','definizione','rapido'],time:'10 min',kcal:380,p:36,c:28,g:12,diff:'Facile',alimenti:['pollo','lattuga','parmigiano','limone','yogurt greco','tortilla integrale'],desc:'Il pranzo da portare in ufficio. Preparalo la sera.',ingredienti:['150g pollo grigliato a straccetti','1 tortilla integrale','50g lattuga romana','20g parmigiano a scaglie','Salsa: 2 cucchiai yogurt greco + limone + senape + aglio in polvere'],steps:['Mescola gli ingredienti della salsa caesar.','Scalda la tortilla 30 sec.','Disponi lattuga, pollo e parmigiano.','Aggiungi la salsa e arrotola strettamente.','Taglia a metà e servi.']},
+  {id:'nx4',name:'Pollo alla Diavola al Forno',ico:'🌶️',tags:['cena','massa','definizione'],time:'35 min',kcal:380,p:52,c:4,g:14,diff:'Facile',alimenti:['pollo','peperoncino','aglio','limone','rosmarino','olio EVO'],desc:'Alta proteina, quasi zero carbs. Il peperoncino accelera il metabolismo.',ingredienti:['250g cosce di pollo disossate senza pelle','2 cucchiai olio EVO','Succo di 1 limone','2 spicchi aglio','Peperoncino','Rosmarino','Sale, pepe nero'],steps:['Incidi il pollo in profondità.','Marina con olio, limone, aglio, peperoncino, rosmarino minimo 20 min.','Cuoci in forno a 210°C per 28-30 min girando a metà.','Fai riposare 5 min prima di servire.']},
+  {id:'nx5',name:'Uova in Purgatorio Fit',ico:'🍳',tags:['colazione','cena','rapido','definizione'],time:'15 min',kcal:280,p:22,c:18,g:10,diff:'Facile',alimenti:['uova','pomodori','peperoncino','aglio','cipolla'],desc:'Piatto mediterraneo low-carb e ad alta proteina. Perfetto come cena veloce.',ingredienti:['3 uova','300g passata di pomodoro','1/2 cipolla','2 spicchi aglio','Peperoncino','Basilico','Sale, olio EVO'],steps:['Soffriggi cipolla e aglio in olio 3 min.','Aggiungi passata, peperoncino, sale. Cuoci 8 min.','Crea 3 fossette nella salsa.','Rompi un uovo per ogni fossetta. Copri.','Cuoci 4-5 min per tuorlo morbido. Guarnisci con basilico.']},
+  {id:'nx6',name:'Strapazzate con Salmone Affumicato',ico:'🥚',tags:['colazione','definizione','rapido'],time:'8 min',kcal:320,p:30,c:4,g:18,diff:'Facile',alimenti:['uova','salmone affumicato','erba cipollina','burro'],desc:'Tecnica dello chef: fuoco basso, movimento costante, ritiro dal fuoco prima che sia cotta.',ingredienti:['3 uova intere + 1 albume','60g salmone affumicato a pezzi','5g burro','Erba cipollina','Sale, pepe bianco'],steps:['Sbatti le uova con sale e pepe. NON aggiungere latte.','Padella a fuoco BASSO con il burro.','Versa le uova e mescola continuamente.','Quando ancora lucide, togli dal fuoco.','Aggiungi salmone ed erba cipollina. Il calore residuo finisce la cottura.']},
+  {id:'nx7',name:'Frittata Mediterranea',ico:'🫔',tags:['cena','colazione','definizione'],time:'18 min',kcal:300,p:28,c:8,g:16,diff:'Facile',alimenti:['uova','feta','olive','pomodorini','spinaci','cipolla rossa'],desc:'Fredda il giorno dopo è ancora più buona.',ingredienti:['4 uova + 3 albumi','60g feta sbriciolata','50g olive kalamata','80g pomodorini','80g spinaci','1/4 cipolla rossa','Origano','Olio EVO'],steps:['Sbatti uova e albumi con origano.','Rosola cipolla 2 min. Aggiungi spinaci 1 min.','Versa le uova. Distribuisci pomodorini, olive e feta.','Cuoci sul fornello 3 min, poi forno 180°C per 8-10 min.']},
+  {id:'nx8',name:'Trota al Cartoccio con Erbe',ico:'🐠',tags:['cena','definizione'],time:'25 min',kcal:310,p:40,c:2,g:14,diff:'Facile',alimenti:['trota','limone','rosmarino','prezzemolo','aglio','olio EVO'],desc:'Cottura al cartoccio = zero grassi aggiunti, sapore intatto.',ingredienti:['200g filetto di trota','1/2 limone a fette','Rosmarino e timo freschi','2 spicchi aglio a lamelle','Prezzemolo tritato','10ml olio EVO','Sale grosso, pepe'],steps:['Preriscalda forno a 190°C.','Stendi carta forno. Metti il filetto al centro.','Distribuisci aglio, erbe e limone sopra e sotto.','Irrora con olio. Chiudi il cartoccio.','Cuoci 18-20 min.']},
+  {id:'nx9',name:'Gamberoni Saltati all Aglio',ico:'🍤',tags:['cena','definizione','rapido'],time:'10 min',kcal:220,p:32,c:4,g:8,diff:'Facile',alimenti:['gamberoni','aglio','prezzemolo','vino bianco','limone','peperoncino'],desc:'Piatto da ristorante in 10 minuti.',ingredienti:['250g gamberoni freschi sgusciati','3 spicchi aglio a lamelle','Prezzemolo abbondante','50ml vino bianco','1/2 limone','Peperoncino','15ml olio EVO'],steps:['Asciuga i gamberoni. Fondamentale per la rosolatura.','Scalda olio a fuoco alto. Aglio e peperoncino 30 sec.','Gamberoni in un solo strato. NON mescolare per 90 sec.','Gira, aggiungi vino, cuoci 60 sec.','Prezzemolo e succo limone. Servi subito.']},
+  {id:'nx10',name:'Zuppa di Pesce Proteica',ico:'🍲',tags:['cena','definizione'],time:'35 min',kcal:340,p:42,c:16,g:8,diff:'Media',alimenti:['merluzzo','gamberoni','pomodori','cipolla','aglio','patate'],desc:'Cacciucco light con patate invece del pane.',ingredienti:['150g filetto di merluzzo','100g gamberoni','100g cozze','200g pomodori pelati','100g patate a cubetti','1 cipolla','3 spicchi aglio','50ml vino bianco','Prezzemolo','Olio EVO'],steps:['Soffriggi cipolla e aglio 4 min.','Aggiungi vino, evapori 1 min.','Pomodori, peperoncino e patate. Cuoci 15 min.','Aggiungi merluzzo a pezzi 5 min.','Gamberoni e cozze 4-5 min. Guarnisci con prezzemolo.']},
+  {id:'nx11',name:'Bowl Bistecca e Patate Dolci',ico:'🥩',tags:['cena','massa'],time:'30 min',kcal:580,p:48,c:38,g:18,diff:'Facile',alimenti:['manzo','patate dolci','rucola','avocado','limone'],desc:'Pasto completo per chi vuole massa seria. La bistecca e tra le fonti di creatina naturale piu alte.',ingredienti:['180g controfiletto di manzo','150g patate dolci a cubetti','40g rucola','1/2 avocado','Limone','Aglio in polvere','Paprika','Olio EVO','Sale, pepe nero'],steps:['Cuoci patate dolci con olio, paprika e aglio a 200°C per 22 min.','Bistecca a temperatura ambiente 15 min prima.','Padella in ghisa a fuoco massimo. Asciuga la bistecca.','Cuoci 2-3 min per lato. Sale e pepe solo dopo.','Fai riposare 5 min, affetta. Assembla la bowl.']},
+  {id:'nx12',name:'Polpette di Tacchino al Sugo',ico:'🍝',tags:['cena','pranzo','massa','meal-prep'],time:'35 min',kcal:420,p:44,c:22,g:12,diff:'Media',alimenti:['tacchino macinato','passata di pomodoro','uova','pangrattato','aglio','basilico'],desc:'Meal prep da fare in 4 porzioni. Le polpette si congelano benissimo.',ingredienti:['350g tacchino macinato','1 uovo','2 cucchiai pangrattato integrale','30g parmigiano','Aglio in polvere','Prezzemolo','500g passata di pomodoro','Basilico','Cipolla'],steps:['Mescola tacchino, uovo, pangrattato, parmigiano, aglio e prezzemolo.','Forma polpette da 30g. Frigo 10 min.','Rosola le polpette in olio 5 min. Metti da parte.','Sugo: cipolla in olio 3 min, passata + basilico.','Polpette nel sugo, cuoci a fuoco basso 20 min.']},
+  {id:'nx13',name:'Hummus Bowl con Falafel al Forno',ico:'🥙',tags:['pranzo','veg','definizione'],time:'25 min',kcal:440,p:20,c:52,g:14,diff:'Media',alimenti:['ceci','tahini','limone','aglio','prezzemolo','cipolla','cumino'],desc:'Falafel al forno invece che fritti: stessa croccantezza, meta grassi.',ingredienti:['Hummus: 200g ceci cotti, 2 cucchiai tahini, limone, aglio, olio EVO','Falafel: 150g ceci cotti, 1/4 cipolla, prezzemolo, cumino, coriandolo, 2 cucchiai farina di ceci','Guarnizione: pomodorini, cetriolo, cipolla rossa, olive'],steps:['Falafel: frulla ceci con cipolla, prezzemolo e spezie. Aggiungi farina.','Forma palline, spennella con olio. Cuoci 200°C per 18-20 min.','Hummus: frulla ceci, tahini, limone, aglio e olio.','Assembla la bowl con hummus, falafel caldi e guarnizioni.']},
+  {id:'nx14',name:'Tempeh Croccante con Quinoa',ico:'🌱',tags:['cena','veg','massa'],time:'25 min',kcal:480,p:34,c:46,g:14,diff:'Facile',alimenti:['tempeh','quinoa','broccoli','salsa di soia','aglio','zenzero','sesamo'],desc:'Il tempeh fermentato ha un profilo amminoacidico completo.',ingredienti:['200g tempeh a fette','100g quinoa cotta','150g broccoli','2 cucchiai salsa di soia','1 cucchiaio olio di sesamo','Zenzero grattugiato','Aglio','Sesamo tostato'],steps:['Marina tempeh con salsa di soia + aglio + zenzero + lime 10 min.','Cuoci quinoa.','Cuoci tempeh in olio sesamo 4 min per lato finche croccante.','Aggiungi broccoli e salta 3 min.','Servi su quinoa con sesamo.']},
+  {id:'nx15',name:'Dahl di Lenticchie Rosse',ico:'🍛',tags:['cena','veg','meal-prep','definizione'],time:'30 min',kcal:370,p:22,c:54,g:6,diff:'Facile',alimenti:['lenticchie rosse','latte di cocco','cipolla','aglio','zenzero','curcuma','pomodori'],desc:'Vegan, economico, miglior il giorno dopo in frigo.',ingredienti:['200g lenticchie rosse secche','400ml latte di cocco light','200g pomodori pelati','1 cipolla','3 spicchi aglio','Zenzero 2cm','Curcuma 1 cucchiaino','Garam masala 1 cucchiaino','Spinaci 100g','Limone'],steps:['Soffriggi cipolla, aglio e zenzero 4 min.','Aggiungi spezie e tosta 1 min.','Lenticchie, pomodori e latte di cocco. Aggiungi 200ml acqua.','Cuoci 20 min finche le lenticchie si disfano.','Aggiungi spinaci 2 min. Regola di sale e limone.']},
+  {id:'nx16',name:'Pasta e Ceci',ico:'🍝',tags:['pranzo','veg','massa'],time:'25 min',kcal:480,p:22,c:72,g:8,diff:'Facile',alimenti:['pasta integrale','ceci','rosmarino','aglio','pomodori','olio EVO'],desc:'Piatto della tradizione italiana, perfetto per il carico di carboidrati.',ingredienti:['80g pasta integrale corta','200g ceci cotti','200g pomodori pelati','2 spicchi aglio','Rosmarino','Peperoncino','Brodo vegetale','Olio EVO'],steps:['Soffriggi aglio e rosmarino in olio 2 min.','Aggiungi peperoncino e meta ceci. Cuoci 3 min.','Aggiungi pomodori e schiaccia grossolanamente. Cuoci 8 min.','Frulla meta della zuppa per cremosita.','Cuoci pasta direttamente nella zuppa. Servi con olio a crudo.']},
+  {id:'nx17',name:'Smoothie Bowl Tropicale',ico:'🍓',tags:['colazione','spuntino','definizione'],time:'5 min',kcal:320,p:24,c:42,g:5,diff:'Facile',alimenti:['yogurt greco','mango','banana','frutti di bosco','granola','semi di chia'],desc:'Base cremosa densa che si mangia con il cucchiaio.',ingredienti:['150g yogurt greco 0%','100g mango congelato','1/2 banana','30g granola integrale','Frutti di bosco freschi','1 cucchiaio semi di chia'],steps:['Frulla yogurt, mango e banana fino a crema densa.','Versa in una bowl larga.','Disponi granola, frutti di bosco e chia per file.','Consuma subito.']},
+  {id:'nx18',name:'Toast Avocado e Uova Pochees',ico:'🥑',tags:['colazione','definizione','rapido'],time:'10 min',kcal:380,p:22,c:28,g:18,diff:'Media',alimenti:['avocado','uova','pane integrale','limone','peperoncino','erba cipollina'],desc:'Le uova pochees sembrano difficili ma con la tecnica giusta sono infallibili.',ingredienti:['2 fette pane integrale','1/2 avocado maturo','2 uova fresche','Succo di limone','Peperoncino in scaglie','Erba cipollina','Aceto bianco'],steps:['Toasta il pane.','Schiaccia avocado con limone, sale e pepe.','Uova pochees: acqua bollente + aceto, fuoco dolce, mulinello, uovo 3 min.','Assembla: pane - avocado - uova - peperoncino ed erba cipollina.']},
+  {id:'nx19',name:'Granola Proteica Homemade',ico:'🌾',tags:['colazione','spuntino','meal-prep'],time:'25 min',kcal:220,p:9,c:28,g:8,diff:'Facile',alimenti:['avena','mandorle','noci','miele','albumi','cannella'],desc:'Preparane 500g. Dura 2 settimane in barattolo ermetico.',ingredienti:['200g fiocchi avena grandi','50g mandorle tritate','30g noci tritate','30g semi di girasole','2 albumi','3 cucchiai miele','Cannella e vaniglia'],steps:['Preriscalda forno a 160°C.','Mescola avena, frutta secca e semi.','Sbatti albumi a schiuma. Aggiungi miele e spezie.','Mescola tutto e stendi su carta forno.','Cuoci 20-22 min mescolando a meta. Raffredda prima di conservare.']},
+  {id:'nx20',name:'Crepes Proteiche alla Ricotta',ico:'🫔',tags:['colazione','massa'],time:'20 min',kcal:400,p:32,c:36,g:12,diff:'Facile',alimenti:['uova','ricotta','farina di avena','banana','miele','frutti di bosco'],desc:'La ricotta sostituisce il burro e triplica le proteine.',ingredienti:['3 uova','100g ricotta magra','40g farina avena frullata','1/2 banana','Cannella, vaniglia','Frutti di bosco','Miele'],steps:['Frulla uova, ricotta, farina, banana, cannella e vaniglia.','Padella antiaderente piccola a fuoco medio-basso.','Cuoci ogni crepe 2 min, gira, 1 min.','Farcisci con ricotta e frutti di bosco.','Piega e servi con miele.']},
+  {id:'nx21',name:'Pudding di Chia al Cioccolato',ico:'🍫',tags:['spuntino','colazione','definizione'],time:'5 min',kcal:260,p:18,c:26,g:10,diff:'Facile',alimenti:['semi di chia','latte di mandorla','cacao amaro','miele','banana'],desc:'Preparalo la sera: 3 giorni di spuntini pronti in frigo.',ingredienti:['40g semi di chia','250ml latte di mandorla','1 cucchiaio cacao amaro','1 cucchiaino miele','Vaniglia','Banana o frutti di bosco per servire'],steps:['Mescola chia, latte, cacao, miele e vaniglia.','Mescola energicamente 2 min per evitare grumi.','Frigo minimo 4 ore.','Al mattino mescola e aggiungi frutta.']},
+  {id:'nx22',name:'Barrette Proteiche Avena e Cioccolato',ico:'🍫',tags:['spuntino','pre-workout','massa'],time:'15 min',kcal:190,p:11,c:22,g:6,diff:'Facile',alimenti:['avena','whey cioccolato','burro di arachidi','miele','cioccolato fondente'],desc:'8 barrette in 15 minuti senza cottura. Pronte per tutta la settimana.',ingredienti:['150g fiocchi avena frullati','40g whey cioccolato','60g burro di arachidi','3 cucchiai miele','30ml latte','40g cioccolato fondente 85%'],steps:['Mescola avena, whey, burro di arachidi, miele e latte.','Stendi in stampo rettangolare (spessore 2cm).','Frigo 20 min.','Sciogli cioccolato e stendi sopra. Frigo 10 min.','Taglia in 8 barrette. Conserva in frigo 7 giorni.']},
+  {id:'nx23',name:'Tzatziki Proteico con Verdure',ico:'🥒',tags:['spuntino','definizione','veg'],time:'10 min',kcal:160,p:14,c:12,g:4,diff:'Facile',alimenti:['yogurt greco','cetriolo','aglio','limone','carote','peperoni'],desc:'Spuntino saziante. Il tzatziki e naturalmente alto in proteine.',ingredienti:['200g yogurt greco 0%','1 cetriolo piccolo grattugiato e strizzato','1 spicchio aglio','Aneto','Succo di limone','Sale','Verdure crude per intingolo'],steps:['Grattugia cetriolo e strizzalo bene.','Mescola yogurt, cetriolo, aglio, aneto, limone e sale.','Frigo 10 min per amalgamare.','Taglia verdure a bastoncini.','Servi il tzatziki con le verdure.']},
+  {id:'nx24',name:'Pasta al Pesto di Pistacchi',ico:'🍝',tags:['pranzo','massa'],time:'20 min',kcal:520,p:28,c:58,g:16,diff:'Facile',alimenti:['pasta integrale','pistacchi','ricotta','basilico','limone','parmigiano'],desc:'Il pesto di pistacchi e ricco di grassi buoni. La ricotta aggiunge cremosita.',ingredienti:['90g pasta integrale','Pesto: 40g pistacchi, 30g basilico, 2 cucchiai olio EVO, 20g parmigiano, limone','2 cucchiai ricotta magra','Acqua di cottura'],steps:['Frulla pistacchi, basilico, olio, parmigiano e limone a pesto grossolano.','Cuoci pasta al dente. Tieni acqua di cottura.','Mescola pesto con ricotta e acqua di cottura per cremosita.','Condisci la pasta calda.','Guarnisci con pistacchi tritati.']},
+  {id:'nx25',name:'Riso al Salto con Verdure e Uova',ico:'🍳',tags:['cena','pranzo','definizione','rapido'],time:'15 min',kcal:380,p:22,c:48,g:10,diff:'Facile',alimenti:['riso','uova','piselli','carote','salsa di soia','zenzero','aglio'],desc:'Il modo migliore per riutilizzare il riso avanzato. Riso freddo di frigo ideale.',ingredienti:['150g riso cotto freddo di frigo','2 uova','50g piselli','1 carota a cubetti','2 cucchiai salsa di soia','Zenzero e aglio','Olio di sesamo'],steps:['Wok a fuoco alto con olio di sesamo.','Aglio e zenzero 30 sec. Carote 2 min.','Spingi sui bordi, strapazza le uova al centro.','Aggiungi riso e piselli. Mescola con salsa di soia.','Cuoci 3-4 min a fuoco alto.']},
+  {id:'nx26',name:'Insalata Nizzarda Fit',ico:'🥗',tags:['pranzo','definizione'],time:'15 min',kcal:340,p:30,c:18,g:14,diff:'Facile',alimenti:['tonno','uova','fagiolini','pomodori','olive','lattuga','limone'],desc:'La salade nicoise e gia bilanciata. Versione fit con tonno al naturale.',ingredienti:['120g tonno al naturale','2 uova sode','80g fagiolini cotti','100g pomodorini','30g olive nere','2 manciate lattuga romana','Olio EVO, limone, senape, sale'],steps:['Cuoci le uova sode 9 min. Raffredda e sbucciale.','Cuoci fagiolini 5 min, raffredda in acqua ghiacciata.','Disponi lattuga come base.','Aggiungi ingredienti in sezioni separate.','Emulsiona olio, limone e senape. Condisci al momento.']},
+  {id:'nx27',name:'Poke Bowl al Tonno Fresco',ico:'🍱',tags:['pranzo','cena','definizione','massa'],time:'15 min',kcal:480,p:38,c:42,g:12,diff:'Facile',alimenti:['tonno fresco','riso','avocado','edamame','cetriolo','salsa di soia','sesamo'],desc:'Il poke autentico hawaiano. Usa tonno sushi-grade freschissimo.',ingredienti:['150g tonno fresco a cubetti','120g riso cotto','1/2 avocado','50g edamame cotti','1/2 cetriolo','Salsa: salsa di soia, olio sesamo, miele, lime','Sesamo e cipollotto'],steps:['Marina il tonno nella salsa 10 min.','Cuoci riso e lascia intiepidire.','Bowl: riso come base.','Disponi tonno, avocado, edamame e cetriolo in sezioni.','Versa la marinata. Guarnisci con sesamo.']},
+  {id:'nx28',name:'Prep Settimanale Pollo e Riso',ico:'📦',tags:['meal-prep','massa'],time:'45 min',kcal:430,p:42,c:44,g:8,diff:'Facile',alimenti:['pollo','riso','broccoli','carote','olio EVO','aglio','limone'],desc:'4 contenitori pronti per la settimana. 45 minuti totali.',ingredienti:['600g petti di pollo','300g riso basmati secco','400g broccoli','200g carote','Marinata: olio, aglio, paprika, curcuma, limone, sale','4 contenitori ermetici 1L'],steps:['Preriscalda forno a 200°C.','Marina pollo con olio, aglio, paprika, curcuma e limone.','Cuoci il riso 17 min.','Pollo, broccoli e carote in teglia. Cuoci 25 min.','Dividi equamente in 4 contenitori. Conserva in frigo 4 giorni.']},
+  {id:'nx29',name:'Prep Bowl Legumi Misti',ico:'📦',tags:['meal-prep','veg','definizione'],time:'40 min',kcal:360,p:20,c:52,g:7,diff:'Facile',alimenti:['ceci','lenticchie','fagioli','quinoa','zucchine','peperoni'],desc:'Prep vegano per 4 giorni. I legumi misti danno tutti gli amminoacidi.',ingredienti:['200g ceci cotti','200g lenticchie verdi cotte','200g fagioli cannellini cotti','200g quinoa cotta','Verdure arrostite: zucchine, peperoni, melanzane','Olio EVO, limone, cumino, paprika affumicata'],steps:['Arrostisc le verdure a 200°C per 20 min.','Cuoci la quinoa 15 min.','Mescola tutti i legumi con spezie.','Assembla: quinoa + legumi + verdure in 4 container.','Conserva in frigo 4 giorni.']},
+  {id:'nx30',name:'Banana Bread Proteico',ico:'🍌',tags:['colazione','pre-workout','massa'],time:'45 min',kcal:280,p:18,c:34,g:6,diff:'Media',alimenti:['banana','uova','farina di avena','whey vaniglia','burro di arachidi','miele'],desc:'Preparane una pagnotta intera: 8-10 fette per tutta la settimana.',ingredienti:['3 banane molto mature','3 uova','100g farina avena frullata','40g whey vaniglia','60g burro di arachidi','2 cucchiai miele','Lievito, cannella, vaniglia'],steps:['Preriscalda forno a 175°C.','Schiacciate le banane. Aggiungete uova e burro di arachidi.','Unite farina, whey, lievito e spezie.','Versa in stampo da plumcake foderato.','Cuoci 40-45 min. Verifica con stuzzicadenti.']},
+  {id:'nx31',name:'Waffle Proteici',ico:'🧇',tags:['colazione','massa','pre-workout'],time:'15 min',kcal:420,p:34,c:38,g:12,diff:'Facile',alimenti:['uova','ricotta','farina di avena','whey','latte','miele','frutti di bosco'],desc:'Croccanti fuori, morbidi dentro. Servono la piastra per waffle.',ingredienti:['2 uova','100g ricotta magra','50g farina avena frullata','20g whey vaniglia','50ml latte scremato','1 cucchiaino lievito','Vaniglia','Frutti di bosco e miele per servire'],steps:['Scalda la piastra per waffle.','Frulla tutti gli ingredienti a pastella omogenea.','Versa nelle piastre. Cuoci 4-5 min.','Servi immediatamente con frutti di bosco e miele.']},
+  {id:'nx32',name:'Zuppa Toscana di Fagioli',ico:'🥣',tags:['cena','veg','meal-prep','definizione'],time:'30 min',kcal:330,p:18,c:48,g:6,diff:'Facile',alimenti:['fagioli','rosmarino','aglio','salvia','pomodori','spinaci'],desc:'La ribollita fit senza pane per mantenere i carbs controllati.',ingredienti:['400g fagioli cannellini cotti','200g pomodori pelati','100g spinaci freschi','2 spicchi aglio','Rosmarino e salvia','1 cipolla','Brodo vegetale 400ml','Olio EVO'],steps:['Soffriggi cipolla, aglio, rosmarino e salvia 4 min.','Aggiungi pomodori 5 min.','Unisci fagioli e brodo. Cuoci 15 min.','Preleva 1/3 dei fagioli, frullali e rimetti.','Aggiungi spinaci 2 min. Olio EVO a crudo.']},
+  {id:'nx33',name:'Minestrone Proteico con Quinoa',ico:'🥣',tags:['cena','veg','meal-prep'],time:'35 min',kcal:310,p:16,c:46,g:5,diff:'Facile',alimenti:['quinoa','zucchine','carote','sedano','cipolla','pomodori','fagioli'],desc:'Minestrone con quinoa al posto della pasta per profilo amminoacidico completo.',ingredienti:['80g quinoa secca','400g verdure miste: zucchine, carote, sedano, cipolla','200g fagioli borlotti cotti','300g pomodori pelati','Brodo vegetale 500ml','Basilico e prezzemolo','Olio EVO'],steps:['Taglia le verdure a cubetti.','Soffriggi cipolla e sedano 4 min.','Aggiungi carote, zucchine, pomodori e brodo. Porta a bollore.','Aggiungi quinoa e fagioli. Cuoci 15 min.','Regola di sale. Servi con basilico.']},
+  {id:'nx34',name:'Bowl Tahini e Verdure Arrostite',ico:'🫙',tags:['cena','veg','definizione'],time:'30 min',kcal:380,p:14,c:38,g:18,diff:'Facile',alimenti:['tahini','ceci','zucchine','peperoni','limone','aglio'],desc:'La salsa al tahini e il condimento piu nutriente del Medio Oriente.',ingredienti:['Verdure: melanzana, zucchine, peperone','100g ceci cotti','80g quinoa o riso cotto','Salsa: 3 cucchiai tahini, succo di 1 limone, 1 spicchio aglio, acqua, sale'],steps:['Verdure con olio e paprika. Arrostisc a 200°C per 22 min.','Arrostisc ceci con cumino gli ultimi 10 min.','Prepara salsa: tahini + limone + aglio + acqua.','Assembla: quinoa, verdure, ceci.','Versa salsa tahini abbondante sopra.']},
+  {id:'nx35',name:'Cheesecake Proteica senza Cottura',ico:'🍰',tags:['spuntino','definizione'],time:'15 min',kcal:220,p:18,c:20,g:6,diff:'Facile',alimenti:['yogurt greco','ricotta','miele','frutti di bosco','limone'],desc:'Nessuna cottura ne gelatina. Consistenza reale di cheesecake.',ingredienti:['Base: 60g biscotti avena tritati + 15g burro fuso','Crema: 200g ricotta magra + 100g yogurt greco + 2 cucchiai miele + scorza limone','Topping: frutti di bosco misti'],steps:['Mescola biscotti con burro fuso. Pressa in 4 bicchieri.','Frulla ricotta, yogurt, miele e scorza limone.','Versa crema sopra la base.','Frigo minimo 2 ore.','Aggiungi frutti di bosco prima di servire.']},
+  {id:'nx36',name:'Gelato Proteico alla Banana',ico:'🍦',tags:['spuntino','definizione'],time:'5 min',kcal:180,p:14,c:28,g:2,diff:'Facilissimo',alimenti:['banana','yogurt greco','whey vaniglia','latte'],desc:'Texture di vero gelato grazie alle banane congelate. Zero sensi di colpa.',ingredienti:['2 banane congelate a pezzi','100g yogurt greco 0%','20g whey vaniglia','30ml latte scremato se necessario'],steps:['Metti banane, yogurt e whey nel frullatore.','Frulla 60 sec a potenza massima.','Consuma immediatamente per soft-serve.','Per gelato duro: congelatore 1 ora e frulli di nuovo.']},
+  {id:'nx37',name:'Shakshuka Fit',ico:'🍳',tags:['colazione','cena','definizione'],time:'25 min',kcal:290,p:22,c:20,g:10,diff:'Facile',alimenti:['uova','pomodori','peperoni','cipolla','cumino','paprika','feta'],desc:'Colazione mediorientale ad alto contenuto proteico.',ingredienti:['4 uova','400g pomodori pelati','1 peperone rosso','1 cipolla','2 spicchi aglio','Cumino 1 cucchiaino','Paprika affumicata','30g feta sbriciolata','Prezzemolo'],steps:['Soffriggi cipolla, aglio e peperone 5 min.','Aggiungi cumino e paprika. Tosta 1 min.','Aggiungi pomodori, sale. Cuoci 10 min.','Crea fossette, rompi un uovo per fossetta.','Copri e cuoci 5-8 min. Aggiungi feta e prezzemolo.']},
+  {id:'nx38',name:'Burrito Bowl Messicano Fit',ico:'🌮',tags:['pranzo','cena','massa'],time:'25 min',kcal:520,p:40,c:52,g:12,diff:'Facile',alimenti:['manzo','fagioli neri','riso','mais','peperoni','avocado','limone'],desc:'Bowl messicana senza tortilla. Tutti i sapori, meno i carboidrati raffinati.',ingredienti:['150g manzo macinato magro','100g fagioli neri','100g riso integrale cotto','50g mais','1/2 peperone','1/4 avocado','Cumino, paprika, coriandolo','Yogurt greco come sour cream'],steps:['Rosola il macinato con cumino e paprika 6 min.','Aggiungi fagioli e mais. Cuoci 3 min.','Assembla la bowl: riso, macinato, avocado, salsa lime.','Guarnisci con yogurt greco e coriandolo.']},
+  {id:'nx39',name:'Insalata Greca con Pollo',ico:'🥗',tags:['pranzo','definizione'],time:'15 min',kcal:360,p:36,c:12,g:16,diff:'Facile',alimenti:['pollo','feta','olive','cetriolo','pomodori','cipolla rossa','origano','limone'],desc:'Sazia grazie alla combinazione di proteine, grassi e fibre.',ingredienti:['150g pollo grigliato','80g feta','40g olive kalamata','1 cetriolo','150g pomodori','1/4 cipolla rossa','Origano','Olio EVO + limone + sale'],steps:['Taglia le verdure a pezzi generosi.','Disponi in ciotola capiente.','Aggiungi feta a cubetti e olive.','Aggiungi pollo a straccetti.','Condisci con olio, limone, origano e sale.']},
+  {id:'nx40',name:'Bistecca di Tonno alla Siciliana',ico:'🐟',tags:['cena','definizione','pranzo'],time:'15 min',kcal:320,p:44,c:8,g:12,diff:'Facile',alimenti:['tonno fresco','olive','capperi','pomodori','aglio','prezzemolo','limone'],desc:'La bistecca di tonno si cuoce come quella di manzo. Max due minuti per lato.',ingredienti:['200g trancio di tonno fresco','60g olive verdi denocciolate','1 cucchiaio capperi','100g pomodorini','2 spicchi aglio','Prezzemolo','Limone','Olio EVO'],steps:['Scalda padella a fuoco alto. Asciuga il tonno.','Cuoci 2 min per lato. Deve restare rosa al centro.','Togli tonno. Cuoci aglio 30 sec nella stessa padella.','Aggiungi pomodorini, olive, capperi. Cuoci 3 min.','Servi con sughetto, prezzemolo e limone.']},
+  {id:'nx41',name:'Zuppa Satiante di Verdure',ico:'🥦',tags:['cena','definizione','veg'],time:'30 min',kcal:200,p:12,c:28,g:4,diff:'Facile',alimenti:['broccoli','cavolfiore','zucchine','carote','cipolla','ceci','curcuma'],desc:'Alto volume, basse calorie. Un litro di zuppa per meno di 200 kcal.',ingredienti:['200g broccoli','200g cavolfiore','1 zucchina','2 carote','1 cipolla','100g ceci','Curcuma, zenzero','Brodo vegetale 800ml','Olio EVO'],steps:['Taglia tutte le verdure.','Soffriggi cipolla in olio 3 min. Aggiungi curcuma e zenzero 1 min.','Unisci verdure e brodo. Porta a bollore.','Cuoci 18-20 min. Frulla meta per cremosita.','Aggiungi ceci. Aggiusta di sale.']},
+  {id:'nx42',name:'Insalata di Cavolfiore Arrostito',ico:'🥦',tags:['cena','definizione','veg'],time:'30 min',kcal:250,p:14,c:22,g:10,diff:'Facile',alimenti:['cavolfiore','ceci','tahini','limone','prezzemolo','pinoli'],desc:'Il cavolfiore arrostito diventa dolce e cremoso. Completamente diverso da bollito.',ingredienti:['400g cavolfiore a cimette','100g ceci cotti','2 cucchiai tahini','Succo di 1 limone','Prezzemolo abbondante','20g pinoli tostati','Cumino, paprika','Olio EVO'],steps:['Cavolfiore con olio, cumino e paprika. Arrostisc 220°C per 20 min.','Arrostisc ceci nella stessa teglia gli ultimi 10 min.','Prepara salsa: tahini + limone + acqua + sale.','Mescola cavolfiore, ceci, prezzemolo e pinoli.','Versa salsa tahini e servi tiepido.']},
+  {id:'nx43',name:'Salmone con Crosta di Sesamo',ico:'🐟',tags:['cena','definizione','massa'],time:'20 min',kcal:430,p:40,c:8,g:24,diff:'Facile',alimenti:['salmone','sesamo','salsa di soia','zenzero','aglio','miele'],desc:'La crosta di sesamo protegge il salmone e aggiunge croccantezza.',ingredienti:['200g filetto di salmone','3 cucchiai sesamo misto bianco e nero','Glassa: 2 cucchiai salsa di soia, 1 cucchiaino miele, zenzero grattugiato, aglio','Olio di sesamo'],steps:['Prepara la glassa mescolando soia, miele, zenzero e aglio.','Spennella il salmone con la glassa.','Pressa il sesamo su tutta la superficie del filetto.','Cuoci in padella con olio sesamo 3-4 min per lato.','Servi con verdure saltate o riso.']},
+  {id:'nx44',name:'Pollo in Salsa di Miso',ico:'🍱',tags:['cena','pranzo','definizione'],time:'25 min',kcal:350,p:44,c:14,g:10,diff:'Facile',alimenti:['pollo','miso','miele','zenzero','aglio','salsa di soia'],desc:'Il miso e un probiotico naturale che migliora la digestione e aggiunge umami profondo.',ingredienti:['200g petto di pollo','2 cucchiai miso bianco','1 cucchiaio miele','1 cucchiaio salsa di soia','Zenzero grattugiato','Aglio in polvere','Olio di sesamo'],steps:['Mescola miso, miele, salsa di soia, zenzero e aglio.','Marina il pollo 20 min (meglio 1h in frigo).','Cuoci in padella con olio sesamo 5-6 min per lato.','Aggiungi la marinata rimanente e caramella 1 min.','Fai riposare 3 min prima di tagliare.']},
+  // ── BATCH 3: 60 nuove ricette ─────────────────────────
+  // ── COLAZIONE AVANZATA ──
+  {id:'ny1',name:'Overnight Oats Proteici al Cacao',ico:'🌑',tags:['colazione','massa','meal-prep'],time:'5 min',kcal:440,p:32,c:52,g:10,diff:'Facilissimo',alimenti:['avena','yogurt greco','latte','cacao amaro','whey','banana'],desc:'Preparali la sera: 5 giorni di colazioni pronte in frigo. Mai più "non ho tempo".',ingredienti:['80g fiocchi avena','150g yogurt greco 0%','100ml latte scremato','1 cucchiaio cacao amaro','20g whey cioccolato','1/2 banana a fette','1 cucchiaio miele','Granola per topping'],steps:['Mescola avena, yogurt, latte, cacao e whey in un barattolo.','Copri e metti in frigo tutta la notte.','Al mattino mescola, aggiungi banana e miele.','Top con granola per la croccantezza. Pronto in 30 secondi.']},
+  {id:'ny2',name:'Muffin Proteici Avena e Mirtilli',ico:'🫐',tags:['colazione','spuntino','massa'],time:'30 min',kcal:160,p:10,c:18,g:4,diff:'Facile',alimenti:['avena','uova','yogurt greco','mirtilli','miele','albumi'],desc:'12 muffin in 30 minuti. Colazione della settimana intiera in una volta.',ingredienti:['150g farina avena frullata','2 uova + 2 albumi','100g yogurt greco','3 cucchiai miele','150g mirtilli freschi o congelati','1 cucchiaino lievito','Cannella','Vaniglia','Buccia di limone'],steps:['Preriscalda forno 175°C. Fodera 12 pirottini.','Mescola farina, lievito e cannella.','In altro bowl: uova, yogurt, miele e vaniglia.','Unisci secchi e umidi. Aggiungi mirtilli mescolando delicatamente.','Dividi nei pirottini. Cuoci 20-22 min. Uno stuzzicadenti pulito = pronti.']},
+  {id:'ny3',name:'French Toast Proteico',ico:'🍞',tags:['colazione','massa'],time:'12 min',kcal:390,p:28,c:38,g:10,diff:'Facile',alimenti:['pane integrale','uova','albumi','latte','cannella','frutti di bosco','miele'],desc:'Il brunch del weekend che soddisfa sia i macro che il palato.',ingredienti:['3 fette pane integrale spesso','2 uova + 2 albumi','60ml latte scremato','Cannella abbondante','Vaniglia','Frutti di bosco','1 cucchiaino miele'],steps:['Sbatti uova, albumi, latte, cannella e vaniglia.','Immergi ogni fetta di pane nel composto 30 secondi per lato.','Cuoci in padella antiaderente a fuoco medio 2-3 min per lato.','Servi con frutti di bosco freschi e un filo di miele.']},
+  {id:'ny4',name:'Porridge Salato con Uovo Pochée',ico:'🥣',tags:['colazione','definizione'],time:'12 min',kcal:310,p:22,c:36,g:8,diff:'Media',alimenti:['avena','uova','brodo vegetale','parmigiano','erba cipollina'],desc:'Il porridge dolce stanca. Questa versione salata con uovo è il cambio di paradigma.',ingredienti:['70g fiocchi avena grandi','250ml brodo vegetale caldo','1 uovo pochée','20g parmigiano grattugiato','Erba cipollina fresca','Pepe nero abbondante','Olio EVO a crudo'],steps:['Cuoci i fiocchi nel brodo caldo 5 min mescolando.','Nel frattempo prepara l\'uovo pochée (acqua bollente + aceto, 3 min).','Incorpora parmigiano nel porridge. Versa in una bowl.','Posa l\'uovo al centro. Erba cipollina, pepe e olio. Rompi il tuorlo servendo.']},
+  {id:'ny5',name:'Acai Bowl Proteica',ico:'🫐',tags:['colazione','spuntino','definizione'],time:'8 min',kcal:350,p:22,c:44,g:8,diff:'Facile',alimenti:['yogurt greco','acai','frutti di bosco','banana','granola','semi di chia','cocco'],desc:'Instagram-worthy ma anche efficace. La base allo yogurt triplica le proteine vs quella al succo.',ingredienti:['150g yogurt greco 0%','100g mix frutti di bosco congelati','1 cucchiaio polvere di acai','1/2 banana congelata','30g granola','Frutti freschi per topping','Semi di chia, cocco rapé'],steps:['Frulla yogurt, frutti di bosco, acai e banana congelata a crema densa.','Se troppo liquido: aggiungi ghiaccio. Se troppo denso: un cucchiaio di latte.','Versa in bowl fredda.','Decora con granola, frutti freschi, chia e cocco in file ordinate.']},
+  // ── PRANZI VELOCI ──
+  {id:'ny6',name:'Wraps di Lattuga con Pollo Thai',ico:'🥬',tags:['pranzo','definizione','rapido'],time:'15 min',kcal:280,p:32,c:12,g:10,diff:'Facile',alimenti:['pollo macinato','lattuga','carote','cetriolo','arachidi','limone','salsa di soia'],desc:'Zero carb artificiali: la lattuga sostituisce la tortilla. Fresco e croccante.',ingredienti:['200g pollo macinato','8 foglie lattuga iceberg grandi','1 carota julienne','1/2 cetriolo julienne','30g arachidi tostate tritate','Salsa: 2 cucchiai salsa di soia + succo lime + zenzero + aglio + peperoncino','Coriandolo fresco'],steps:['Rosola il pollo macinato con aglio e zenzero 6 min.','Aggiungi la salsa, cuoci 2 min finché caramellata.','Disponi le foglie di lattuga su un piatto.','Riempi ogni foglia con pollo, carote, cetriolo.','Aggiungi arachidi e coriandolo. Mangia con le mani.']},
+  {id:'ny7',name:'Insalata di Farro e Tonno',ico:'🥗',tags:['pranzo','massa','meal-prep'],time:'20 min',kcal:460,p:34,c:52,g:10,diff:'Facile',alimenti:['farro','tonno','pomodori','olive','rucola','limone','capperi'],desc:'Il farro ha un indice glicemico più basso del riso e più proteine della pasta.',ingredienti:['90g farro perlato secco','150g tonno al naturale','100g pomodorini','30g olive nere','40g rucola','1 cucchiaio capperi','Olio EVO + limone + sale'],steps:['Cuoci il farro in acqua salata 25 min. Scola e raffredda.','Scola il tonno e sminuzzalo con una forchetta.','Mescola farro, tonno, pomodorini, olive, capperi e rucola.','Condisci con olio, limone e sale. Regola di pepe.','Ottimo anche freddo: perfetto per il pranzo in ufficio.']},
+  {id:'ny8',name:'Zuppa Fredda di Avocado e Gamberi',ico:'🥑',tags:['pranzo','cena','definizione'],time:'10 min',kcal:320,p:28,c:12,g:16,diff:'Facile',alimenti:['avocado','gamberoni','cetriolo','yogurt greco','limone','aglio','erba cipollina'],desc:'Gazpacho proteico per l\'estate. Servita fredda, pronta in 10 minuti.',ingredienti:['2 avocado maturi','150g gamberoni cotti sgusciati','1/2 cetriolo','100g yogurt greco','Succo di 1 limone','1 spicchio aglio','Erba cipollina','Sale, pepe','Paprika affumicata per guarnire'],steps:['Frulla avocado, yogurt, cetriolo, aglio e limone fino a crema liscia.','Regola di sale e aggiungi un po\' d\'acqua se troppo denso.','Versa in 2 ciotole. Disponi i gamberoni sopra.','Erba cipollina, paprika e un filo d\'olio. Servi subito o raffredda 20 min.']},
+  {id:'ny9',name:'Riso Venere con Salmone e Avocado',ico:'🍱',tags:['pranzo','cena','definizione'],time:'30 min',kcal:500,p:36,c:42,g:18,diff:'Facile',alimenti:['riso venere','salmone','avocado','edamame','sesamo','salsa di soia'],desc:'Il riso venere ha il doppio delle proteine del riso bianco e antiossidanti naturali.',ingredienti:['80g riso venere secco','150g salmone cotto (al vapore o grigliato)','1/2 avocado','50g edamame cotti','Sesamo tostato','Salsa: salsa di soia + olio sesamo + lime','Zenzero grattugiato'],steps:['Cuoci il riso venere (30 min in acqua salata).','Cuoci il salmone in padella con olio sesamo 3 min per lato.','Prepara la salsa mescolando soia, olio sesamo, lime e zenzero.','Assembla: riso venere + salmone a pezzi + avocado + edamame.','Versa la salsa e aggiungi sesamo.']},
+  {id:'ny10',name:'Sandwich Proteico con Tacchino e Hummus',ico:'🥪',tags:['pranzo','definizione','rapido'],time:'5 min',kcal:340,p:34,c:26,g:10,diff:'Facilissimo',alimenti:['tacchino affettato','pane integrale','hummus','spinaci','pomodori','cetriolo'],desc:'Il sandwich che non sembra da palestra ma è da palestra. Rapido come un bar.',ingredienti:['2 fette pane integrale','120g tacchino affettato magro','3 cucchiai hummus','Manciata spinaci baby','2 fette pomodoro','Fettine di cetriolo','Sale, pepe, origano'],steps:['Toasta il pane (opzionale ma miglior texture).','Spalma hummus abbondante su entrambe le fette.','Disponi tacchino, spinaci, pomodoro e cetriolo.','Chiudi, taglia in diagonale. Avvolgi in carta se porti fuori.']},
+  // ── CENE AVANZATE ──
+  {id:'ny11',name:'Spiedini di Pollo al Limone',ico:'🍢',tags:['cena','definizione','pre-workout'],time:'25 min',kcal:340,p:44,c:6,g:14,diff:'Facile',alimenti:['pollo','limone','rosmarino','aglio','olio EVO','peperoni'],desc:'Grigliati in padella o al BBQ. La marinatura al limone tenera la carne.',ingredienti:['250g petto di pollo a cubetti 3cm','2 peperoni di colori diversi','Marinata: succo 2 limoni + scorza + 3 cucchiai olio EVO + 2 spicchi aglio + rosmarino + sale','Stecchi da spiedino (bagnati in acqua 20 min)'],steps:['Marina il pollo nella marinata per minimo 30 min (meglio 2h).','Alterna pollo e peperoni sugli stecchi.','Griglia in padella a fuoco alto 4-5 min per lato.','Griglia a bbq: fuoco diretto 3-4 min per lato girando.','Servi con tzatziki o hummus.']},
+  {id:'ny12',name:'Hamburger di Merluzzo',ico:'🐟',tags:['cena','definizione'],time:'20 min',kcal:310,p:38,c:18,g:8,diff:'Facile',alimenti:['merluzzo','uova','pangrattato','aglio','prezzemolo','limone'],desc:'Fish burger senza friggere. Croccante in padella con metà dei grassi.',ingredienti:['300g filetto di merluzzo tritato','1 uovo','2 cucchiai pangrattato integrale','Aglio in polvere','Prezzemolo tritato abbondante','Scorza di limone','Sale, pepe'],steps:['Trita il merluzzo grossolanamente (non a pasta, ci vogliono pezzi).','Mescola con uovo, pangrattato, aglio, prezzemolo e scorza limone.','Forma 3 burger. Metti in frigo 10 min per compattare.','Cuoci in padella antiaderente con un filo d\'olio 4 min per lato.','Servi su insalata o con patate dolci al forno.']},
+  {id:'ny13',name:'Pollo in Crosta di Panko e Parmigiano',ico:'🍗',tags:['cena','massa'],time:'30 min',kcal:420,p:48,c:16,g:14,diff:'Facile',alimenti:['pollo','pangrattato','parmigiano','uova','aglio','rosmarino'],desc:'La versione fit del pollo impanato. Forno invece di padella: stessa croccantezza.',ingredienti:['2 petti di pollo (200g cad.)','Impanatura: pangrattato integrale + parmigiano grattugiato + aglio polvere + rosmarino + sale + pepe','2 uova sbattute','Olio spray o 1 cucchiaino olio EVO'],steps:['Preriscalda forno a 210°C con griglia alta.','Appiattisci i petti tra due fogli di pellicola (più sottile = più croccante).','Passa nel mix di impanatura premendo per far aderire.','Disponi su griglia forata. Spruzza con olio spray.','Cuoci 18-20 min girando a metà. Ultimi 2 min grill per dorare.']},
+  {id:'ny14',name:'Agnello con Chimichurri Verde',ico:'🥩',tags:['cena','massa'],time:'20 min',kcal:480,p:40,c:4,g:32,diff:'Facile',alimenti:['costolette di agnello','prezzemolo','aglio','limone','olio EVO','peperoncino','origano'],desc:'Il chimichurri argentino copre qualsiasi carne. Con l\'agnello è un matrimonio perfetto.',ingredienti:['4 costolette di agnello','Chimichurri: 50g prezzemolo + 3 spicchi aglio + 60ml olio EVO + 2 cucchiai aceto rosso + peperoncino + origano + sale'],steps:['Frulla tutti gli ingredienti del chimichurri. Metti metà da parte per servire.','Massaggia le costolette con l\'altra metà del chimichurri.','Griglia a fuoco altissimo 3 min per lato (cottura media).','Fai riposare 3 min coperte con stagnola.','Servi con chimichurri fresco sopra.']},
+  {id:'ny15',name:'Pasta all\'Amatriciana Fit',ico:'🍝',tags:['cena','pranzo','massa'],time:'25 min',kcal:490,p:28,c:56,g:14,diff:'Facile',alimenti:['pasta integrale','guanciale','pomodori','pecorino','peperoncino'],desc:'L\'originale ma con pasta integrale e guanciale controllato. I macro reggono.',ingredienti:['90g pasta integrale spaghetti','60g guanciale a cubetti','200g pomodori pelati San Marzano','20g pecorino romano grattugiato','Peperoncino fresco o secco','Vino bianco (opzionale)','Sale, pepe nero abbondante'],steps:['Rosola il guanciale in padella a fuoco medio senza olio finché croccante.','Aggiungi peperoncino. Sfuma con vino bianco (opzionale).','Aggiungi pomodori e schiaccia. Cuoci 12 min.','Cuoci pasta al dente. Tieni l\'acqua di cottura.','Manteca pasta nel sugo con acqua di cottura. Pecorino abbondante fuori fuoco.']},
+  {id:'ny16',name:'Costine di Maiale al Miele e Soia',ico:'🍖',tags:['cena','massa'],time:'90 min',kcal:540,p:42,c:20,g:28,diff:'Media',alimenti:['costine di maiale','miele','salsa di soia','aglio','zenzero','aceto di mele'],desc:'Slow roasted: 80 min in forno + 10 min grill. Carne che si stacca dall\'osso.',ingredienti:['600g costine di maiale','Glassa: 3 cucchiai miele + 3 cucchiai salsa di soia + 2 spicchi aglio + zenzero grattugiato + 1 cucchiaio aceto mele + paprika affumicata'],steps:['Preriscalda forno a 160°C.','Rimuovi la membrana dal retro delle costine.','Massaggia con metà glassa. Avvolgi in stagnola doppia.','Cuoci 80 min a 160°C (rimangono morbidissime).','Apri la stagnola, spennella con glassa rimanente. Grill 200°C per 10 min finché caramellate.']},
+  // ── VEGETARIANO/VEGANO AVANZATO ──
+  {id:'ny17',name:'Curry di Tofu e Spinaci',ico:'🌿',tags:['cena','veg','definizione'],time:'25 min',kcal:340,p:22,c:24,g:14,diff:'Facile',alimenti:['tofu','spinaci','latte di cocco','cipolla','aglio','zenzero','curry','curcuma'],desc:'Il tofu impara ad assorbire i sapori: cucinalo così e non ti deluderà più.',ingredienti:['300g tofu extra-firm a cubetti','200g spinaci freschi','200ml latte di cocco light','1 cipolla','3 spicchi aglio','Zenzero 2cm','Curry 2 cucchiaini','Curcuma 1 cucchiaino','Coriandolo','Olio'],steps:['Asciuga il tofu pressandolo con carta da cucina 10 min. Fondamentale.','Rosola il tofu in padella senza olio 5 min per lato finché dorato. Metti da parte.','Soffriggi cipolla, aglio e zenzero 4 min.','Aggiungi spezie 1 min, poi latte di cocco e spinaci.','Rimetti il tofu e cuoci 5 min. Guarnisci con coriandolo.']},
+  {id:'ny18',name:'Involtini di Melanzane con Ricotta',ico:'🍆',tags:['cena','veg','definizione'],time:'35 min',kcal:280,p:18,c:14,g:14,diff:'Media',alimenti:['melanzane','ricotta','uova','basilico','parmigiano','passata di pomodoro'],desc:'Alternativa agli involtini di carne. Ricotta + uova = proteina vegetale completa.',ingredienti:['2 melanzane grandi','200g ricotta magra','1 uovo','30g parmigiano','Basilico fresco','Aglio in polvere','300g passata di pomodoro','Sale, olio EVO'],steps:['Taglia le melanzane a fette longitudinali 5mm. Sala e lascia 15 min, poi asciuga.','Griglia le fette su padella calda senza olio 2 min per lato.','Mescola ricotta, uovo, parmigiano, basilico e aglio.','Metti un cucchiaio di ripieno su ogni fetta. Arrotola e metti in teglia.','Copri con passata. Cuoci forno 180°C per 20 min.']},
+  {id:'ny19',name:'Buddha Bowl con Falafel e Tahini',ico:'🥙',tags:['pranzo','cena','veg'],time:'30 min',kcal:520,p:22,c:60,g:16,diff:'Media',alimenti:['ceci','quinoa','avocado','cetriolo','pomodorini','tahini','limone','cumino'],desc:'La bowl completa: proteine vegetali + carbs complessi + grassi buoni.',ingredienti:['100g quinoa cotta','Falafel: 150g ceci + cipolla + prezzemolo + cumino + farina di ceci','1/2 avocado','50g pomodorini','1/2 cetriolo','Salsa tahini: 3 cucchiai tahini + limone + aglio + acqua','Paprika e sesamo'],steps:['Falafel al forno 200°C per 18 min (vedi ricetta nx13 per dettagli).','Cuoci quinoa.','Prepara salsa tahini con limone, aglio e acqua fino a cremosità colabile.','Assembla la bowl: quinoa + falafel + avocado + verdure.','Versa salsa tahini abbondante. Paprika e sesamo.']},
+  {id:'ny20',name:'Zucchine Ripiene di Quinoa e Feta',ico:'🫑',tags:['cena','veg','definizione'],time:'35 min',kcal:300,p:16,c:28,g:12,diff:'Facile',alimenti:['zucchine','quinoa','feta','pomodorini','cipolla','origano'],desc:'Piatto estivo completo. Le zucchine diventano il "contenitore" edibile.',ingredienti:['3 zucchine grandi','100g quinoa cotta','80g feta sbriciolata','80g pomodorini a metà','1/4 cipolla rossa tritata','Origano secco e basilico','Olio EVO','Sale'],steps:['Taglia le zucchine a metà nel senso della lunghezza. Svuota la polpa con cucchiaio.','Trita la polpa grossolanamente.','Mescola quinoa, feta, pomodorini, cipolla, polpa di zucchina e origano.','Riempi le barchette di zucchina con il mix.','Cuoci in forno a 190°C per 22-25 min finché dorate.']},
+  {id:'ny21',name:'Crocchette di Lenticchie e Curcuma',ico:'🟡',tags:['cena','veg','meal-prep'],time:'30 min',kcal:320,p:18,c:40,g:8,diff:'Facile',alimenti:['lenticchie rosse','curcuma','cumino','cipolla','aglio','farina di ceci','limone'],desc:'Vegane, senza glutine. Si congelano crude: bake direttamente dal freezer.',ingredienti:['200g lenticchie rosse cotte e scolate','1/4 cipolla tritata','2 spicchi aglio','Curcuma 1 cucchiaino','Cumino 1 cucchiaino','4 cucchiai farina di ceci','Succo di limone','Sale, pepe','Prezzemolo'],steps:['Frulla le lenticchie con cipolla e aglio grossolanamente (non a crema).','Aggiungi spezie, farina, limone e prezzemolo.','Forma crocchette da 40g. Se troppo morbide: aggiungi farina.','Forno 200°C per 18-20 min, girando a metà. O padella con olio 3 min per lato.','Servi con hummus o yogurt greco condito.']},
+  // ── ALTA PROTEINA ALTERNATIVA ──
+  {id:'ny22',name:'Tartare di Salmone con Avocado',ico:'🐟',tags:['cena','definizione'],time:'15 min',kcal:380,p:32,c:8,g:22,diff:'Facile',alimenti:['salmone fresco','avocado','scalogno','salsa di soia','sesamo','limone','zenzero'],desc:'Usa salmone sushi-grade. Il coltello ben affilato fa tutto il lavoro.',ingredienti:['200g salmone freschissimo sushi-grade','1/2 avocado a cubetti','1 scalogno piccolo tritato','1 cucchiaio salsa di soia','1 cucchiaino olio di sesamo','Zenzero grattugiato','Succo di lime','Sesamo nero e erba cipollina'],steps:['Taglia il salmone a cubetti 1cm con coltello affilato freddo (non tritare).','Mescola delicatamente con scalogno, salsa di soia, olio sesamo, zenzero e lime.','Dividi in 2 ciotole. Aggiungi l\'avocado sopra (non mescolare per non ossidare).','Guarnisci con sesamo e erba cipollina. Servi subito.']},
+  {id:'ny23',name:'Polpo alla Griglia con Patate',ico:'🐙',tags:['cena','definizione'],time:'60 min',kcal:380,p:38,c:30,g:8,diff:'Avanzata',alimenti:['polpo','patate','limone','prezzemolo','aglio','olio EVO'],desc:'Il polpo è una delle proteine più magre del mare. La bollitura + griglia è la tecnica corretta.',ingredienti:['400g polpo pulito','200g patate piccole','Condimento: olio EVO + limone + prezzemolo + aglio + origano','Sale grosso'],steps:['Bollire il polpo: immergilo in acqua fredda salata. Porta a bollore, abbassa, cuoci 45 min.','Scola e raffredda. La bollitura lenta = tenerezza.','Cuoci le patate in acqua salata 20 min.','Griglia il polpo a fuoco alto 3-4 min per lato finché ha le strisce.','Taglia a pezzi. Condisci polpo e patate con olio, limone, prezzemolo e aglio.']},
+  {id:'ny24',name:'Insalata di Polipo e Citrus',ico:'🐙',tags:['pranzo','definizione'],time:'15 min',kcal:240,p:30,c:12,g:6,diff:'Facile',alimenti:['polpo cotto','arancia','sedano','olive','prezzemolo','limone','olio EVO'],desc:'Fresca, leggera, zero grassi. Il polpo cotto precucinato rende questo piatto veloce.',ingredienti:['250g polpo cotto e raffreddato','1 arancia a spicchi','2 gambi sedano a fettine','30g olive verdi','Prezzemolo fresco','Succo di limone','Olio EVO','Sale, pepe'],steps:['Taglia il polpo a pezzi boccone.','Pela l\'arancia a vivo e taglia a spicchi.','Mescola polpo, arancia, sedano, olive e prezzemolo.','Condisci con olio, limone, sale e pepe. Mescola delicatamente.','Lascia riposare 5 min prima di servire.']},
+  {id:'ny25',name:'Manzo Marinato allo Stile Coreano (Bulgogi)',ico:'🥩',tags:['cena','massa'],time:'25 min',kcal:460,p:44,c:20,g:18,diff:'Facile',alimenti:['manzo','pera asiatica','salsa di soia','aglio','zenzero','olio di sesamo','cipollotti'],desc:'La pera asiatica tenerisce la carne in modo naturale: nessun martello necessario.',ingredienti:['250g manzo (controfiletto o ribeye) a fettine sottili','Marinata: 1/2 pera asiatica frullata + 3 cucchiai salsa di soia + 1 cucchiaio zucchero di canna + sesamo + aglio + zenzero + olio sesamo','Cipollotti','Sesamo tostato','Riso bianco per servire'],steps:['Frulla la pera. Mescola tutti gli ingredienti della marinata.','Marinate il manzo 20 min minimo (meglio 2h).','Scalda wok a fuoco altissimo. Cuoci la carne in piccole porzioni, non ammassarla.','Cuoci 2-3 min per lato. Dovrebbe caramellare ai bordi.','Servi su riso con cipollotti e sesamo.']},
+  // ── ZUPPE E VELLUTATE ──
+  {id:'ny26',name:'Vellutata di Zucca e Lenticchie',ico:'🎃',tags:['cena','veg','meal-prep','definizione'],time:'30 min',kcal:290,p:16,c:44,g:5,diff:'Facile',alimenti:['zucca','lenticchie rosse','cipolla','aglio','curcuma','zenzero','latte di cocco'],desc:'Due superfoods in una sola zuppa. Calda e satiante, pochissime calorie.',ingredienti:['400g zucca a cubetti','150g lenticchie rosse','1 cipolla','3 spicchi aglio','Curcuma 1 cucchiaino','Zenzero fresco grattugiato','100ml latte di cocco light','Brodo vegetale 700ml','Olio EVO','Sale'],steps:['Soffriggi cipolla e aglio 4 min.','Aggiungi curcuma e zenzero 1 min.','Unisci zucca, lenticchie e brodo. Porta a bollore.','Cuoci 20 min finché tutto è morbido.','Frulla completamente. Aggiungi latte di cocco. Regola di sale.']},
+  {id:'ny27',name:'Zuppa di Miso e Tofu',ico:'🍜',tags:['cena','veg','definizione','rapido'],time:'10 min',kcal:180,p:16,c:12,g:6,diff:'Facilissimo',alimenti:['miso bianco','tofu','alga nori','cipollotto','dashi','funghi shiitake'],desc:'La zuppa più veloce. Il miso non va fatto bollire o perde i probiotici.',ingredienti:['2 cucchiai miso bianco','150g tofu morbido a cubetti','1 foglio alga nori tagliata a strisce','Cipollotto affettato','3-4 funghi shiitake secchi (reidratati)','600ml brodo dashi o vegetale caldo'],steps:['Porta il brodo a 80°C (fuori bollore — il miso non va bollito).','Reidrata i funghi in acqua calda 5 min. Strizza e aggiungi al brodo.','Scioglie il miso in un po\' di brodo caldo, poi aggiungi al resto.','Aggiungi tofu, alga nori e cipollotto.','Servi immediatamente. Non far riprendere il bollore.']},
+  {id:'ny28',name:'Minestra di Orzo e Funghi Porcini',ico:'🍄',tags:['cena','pranzo','veg','meal-prep'],time:'35 min',kcal:320,p:12,c:52,g:6,diff:'Facile',alimenti:['orzo perlato','funghi porcini secchi','cipolla','aglio','rosmarino','parmigiano'],desc:'L\'orzo è più proteico del riso e ricco di beta-glucani per il sistema immunitario.',ingredienti:['100g orzo perlato','30g funghi porcini secchi','1 cipolla','2 spicchi aglio','Rosmarino e timo','Brodo vegetale 800ml','20g parmigiano grattugiato','Olio EVO','Sale, pepe'],steps:['Reidrata i funghi in acqua calda 20 min. Tieni l\'acqua di ammollo (filtrata).','Soffriggi cipolla e aglio in olio 4 min.','Aggiungi i funghi strizzati, rosmarino e timo. Cuoci 3 min.','Unisci l\'orzo, il brodo e l\'acqua dei funghi filtrata. Cuoci 25 min.','Servi con parmigiano e pepe abbondante.']},
+  {id:'ny29',name:'Gazpacho Proteico con Gamberi',ico:'🍅',tags:['pranzo','definizione'],time:'15 min',kcal:220,p:22,c:14,g:8,diff:'Facile',alimenti:['pomodori','gamberoni','cetriolo','peperone','aglio','limone','olio EVO'],desc:'Freddo, crudo, massima nutrizione. Il gazpacho originale con gamberi diventa un pasto completo.',ingredienti:['500g pomodori maturi','1 peperone rosso','1 cetriolo','2 spicchi aglio','2 cucchiai olio EVO','Aceto di sherry o vino rosso','150g gamberoni cotti sgusciati','Sale','Pan di segale per accompagnare (opzionale)'],steps:['Frulla pomodori, peperone, cetriolo, aglio, olio e aceto.','Passa al setaccio per una consistenza vellutata.','Regola di sale. Metti in frigo almeno 30 min.','Servi nelle ciotole con i gamberoni sopra.','Condisci con un filo d\'olio EVO a crudo.']},
+  // ── POST-WORKOUT AVANZATI ──
+  {id:'ny30',name:'Shake Proteico Biscotto e Burro di Arachidi',ico:'🥤',tags:['post-workout','spuntino','massa'],time:'3 min',kcal:380,p:36,c:30,g:12,diff:'Facilissimo',alimenti:['whey vaniglia','burro di arachidi','banana','latte','avena','cannella'],desc:'Il post-workout che sembra un dessert. Macro bilanciati per la crescita muscolare.',ingredienti:['30g whey vaniglia','1 cucchiaio burro di arachidi naturale','1/2 banana','200ml latte scremato','2 cucchiai avena frullata','Cannella','4-5 cubetti ghiaccio'],steps:['Metti tutti gli ingredienti nel frullatore.','Frulla 30 secondi a potenza alta.','Bevi entro 30 minuti dall\'allenamento.','Variante: aggiungi 1 cucchiaino di cacao per versione cioccolato.']},
+  {id:'ny31',name:'Rice Cake con Mozzarella e Prosciutto',ico:'🍱',tags:['post-workout','spuntino','definizione','rapido'],time:'3 min',kcal:220,p:22,c:20,g:6,diff:'Facilissimo',alimenti:['gallette di riso','mozzarella light','prosciutto crudo','pomodoro','basilico'],desc:'Post-workout immediato: carbs veloci delle gallette + proteine rapide. Pronto in 3 minuti.',ingredienti:['4 gallette di riso','80g mozzarella light','60g prosciutto crudo magro','2 pomodori a fette','Basilico fresco','Olio EVO, sale'],steps:['Disponi le gallette su un piatto.','Aggiungi fette di mozzarella su ogni galletta.','Copri con prosciutto crudo a rose.','Aggiungi pomodoro e basilico.','Un filo d\'olio e sale. Mangia subito.']},
+  {id:'ny32',name:'Bowl Post-Workout Ananas e Gamberoni',ico:'🍍',tags:['post-workout','cena','definizione'],time:'20 min',kcal:380,p:34,c:38,g:8,diff:'Facile',alimenti:['gamberoni','riso','ananas','peperoni','salsa di soia','lime','coriandolo'],desc:'L\'ananas accelera il recupero muscolare grazie alla bromelina. Con i gamberoni = combo perfetto.',ingredienti:['200g gamberoni','100g riso basmati cotto','100g ananas fresca a cubetti','1 peperone giallo','Salsa: 2 cucchiai salsa di soia + succo lime + zenzero','Coriandolo fresco','Olio di sesamo'],steps:['Rosola i gamberoni in olio sesamo 2 min per lato.','Aggiungi ananas e peperone. Cuoci 2 min.','Versa la salsa. Mescola e cuoci 1 min.','Servi su riso basmati.','Guarnisci con coriandolo.']},
+  // ── SNACK E DOLCI FIT ──
+  {id:'ny33',name:'Brownies Proteici al Cioccolato Fondente',ico:'🍫',tags:['spuntino','massa'],time:'25 min',kcal:160,p:12,c:16,g:5,diff:'Facile',alimenti:['fagioli neri','cacao amaro','uova','miele','cioccolato fondente','whey cioccolato'],desc:'Fagioli neri: l\'ingrediente segreto che dà la texture e aggiunge proteine.',ingredienti:['200g fagioli neri cotti (ben scolati)','2 uova','3 cucchiai cacao amaro','3 cucchiai miele','20g whey cioccolato','1 cucchiaino lievito','1/4 cucchiaino sale','40g cioccolato fondente 85% a pezzetti'],steps:['Preriscalda forno a 175°C. Fodera teglia 20x20cm con carta forno.','Frulla fagioli, uova, cacao, miele e whey fino a crema liscia.','Aggiungi lievito e sale. Mescola.','Versa nella teglia. Distribuisci pezzi di cioccolato sopra.','Cuoci 20-22 min. Devono sembrare leggermente umidi al centro. Raffredda 10 min.']},
+  {id:'ny34',name:'Energy Balls Datteri e Cacao',ico:'⚽',tags:['spuntino','pre-workout'],time:'10 min',kcal:120,p:4,c:18,g:4,diff:'Facilissimo',alimenti:['datteri','mandorle','cacao amaro','cocco rapé','vaniglia'],desc:'12 palline in 10 minuti senza cottura. Pre-workout naturale con zuccheri lenti.',ingredienti:['150g datteri medjool denocciolati','80g mandorle pelate','2 cucchiai cacao amaro','1 cucchiaino vaniglia','Pizzico di sale','Cocco rapé per rotolare'],steps:['Metti datteri in acqua calda 5 min se duri.','Frulla datteri, mandorle, cacao, vaniglia e sale nel robot da cucina.','Il mix deve compattarsi quando premuto tra le dita.','Forma palline da 25g con le mani leggermente bagnate.','Rotola nel cocco rapé. Metti in frigo 30 min. Conserva fino a 2 settimane.']},
+  {id:'ny35',name:'Panna Cotta Proteica alla Vaniglia',ico:'🍮',tags:['spuntino','definizione'],time:'10 min',kcal:160,p:16,c:12,g:4,diff:'Facile',alimenti:['yogurt greco','ricotta','gelatina','miele','vaniglia','frutti di bosco'],desc:'Dessert da ristorante con il profilo macro di un pasto da palestra.',ingredienti:['200g yogurt greco 0%','100g ricotta magra','2 fogli gelatina (4g)','1 cucchiaio miele','Vaniglia','50ml latte','Frutti di bosco per servire'],steps:['Ammolla la gelatina in acqua fredda 5 min.','Scalda il latte con il miele senza bollire. Scioglie la gelatina strizzata nel latte caldo.','Frulla yogurt, ricotta e vaniglia a crema liscia.','Aggiungi il latte con gelatina e mescola bene.','Versa in 4 bicchieri. Frigo minimo 3 ore. Servi con frutti di bosco.']},
+  // ── RICETTE CON INGREDIENTI ECONOMICI ──
+  {id:'ny36',name:'Riso e Fagioli alla Cubana',ico:'🍚',tags:['pranzo','cena','veg','massa'],time:'20 min',kcal:420,p:18,c:72,g:6,diff:'Facile',alimenti:['riso','fagioli neri','cipolla','aglio','cumino','peperoni','lime'],desc:'La combinazione riso+fagioli è proteina vegetale completa. Economicissimo.',ingredienti:['100g riso bianco cotto','150g fagioli neri cotti','1 cipolla','3 spicchi aglio','Cumino e origano','1 peperone verde','Succo di lime','Prezzemolo o coriandolo','Olio'],steps:['Rosola cipolla e aglio in olio 4 min.','Aggiungi peperone e cuoci 3 min.','Aggiungi fagioli, cumino e origano. Cuoci 8 min schiacciando qualcuno.','Regola di sale e aggiungi il succo di lime.','Servi sui fagioli il riso. Prezzemolo o coriandolo.']},
+  {id:'ny37',name:'Frittata di Patate e Cipolla',ico:'🍳',tags:['pranzo','cena','massa'],time:'25 min',kcal:350,p:24,c:32,g:12,diff:'Facile',alimenti:['uova','albumi','patate','cipolla','rosmarino','parmigiano'],desc:'La tortilla española fit. Più albumi, meno tuorli, risultato uguale.',ingredienti:['3 uova + 3 albumi','200g patate a cubetti piccoli','1 cipolla media','Rosmarino','20g parmigiano grattugiato','Olio EVO','Sale, pepe'],steps:['Cuoci le patate in padella con olio e rosmarino 12 min finché dorate.','Aggiungi la cipolla affettata. Cuoci altri 5 min.','Sbatti uova e albumi con parmigiano, sale e pepe.','Versa sulle patate. Cuoci a fuoco basso 5 min con coperchio.','Gira con un piatto grande. Cuoci l\'altro lato 3 min.']},
+  {id:'ny38',name:'Pasta e Patate Napoletana Fit',ico:'🍝',tags:['pranzo','massa'],time:'30 min',kcal:440,p:18,c:74,g:8,diff:'Facile',alimenti:['pasta integrale','patate','cipolla','rosmarino','sedano','pomodori','parmigiano'],desc:'Doppio carb ma indice glicemico bilanciato. Piatto povero dell\'Italia meridionale.',ingredienti:['60g pasta integrale mista spezzata','150g patate a cubetti','1/2 cipolla','1 gambo sedano','100g pomodori pelati','Rosmarino','Brodo vegetale 500ml','10g parmigiano','Olio EVO'],steps:['Soffriggi cipolla e sedano in olio 4 min.','Aggiungi pomodori e rosmarino. Cuoci 5 min.','Unisci patate e brodo. Cuoci 15 min.','Aggiungi la pasta. Cuoci al dente mescolando (deve rimanere brodosa).','Manteca con parmigiano. Lascia riposare 2 min.']},
+  // ── RICETTE INTERNAZIONALI ──
+  {id:'ny39',name:'Pollo Tikka Masala Fit',ico:'🍛',tags:['cena','massa'],time:'35 min',kcal:420,p:44,c:16,g:14,diff:'Media',alimenti:['pollo','yogurt greco','passata di pomodoro','cipolla','aglio','zenzero','garam masala','curcuma'],desc:'Il curry britannico per eccellenza rivisitato: yogurt greco al posto della panna.',ingredienti:['250g petto di pollo','Marinata: yogurt greco + garam masala + curcuma + aglio + zenzero','Salsa: 200g passata + 1 cipolla + 2 spicchi aglio + zenzero + garam masala 2 cucchiaini + curcuma + paprika','50ml yogurt greco per finire'],steps:['Marina il pollo in yogurt+spezie per 30 min minimo.','Cuoci il pollo in padella grill 5-6 min per lato. Taglia a pezzi.','Prepara la salsa: cipolla+aglio+zenzero 5 min, spezie 1 min, passata 15 min.','Aggiungi il pollo alla salsa. Cuoci 5 min.','Spegni e mescola lo yogurt. Non far bollire.']},
+  {id:'ny40',name:'Ramen Proteico Homemade',ico:'🍜',tags:['cena','massa'],time:'30 min',kcal:480,p:38,c:46,g:12,diff:'Media',alimenti:['uova','pollo','ramen','miso bianco','salsa di soia','zenzero','aglio','funghi shiitake'],desc:'Il ramen dal zero è facile se hai i componenti giusti. Noodles al dente nella salsa umami.',ingredienti:['2 porzioni noodles ramen','200g petto di pollo','2 uova sode marinate','Brodo: 800ml brodo di pollo + 2 cucchiai miso bianco + 2 cucchiai salsa di soia + zenzero + aglio','Toppings: cipollotto, alga nori, sesamo, mais'],steps:['Cuoci le uova 7 min in acqua bollente. Raffredda e pela. Marina in soia+acqua.','Cuoci il pollo in padella con salsa di soia e zenzero 6 min per lato.','Scalda il brodo con miso, soia, zenzero e aglio (non bollire il miso).','Cuoci i noodles secondo le istruzioni.','Assembla: noodles + brodo + pollo affettato + uovo a metà + toppings.']},
+  {id:'ny41',name:'Pad Thai Fit con Gamberoni',ico:'🍜',tags:['cena','definizione'],time:'20 min',kcal:420,p:32,c:46,g:10,diff:'Media',alimenti:['gamberoni','noodles di riso','uova','germogli di soia','cipollotti','arachidi','salsa di pesce','lime'],desc:'Street food thai rivisitato: la salsa autentica fa tutta la differenza.',ingredienti:['150g gamberoni','100g noodles di riso (reidratati)','1 uovo','50g germogli di soia','3 cipollotti','20g arachidi tritate','Salsa: 2 cucchiai salsa di pesce + 1 cucchiaio zucchero di canna + succo lime + sriracha','Coriandolo'],steps:['Reidrata i noodles in acqua calda 8 min.','Scalda wok a fuoco alto con olio. Cuoci gamberoni 2 min per lato.','Aggiungi uovo e strapazza velocemente.','Aggiungi noodles e salsa. Mescola a fuoco alto 2-3 min.','Aggiungi germogli e cipollotti. 1 min. Servi con arachidi e coriandolo.']},
+  {id:'ny42',name:'Moussaka Greca Fit',ico:'🍆',tags:['cena','massa'],time:'60 min',kcal:480,p:36,c:30,g:20,diff:'Avanzata',alimenti:['manzo macinato','melanzane','pomodori','cipolla','aglio','cannella','yogurt greco','uova'],desc:'Béchamel sostituita con yogurt greco: stessa cremosità, triple proteine.',ingredienti:['350g manzo macinato magro','2 melanzane','200g pomodori pelati','1 cipolla','2 spicchi aglio','Cannella, noce moscata, origano','Besciamella fit: 200g yogurt greco + 1 uovo + 20g parmigiano + noce moscata'],steps:['Fetta melanzane 7mm, sala 15 min, asciuga. Griglia su padella senza olio.','Ragù: cipolla+aglio 4 min, macinato 6 min, pomodori+spezie 15 min.','Besciamella fit: mescola yogurt, uovo e parmigiano.','Assembla: melanzane + ragù + melanzane + besciamella.','Forno 180°C per 30 min finché dorata.']},
+  {id:'ny43',name:'Okonomiyaki Proteico',ico:'🥞',tags:['cena','pranzo','definizione'],time:'20 min',kcal:320,p:28,c:26,g:10,diff:'Facile',alimenti:['uova','albumi','cavolo','gamberoni','farina di avena','salsa di soia'],desc:'La frittata giapponese. Versatile: dentro ci puoi mettere quasi tutto.',ingredienti:['3 uova + 2 albumi','100g cavolo cappuccio tritato finissimo','80g gamberoni o tonno','4 cucchiai farina di avena','2 cucchiai salsa di soia','Cipollotto','Mayo + sriracha per servire (opzionale)'],steps:['Mescola uova, albumi, cavolo, farina di avena e salsa di soia.','Aggiungi i gamberoni tritati o il tonno sgocciolato.','Scalda padella con olio a fuoco medio.','Versa il composto come una frittata spessa. Cuoci 5 min per lato.','Servi con cipollotto e un mix mayo+sriracha se vuoi.']},
+  // ── MEAL PREP AVANZATA ──
+  {id:'ny44',name:'Prep 5 Giorni: Salmone + Verdure + Farro',ico:'📦',tags:['meal-prep','definizione'],time:'50 min',kcal:450,p:40,c:38,g:14,diff:'Facile',alimenti:['salmone','farro','zucchine','asparagi','pomodorini','limone','olio EVO','aglio'],desc:'Investimento di 50 minuti domenica = 5 pranzi perfetti senza stress.',ingredienti:['4 filetti salmone 150g','200g farro perlato secco','600g verdure miste: zucchine, asparagi, pomodorini','Marinata salmone: olio+limone+aglio+aneto+sale','5 contenitori ermetici'],steps:['Preriscalda forno a 200°C.','Cuoci il farro in acqua salata 25 min.','Marinate il salmone 15 min.','Disponi salmone e verdure su due teglie separate.','Cuoci: verdure 20 min, salmone 15 min.','Dividi farro in 5 container. Aggiungi un filetto di salmone e le verdure. Conserva 4 giorni.']},
+  {id:'ny45',name:'Prep Tacos Bowl per 5 Giorni',ico:'📦',tags:['meal-prep','massa'],time:'40 min',kcal:480,p:38,c:50,g:12,diff:'Facile',alimenti:['manzo macinato','fagioli neri','riso integrale','mais','peperoni','avocado','lime'],desc:'La prep messicana. Tieni avocado e lime separati, aggiungi al momento.',ingredienti:['500g manzo macinato magro','2 lattine fagioli neri','250g riso integrale secco','1 lattina mais','2 peperoni','Spezie: cumino+paprika+aglio+origano+sale','Avocado e lime al momento'],steps:['Cuoci il riso integrale 35 min.','Rosola macinato con spezie 8 min.','Aggiungi fagioli e mais, cuoci 3 min.','Arrostisc i peperoni in forno 200°C 20 min.','Dividi riso + mix carne + peperoni in 5 container. Al momento: avocado e lime.']},
+  {id:'ny46',name:'Prep Asian Bowl con Manzo',ico:'📦',tags:['meal-prep','massa'],time:'45 min',kcal:500,p:42,c:46,g:14,diff:'Facile',alimenti:['manzo','riso','broccoli','carote','salsa di soia','zenzero','aglio','sesamo'],desc:'Tutti i sapori del wok, preparati in batch per la settimana.',ingredienti:['500g manzo a straccetti','250g riso basmati secco','400g broccoli','200g carote','Salsa: 4 cucchiai salsa di soia + 2 cucchiai miele + 1 cucchiaio olio sesamo + aglio + zenzero','Sesamo e cipollotto'],steps:['Cuoci il riso.','Salta il manzo in wok a fuoco alto 5 min.','Aggiungi broccoli e carote. Salta 4 min.','Versa la salsa e cuoci 2 min finché caramellata.','Dividi in 4-5 container con riso. Sesamo e cipollotto al servizio.']},
+  // ── COLAZIONI SPECIALI ──
+  {id:'ny47',name:'Pancakes alla Banana senza Glutine',ico:'🥞',tags:['colazione','massa','veg'],time:'15 min',kcal:360,p:20,c:42,g:10,diff:'Facile',alimenti:['banana','uova','farina di riso','yogurt greco','miele','frutti di bosco'],desc:'Senza glutine naturalmente. La banana matura è il dolcificante e il legante.',ingredienti:['2 banane molto mature','3 uova','3 cucchiai farina di riso','50g yogurt greco','1 cucchiaino lievito','Cannella','Frutti di bosco e miele per servire'],steps:['Schiacciate le banane a purea con una forchetta.','Aggiungi uova e yogurt. Mescola.','Incorpora farina di riso, lievito e cannella.','Cuoci piccole frittelline in padella antiaderente 2 min per lato.','Servi con frutti di bosco freschi e miele.']},
+  {id:'ny48',name:'Uova in Cocotte con Spinaci e Salmone',ico:'🍳',tags:['colazione','cena','definizione'],time:'20 min',kcal:300,p:28,c:6,g:16,diff:'Facile',alimenti:['uova','salmone affumicato','spinaci','panna','erba cipollina'],desc:'Presentazione da ristorante, preparazione da 5 minuti. Cotte in cocotte o ramekin.',ingredienti:['4 uova','80g salmone affumicato a pezzetti','60g spinaci freschi','2 cucchiai yogurt greco (al posto della panna)','Sale, pepe','Erba cipollina','Burro per gli stampini'],steps:['Preriscalda forno a 180°C. Imburra 4 cocotte o ramekin.','Metti spinaci crudi e salmone sul fondo.','Rompi un uovo in ogni cocotte.','Aggiungi un cucchiaino di yogurt greco sopra ogni uovo.','Cuoci a bagnomaria in forno per 12-14 min (tuorlo morbido).']},
+  // ── CARNE BIANCA ALTERNATIVA ──
+  {id:'ny49',name:'Coniglio alla Cacciatora',ico:'🐇',tags:['cena','definizione'],time:'60 min',kcal:380,p:46,c:12,g:12,diff:'Media',alimenti:['coniglio','pomodori','olive','rosmarino','aglio','vino bianco','cipolla'],desc:'Il coniglio è la carne bianca più magra: meno grassi del pollo con più ferro.',ingredienti:['400g coniglio a pezzi','200g pomodori pelati','40g olive verdi denocciolate','Rosmarino e salvia','3 spicchi aglio','100ml vino bianco','1 cipolla','Olio EVO','Sale'],steps:['Rosola il coniglio in olio a fuoco alto 5 min per lato. Metti da parte.','Nella stessa padella: cipolla e aglio 4 min.','Sfuma con il vino bianco. Fai evaporare 2 min.','Aggiungi pomodori, olive e erbe. Metti il coniglio.','Cuoci coperto a fuoco basso per 40 min.']},
+  {id:'ny50',name:'Petto di Tacchino Farcito',ico:'🦃',tags:['cena','massa','meal-prep'],time:'45 min',kcal:400,p:52,c:8,g:14,diff:'Media',alimenti:['tacchino','spinaci','feta','aglio','limone','rosmarino'],desc:'Un petto di tacchino intero farcito sfama 4 persone o 4 giorni di meal prep.',ingredienti:['500g petto di tacchino','150g spinaci freschi','80g feta sbriciolata','2 spicchi aglio','Buccia di limone','Rosmarino e timo','Sale, pepe','Stecchini o spago da cucina'],steps:['Apri il petto a libro con un coltello affilato.','Appassisce spinaci in padella con aglio 2 min.','Distribuisci spinaci, feta e scorza limone sul petto aperto.','Arrotola e lega con spago da cucina o stecchini.','Rosola in padella 5 min per lato, poi forno 185°C per 25 min.']},
+  // ── RICETTE DOLCI FIT AVANZATE ──
+  {id:'ny51',name:'Tiramisù Proteico',ico:'🍰',tags:['spuntino','massa'],time:'20 min',kcal:250,p:22,c:22,g:6,diff:'Media',alimenti:['ricotta','yogurt greco','uova','savoiardi','caffè','cacao amaro','miele'],desc:'Il tiramisù preferito dagli italiani, con la metà delle calorie e il doppio delle proteine.',ingredienti:['200g ricotta magra','150g yogurt greco 0%','2 tuorli (o 30g whey vaniglia per no uova)','2 cucchiai miele','200ml caffè espresso freddo','12 savoiardi leggeri','Cacao amaro per spolverare','Vaniglia'],steps:['Frulla ricotta, yogurt, tuorli (o whey) e miele fino a crema liscia.','Immergi rapidamente i savoiardi nel caffè freddo (1-2 sec per lato — non inzuppare).','Disponi uno strato di savoiardi, poi la crema, poi di nuovo savoiardi e crema.','Spolvera abbondante cacao amaro.','Frigo minimo 2 ore prima di servire.']},
+  {id:'ny52',name:'Crumble di Mele e Avena',ico:'🍎',tags:['spuntino','colazione'],time:'35 min',kcal:240,p:8,c:36,g:7,diff:'Facile',alimenti:['mele','avena','mandorle','miele','cannella','burro','vaniglia'],desc:'Dessert da forno che profuma di autunno. Ottimo anche a colazione.',ingredienti:['3 mele Golden','Crumble: 80g avena + 30g mandorle tritate + 2 cucchiai miele + 15g burro fuso + cannella','Vaniglia','Succo di mezzo limone'],steps:['Preriscalda forno a 180°C.','Sbuccia e taglia le mele. Condisci con succo limone, cannella e vaniglia.','Disponi le mele in una pirofila.','Mescola avena, mandorle, miele e burro fuso a briciole.','Distribuisci il crumble sopra le mele. Cuoci 30 min.']},
+  // ── RICETTE ESTATE / LEGGERE ──
+  {id:'ny53',name:'Carpaccio di Manzo con Rucola',ico:'🥩',tags:['pranzo','definizione'],time:'10 min',kcal:290,p:30,c:4,g:16,diff:'Facile',alimenti:['manzo','rucola','parmigiano','limone','olive','capperi','olio EVO'],desc:'Zero cottura, massimo sapore. Usa un coltello affilato o chiedi al macellaio di affettare.',ingredienti:['200g controfiletto di manzo congelato 30 min (più facile da affettare)','40g rucola fresca','20g parmigiano a scaglie','Succo di limone','1 cucchiaio capperi','Olio EVO','Sale, pepe nero'],steps:['Affetta il manzo semi-congelato il più sottile possibile con coltello affilato.','Disponi le fette su un piatto freddo.','Condisci con olio EVO, succo di limone e sale.','Distribuisci rucola, parmigiano a scaglie e capperi.','Pepe nero abbondante. Servi subito.']},
+  {id:'ny54',name:'Ceviche di Salmone',ico:'🐟',tags:['pranzo','cena','definizione'],time:'20 min',kcal:280,p:34,c:10,g:10,diff:'Facile',alimenti:['salmone fresco','limone','lime','cipolla rossa','peperoncino','coriandolo','avocado'],desc:'Il pesce viene "cotto" dall\'acido citrico. Fresco, leggero, elevatissimo in proteine.',ingredienti:['250g salmone sushi-grade a cubetti 1.5cm','Succo di 3 lime + 2 limoni','1/4 cipolla rossa a julienne sottile','1 peperoncino fresco','Coriandolo abbondante','1/2 avocado a cubetti','Sale, pepe'],steps:['Metti il salmone in un bowl con il succo di lime e limone.','Assicurati che il pesce sia completamente coperto.','Lascia "cuocere" in frigo 15-20 min (diventa opaco all\'esterno).','Scola parte del succo. Aggiungi cipolla, peperoncino e coriandolo.','Aggiungi avocado. Regola di sale.']},
+  {id:'ny55',name:'Insalata di Farro Estiva',ico:'🥗',tags:['pranzo','massa','meal-prep'],time:'30 min',kcal:430,p:22,c:56,g:12,diff:'Facile',alimenti:['farro','mozzarella','pomodori','basilico','olive','pesto','limone'],desc:'Fredda il giorno dopo è ancora più buona. Prep per 3 giorni.',ingredienti:['100g farro perlato cotto','80g mozzarella di bufala a pezzi','150g pomodori datterini','30g olive taggiasche','Basilico fresco abbondante','2 cucchiai pesto','Olio EVO + limone'],steps:['Cuoci il farro in acqua salata 25 min. Scola e raffredda.','Mescola il farro con il pesto quando ancora tiepido.','Aggiungi pomodori, olive e basilico.','Aggiungi la mozzarella solo al momento di servire.','Condisci con olio e limone.']},
+  // ── HIGH PROTEIN EXTREME ──
+  {id:'ny56',name:'White Fish Taco Bowl',ico:'🌮',tags:['cena','definizione'],time:'20 min',kcal:370,p:40,c:28,g:10,diff:'Facile',alimenti:['merluzzo','cavolo','avocado','lime','yogurt greco','mais','coriandolo'],desc:'Tacos bowl senza guscio. Il merluzzo è la proteina più magra tra i pesci bianchi.',ingredienti:['200g filetto di merluzzo','80g cavolo cappuccio tritato','1/2 avocado','50g mais','Crema: yogurt greco + succo lime + sriracha + sale','Coriandolo','Mais soffiato per croccantezza (opzionale)'],steps:['Condisci il merluzzo con paprika, aglio, sale e un filo d\'olio.','Cuoci in padella 3-4 min per lato finché si sfalda.','Prepara la crema mescolando yogurt, lime e sriracha.','Assembla: cavolo + pesce sbriciolato + mais + avocado.','Versa la crema. Coriandolo e lime.']},
+  {id:'ny57',name:'Bistecche di Cavolfiore Grigliate',ico:'🥦',tags:['cena','veg','definizione'],time:'25 min',kcal:240,p:10,c:22,g:10,diff:'Facile',alimenti:['cavolfiore','tahini','curcuma','paprika','limone','prezzemolo','ceci'],desc:'Il cavolfiore affettato spesso e grigliato cambia completamente consistenza e sapore.',ingredienti:['1 cavolfiore grande','Marinata: olio EVO + curcuma + paprika affumicata + aglio + sale','100g ceci arrostiti','Salsa: tahini + limone + acqua + sale','Prezzemolo e pomegranate'],steps:['Taglia il cavolfiore in "bistecche" da 2cm mantenendo il gambo.','Marina con olio e spezie.','Griglia in padella a fuoco alto 4-5 min per lato finché ben colorata.','Arrostisc i ceci in forno con cumino.','Disponi le bistecche, versa la salsa tahini, aggiungi ceci e prezzemolo.']},
+  {id:'ny58',name:'Insalata Proteica con Edamame',ico:'🌿',tags:['pranzo','definizione','veg','rapido'],time:'10 min',kcal:380,p:28,c:32,g:12,diff:'Facilissimo',alimenti:['edamame','quinoa','avocado','cetriolo','carote','sesamo','salsa di soia','lime'],desc:'Vegan, ad alto contenuto proteico. Pronta in 10 minuti se hai la quinoa cotta.',ingredienti:['150g edamame cotti sgusciati','100g quinoa cotta','1/2 avocado','1/2 cetriolo','1 carota julienne','Sesamo tostato','Dressing: 2 cucchiai soia + 1 cucchiaio olio sesamo + lime + zenzero'],steps:['Mescola edamame, quinoa, cetriolo e carote.','Prepara il dressing.','Aggiungi l\'avocado a cubetti.','Versa il dressing e mescola delicatamente.','Guarnisci con sesamo.']},
+  {id:'ny59',name:'Salmone con Crosta di Pistacchio',ico:'🐟',tags:['cena','massa'],time:'20 min',kcal:480,p:40,c:10,g:28,diff:'Facile',alimenti:['salmone','pistacchi','miele','senape','limone','aglio'],desc:'La crosta di pistacchio è un modo elegante per aggiungere grassi buoni al salmone.',ingredienti:['2 filetti salmone 180g','60g pistacchi tritati grossolanamente','1 cucchiaio miele','1 cucchiaio senape di Digione','Succo di limone','Aglio in polvere','Sale'],steps:['Preriscalda forno a 200°C.','Mescola senape e miele. Spennella i filetti.','Pressa i pistacchi tritati sulla superficie del salmone.','Cuoci su carta forno 12-14 min (roseo al centro = perfetto).','Servi con limone e verdure a vapore.']},
+  {id:'ny60',name:'Zuppa Proteica di Kimchi e Tofu',ico:'🌶️',tags:['cena','definizione'],time:'20 min',kcal:260,p:22,c:18,g:10,diff:'Facile',alimenti:['kimchi','tofu','uova','brodo','cipollotto','sesamo','salsa di soia'],desc:'Il kimchi fermentato ha miliardi di probiotici. La zuppa kimchi è il comfort food coreano per eccellenza.',ingredienti:['200g kimchi','200g tofu morbido a cubetti','1 uovo','600ml brodo di pollo o vegetale','2 cucchiai salsa di soia','Cipollotti','Olio di sesamo','Gochujang (pasta peperoncino coreano) a piacere'],steps:['Scalda il brodo in una pentola.','Aggiungi kimchi e gochujang. Cuoci 5 min.','Aggiungi tofu e salsa di soia. Cuoci 3 min.','Rompi l\'uovo direttamente nella zuppa. Cuoci 3 min senza mescolare.','Servi con cipollotti e un filo di olio di sesamo.']},
+  // ── BATCH 4: 30 ricette senza apostrofi non escapati ──
+  {id:'nz1',name:'Petto di Pollo Ripienato agli Spinaci',ico:'🍗',tags:['cena','massa'],time:'35 min',kcal:390,p:52,c:4,g:16,diff:'Media',alimenti:['pollo','spinaci','feta','aglio','rosmarino'],desc:'Tecnica del petto farcito: piu proteina, piu sapore, zero noia.',ingredienti:['2 petti di pollo 180g cadauno','80g spinaci freschi','60g feta','2 spicchi aglio','Rosmarino','Olio EVO','Sale, pepe','Stecchini da cucina'],steps:['Apri i petti a taschino con un coltello affilato.','Appassisci spinaci con aglio 2 min. Aggiungi feta sbriciolata.','Farcisci ogni petto con il mix. Chiudi con stecchini.','Rosola in padella 4 min per lato. Poi forno 185 gradi per 15 min.','Fai riposare 3 min prima di tagliare.']},
+  {id:'nz2',name:'Soba Fredda con Pollo e Sesamo',ico:'🍜',tags:['pranzo','definizione'],time:'20 min',kcal:420,p:36,c:46,g:10,diff:'Facile',alimenti:['noodles soba','pollo','cetriolo','carote','sesamo','salsa di soia','zenzero'],desc:'I noodles soba al grano saraceno sono naturalmente proteici e senza glutine.',ingredienti:['100g noodles soba','150g petto di pollo grigliato a fettine','1/2 cetriolo julienne','1 carota julienne','Dressing: 3 cucchiai salsa di soia + olio sesamo + lime + zenzero + peperoncino','Sesamo tostato','Cipollotto'],steps:['Cuoci i soba in acqua bollente 4 min. Scola e raffredda in acqua fredda.','Prepara il dressing mescolando tutti gli ingredienti.','Disponi i soba in una bowl.','Aggiungi pollo, cetriolo e carote.','Versa il dressing. Guarnisci con sesamo e cipollotto.']},
+  {id:'nz3',name:'Quiche Proteica senza Pasta',ico:'🥧',tags:['pranzo','cena','definizione','meal-prep'],time:'40 min',kcal:320,p:26,c:8,g:18,diff:'Facile',alimenti:['uova','albumi','salmone affumicato','spinaci','ricotta','cipolla'],desc:'Niente pasta frolla: la base e fatta di uova e ricotta. Keto-friendly.',ingredienti:['4 uova + 3 albumi','100g ricotta magra','80g salmone affumicato a pezzi','100g spinaci freschi','1/4 cipolla tritata','Erba cipollina','Sale, pepe, noce moscata','Olio EVO'],steps:['Preriscalda forno a 180 gradi. Ungi una teglia rotonda da 22cm.','Appassisci cipolla e spinaci in padella 3 min.','Sbatti uova, albumi e ricotta. Aggiungi sale, pepe e noce moscata.','Aggiungi salmone, spinaci e cipolla al composto.','Versa nella teglia. Cuoci 28-30 min finche solida al centro.']},
+  {id:'nz4',name:'Carpaccio di Zucchine con Tonno',ico:'🥒',tags:['pranzo','definizione','rapido'],time:'10 min',kcal:260,p:28,c:8,g:12,diff:'Facilissimo',alimenti:['zucchine','tonno','limone','menta','olive','olio EVO'],desc:'Zero cottura. Le zucchine crude tagliate sottili si marinano nel limone in pochi minuti.',ingredienti:['2 zucchine fresche e sode','120g tonno al naturale','Succo e scorza di 1 limone','Foglie di menta fresca','20g olive taggiasche','1 cucchiaio olio EVO','Sale, pepe nero'],steps:['Taglia le zucchine a nastri molto sottili con un pelapatate o mandolina.','Disponi i nastri su un piatto. Condisci con limone, olio e sale.','Lascia marinare 5 min: le zucchine si ammorbidiscono leggermente.','Distribuisci il tonno sbriciolato sopra.','Aggiungi olive, menta e scorza di limone. Pepe abbondante.']},
+  {id:'nz5',name:'Stufato di Manzo e Verdure Invernale',ico:'🥘',tags:['cena','massa'],time:'90 min',kcal:480,p:44,c:28,g:16,diff:'Media',alimenti:['manzo','carote','sedano','patate','cipolla','rosmarino','pomodori','vino rosso'],desc:'Lo stufato lento e una delle migliori tecniche per rendere la carne tenerissima.',ingredienti:['400g manzo per stufato a cubetti','2 carote','2 gambi sedano','2 patate medie','1 cipolla','200g pomodori pelati','100ml vino rosso','Rosmarino e alloro','Olio EVO','Sale, pepe'],steps:['Rosola il manzo a pezzi in olio a fuoco alto 5 min. Metti da parte.','Nella stessa pentola: cipolla, carote e sedano 5 min.','Sfuma con il vino rosso. Fai evaporare 2 min.','Aggiungi pomodori, rosmarino, alloro e la carne. Copri con acqua.','Cuoci a fuoco basso per 70 min. Aggiungi patate gli ultimi 20 min.']},
+  {id:'nz6',name:'Bowl di Riso Integrale e Edamame',ico:'🌿',tags:['pranzo','veg','definizione','rapido'],time:'10 min',kcal:400,p:20,c:58,g:8,diff:'Facilissimo',alimenti:['riso integrale','edamame','avocado','cetriolo','alga nori','sesamo','salsa di soia'],desc:'Assemblaggio da 10 minuti se hai il riso gia cotto. Vegana e completa.',ingredienti:['150g riso integrale cotto','100g edamame cotti sgusciati','1/2 avocado a cubetti','1/2 cetriolo a rondelle','Striscioline di alga nori','Sesamo tostato','Salsa: soia + olio sesamo + lime'],steps:['Metti il riso caldo nella bowl.','Disponi edamame, avocado e cetriolo in sezioni separate.','Aggiungi le striscioline di nori.','Prepara la salsa e versala sopra.','Guarnisci con sesamo. Mescola prima di mangiare.']},
+  {id:'nz7',name:'Tacchino Macinato alla Messicana',ico:'🌮',tags:['cena','pranzo','definizione'],time:'20 min',kcal:350,p:42,c:12,g:12,diff:'Facile',alimenti:['tacchino macinato','fagioli neri','peperoni','cipolla','cumino','paprika','aglio'],desc:'Alternativa leggera al classico macinato di manzo. Meno grassi, stessa soddisfazione.',ingredienti:['300g tacchino macinato','100g fagioli neri cotti','1 peperone rosso a cubetti','1/2 cipolla','2 spicchi aglio','Cumino 1 cucchiaino','Paprika affumicata','Peperoncino','Olio EVO','Sale'],steps:['Rosola cipolla e aglio in olio 3 min.','Aggiungi il macinato e cuoci 6 min rompendolo con il cucchiaio.','Aggiungi peperone, cumino, paprika e peperoncino. Cuoci 3 min.','Unisci i fagioli. Cuoci altri 4 min.','Regola di sale. Servi con riso, lattuga o gallette.']},
+  {id:'nz8',name:'Salmone en Papillote con Verdure',ico:'🐟',tags:['cena','definizione'],time:'25 min',kcal:380,p:40,c:10,g:18,diff:'Facile',alimenti:['salmone','zucchine','pomodorini','aglio','limone','timo','olio EVO'],desc:'Cottura en papillote: il salmone cuoce nel suo vapore. Zero grassi aggiunti, sapore intenso.',ingredienti:['200g filetto di salmone','1 zucchina a rondelle','80g pomodorini','2 spicchi aglio a lamelle','1/2 limone a fette','Timo fresco','1 cucchiaio olio EVO','Sale, pepe'],steps:['Preriscalda forno a 190 gradi.','Stendi un foglio di carta forno. Metti le zucchine come base.','Posa il salmone sulle zucchine. Aggiungi pomodorini, aglio e limone.','Irrora con olio. Chiudi ermeticamente il cartoccio.','Cuoci 18-20 min. Apri solo al momento di servire.']},
+  {id:'nz9',name:'Frullato Verde Proteico',ico:'🥤',tags:['colazione','post-workout','definizione'],time:'5 min',kcal:280,p:24,c:32,g:4,diff:'Facilissimo',alimenti:['spinaci','banana','latte di mandorla','whey vaniglia','zenzero','limone','semi di chia'],desc:'Verde non significa cattivo. La banana maschera completamente il gusto degli spinaci.',ingredienti:['Grande manciata spinaci baby','1 banana congelata','250ml latte di mandorla','20g whey vaniglia','1cm zenzero fresco','Succo di 1/2 limone','1 cucchiaio semi di chia'],steps:['Metti spinaci e latte nel frullatore per primo.','Frulla 20 sec per liquefar gli spinaci completamente.','Aggiungi banana, whey, zenzero e limone.','Frulla 30 sec ad alta velocita. Aggiungi ghiaccio se vuoi.','Bevi subito: i nutrienti si degradano in fretta.']},
+  {id:'nz10',name:'Lonza di Maiale con Mela e Rosmarino',ico:'🥩',tags:['cena','massa'],time:'35 min',kcal:390,p:48,c:12,g:14,diff:'Facile',alimenti:['lonza di maiale','mele','rosmarino','aglio','senape','miele'],desc:'La lonza e il taglio di maiale piu magro: meno grassi del petto di pollo.',ingredienti:['250g lonza di maiale a fettine','1 mela a spicchi','Rosmarino fresco','2 spicchi aglio','1 cucchiaio senape di Digione','1 cucchiaino miele','Olio EVO','Sale, pepe'],steps:['Condisci la lonza con senape, miele, rosmarino e aglio. Marina 15 min.','Rosola le fettine in padella 3 min per lato. Metti da parte.','Nella stessa padella rosola gli spicchi di mela 2 min per lato.','Rimetti la carne con la mela. Cuoci 2 min insieme.','Servi con le mele caramellate sopra.']},
+  {id:'nz11',name:'Couscous con Pollo e Verdure',ico:'🍲',tags:['pranzo','massa','rapido'],time:'15 min',kcal:450,p:36,c:54,g:8,diff:'Facilissimo',alimenti:['couscous','pollo','zucchine','peperoni','cipolla','curcuma','cumino','prezzemolo'],desc:'Il couscous si cuoce in 5 minuti: il pasto con il rapporto tempo/nutrizione migliore.',ingredienti:['100g couscous integrale','150g pollo grigliato a cubetti','1 zucchina a dadini','1/2 peperone rosso','1/4 cipolla rossa','Curcuma, cumino, paprika','Brodo vegetale bollente','Prezzemolo e limone'],steps:['Versa il couscous in una bowl. Aggiungi le spezie.','Copri con brodo bollente fino a 1cm sopra il couscous. Copri con piatto.','Aspetta 5 min. Sgrana con una forchetta.','Mescola pollo, zucchina, peperone e cipolla rossa.','Condisci con limone e prezzemolo. Servi tiepido o freddo.']},
+  {id:'nz12',name:'Sopa de Lima Messicana',ico:'🥣',tags:['cena','definizione'],time:'25 min',kcal:280,p:30,c:18,g:8,diff:'Facile',alimenti:['pollo','lime','pomodori','cipolla','aglio','peperoncino','coriandolo','tortilla'],desc:'La zuppa acida e aromatica dello Yucatan. Leggera, proteica, piena di profumi.',ingredienti:['200g petto di pollo cotto e sfilacciato','Succo di 3 lime','300g pomodori a cubetti','1 cipolla','3 spicchi aglio','1 peperoncino habanero o jalapeno','Coriandolo fresco abbondante','Brodo di pollo 700ml','Olio','Sale'],steps:['Soffriggi cipolla, aglio e peperoncino in olio 4 min.','Aggiungi pomodori e cuoci 5 min.','Versa il brodo e porta a bollore.','Aggiungi il pollo sfilacciato e il succo di lime.','Cuoci 5 min. Servi con coriandolo e, se vuoi, strisce di tortilla tostata.']},
+  {id:'nz13',name:'Polpettone di Pollo al Forno',ico:'🍗',tags:['cena','massa','meal-prep'],time:'55 min',kcal:360,p:46,c:10,g:12,diff:'Media',alimenti:['pollo macinato','uova','pangrattato','aglio','prezzemolo','pomodori','parmigiano'],desc:'Un polpettone sfama 4 persone o 4 giorni di meal prep. Freddo in sandwich il giorno dopo.',ingredienti:['500g pollo macinato','1 uovo + 1 albume','3 cucchiai pangrattato integrale','30g parmigiano','2 spicchi aglio tritato','Prezzemolo abbondante','Sale, pepe','Passata di pomodoro per nappare'],steps:['Mescola pollo, uovo, pangrattato, parmigiano, aglio e prezzemolo. Impasta bene.','Forma un polpettone e metti in una teglia da forno.','Nappa con la passata di pomodoro sopra.','Cuoci a 175 gradi per 45 min.','Lascia riposare 5 min prima di tagliare a fette.']},
+  {id:'nz14',name:'Insalata di Riso Venere con Gamberoni',ico:'🍱',tags:['pranzo','cena','definizione'],time:'30 min',kcal:420,p:32,c:44,g:10,diff:'Facile',alimenti:['riso venere','gamberoni','mango','cetriolo','cipollotto','lime','coriandolo','sesamo'],desc:'Il riso venere freddo con gamberoni e mango e il piatto estivo per eccellenza.',ingredienti:['80g riso venere secco','150g gamberoni cotti sgusciati','80g mango a cubetti','1/2 cetriolo a rondelle','Cipollotto affettato','Succo di 2 lime','Coriandolo fresco','Sesamo nero e bianco'],steps:['Cuoci il riso venere 30 min. Scola e raffredda completamente.','Condisci il riso con il succo di lime e un filo di olio.','Mescola gamberoni, mango e cetriolo.','Combina tutto. Aggiungi cipollotto e coriandolo.','Guarnisci con sesamo misto. Servi freddo.']},
+  {id:'nz15',name:'Zuppa Spagnola di Pollo e Ceci',ico:'🥣',tags:['cena','massa','meal-prep'],time:'30 min',kcal:420,p:38,c:38,g:10,diff:'Facile',alimenti:['pollo','ceci','pomodori','cipolla','paprika affumicata','aglio','rosmarino'],desc:'Il cocido spagnolo semplificato. Due proteine in una zuppa: pollo e legumi.',ingredienti:['200g petto di pollo a cubetti','200g ceci cotti','300g pomodori pelati','1 cipolla','3 spicchi aglio','Paprika affumicata 2 cucchiaini','Rosmarino','Brodo di pollo 500ml','Olio EVO','Sale'],steps:['Rosola il pollo in olio 5 min. Metti da parte.','Soffriggi cipolla e aglio 4 min.','Aggiungi paprika e tosta 1 min. Aggiungi pomodori.','Cuoci 8 min. Aggiungi ceci, brodo e rosmarino.','Rimetti il pollo e cuoci 10 min. Regola di sale.']},
+  {id:'nz16',name:'Tacos di Pesce Grigliato',ico:'🌮',tags:['cena','definizione'],time:'20 min',kcal:360,p:34,c:32,g:10,diff:'Facile',alimenti:['merluzzo','tortilla di mais','cavolo','avocado','lime','yogurt greco','coriandolo','sriracha'],desc:'Fish tacos californiani: il pesce grigliato invece di fritto cambia completamente i macro.',ingredienti:['200g filetto di merluzzo','4 tortillas di mais piccole','80g cavolo cappuccio tritato','1/2 avocado a fette','Crema: yogurt greco + lime + sriracha + sale','Coriandolo','Lime a spicchi'],steps:['Condisci il merluzzo con paprika, cumino, sale e un filo di olio.','Griglia in padella 4 min per lato finche si sfalda.','Scalda le tortillas 30 sec per lato su padella asciutta.','Prepara la crema mescolando yogurt, lime e sriracha.','Assembla: tortilla + pesce + cavolo + avocado + crema + coriandolo.']},
+  {id:'nz17',name:'Pollo al Limone Greco',ico:'🍋',tags:['cena','definizione'],time:'30 min',kcal:340,p:44,c:6,g:14,diff:'Facile',alimenti:['pollo','limone','aglio','origano','olive kalamata','capperi','olio EVO'],desc:'Il pollo avgolemono semplificato. Acidita del limone e origano greco sono una combo imbattibile.',ingredienti:['250g cosce di pollo senza pelle','Succo e scorza di 2 limoni','4 spicchi aglio schiacciati','Origano secco abbondante','30g olive kalamata','1 cucchiaio capperi','2 cucchiai olio EVO','Sale, pepe nero'],steps:['Marina il pollo con limone, aglio, origano, olio e pepe per 20 min.','Cuoci in padella 6 min per lato a fuoco medio-alto.','Aggiungi olive e capperi. Cuoci 3 min.','Versa la marinata rimasta e cuoci 2 min.','Servi con il sughetto e verdure grigliate.']},
+  {id:'nz18',name:'Riso al Forno con Carne e Patate',ico:'🍚',tags:['cena','massa','meal-prep'],time:'50 min',kcal:520,p:36,c:56,g:14,diff:'Facile',alimenti:['riso','manzo macinato','patate','cipolla','pomodori','prezzemolo','parmigiano'],desc:'Piatto unico da forno: riso, proteine e verdure in una teglia sola.',ingredienti:['150g riso parboiled','200g manzo macinato magro','150g patate a fette sottili','1/2 cipolla tritata','200g passata di pomodoro','Brodo di carne 300ml','Prezzemolo','20g parmigiano','Olio EVO'],steps:['Preriscalda forno a 180 gradi. Ungi una teglia da forno.','Rosola la cipolla e il macinato in olio 5 min.','Stendi le fettine di patate sul fondo della teglia.','Aggiungi riso crudo, macinato, passata e brodo. Mescola.','Copri con stagnola e cuoci 35 min. Togli la stagnola, aggiungi parmigiano, cuoci 10 min.']},
+  {id:'nz19',name:'Hamburger di Pollo Croccante Fit',ico:'🍔',tags:['cena','pranzo','massa'],time:'25 min',kcal:430,p:40,c:32,g:14,diff:'Facile',alimenti:['petto di pollo','pangrattato','parmigiano','uova','aglio','pane integrale','lattuga','pomodoro'],desc:'Il burger di pollo croccante fatto in casa: impanatura leggera al forno, niente friggitrice.',ingredienti:['200g petto di pollo schiacciato a 1cm','Impanatura: pangrattato integrale + parmigiano + paprika + aglio polvere','1 uovo sbattuto','2 panini integrali','Lattuga, pomodoro, cipolla rossa','Salsa: yogurt greco + senape + limone'],steps:['Passa il pollo nell uovo, poi nella miscela di impanatura.','Disponi su teglia con carta forno. Spruzza con olio.','Cuoci a 210 gradi per 18-20 min girando a meta.','Prepara la salsa mescolando yogurt, senape e limone.','Assembla il burger con il pollo croccante e le verdure.']},
+  {id:'nz20',name:'Pasta Fredda al Pesto di Rucola',ico:'🍝',tags:['pranzo','definizione','meal-prep'],time:'20 min',kcal:440,p:22,c:54,g:14,diff:'Facile',alimenti:['pasta integrale','rucola','mandorle','parmigiano','aglio','limone','tonno','pomodorini'],desc:'Il pesto di rucola e piu amaro del basilico: si sposa perfettamente con il tonno.',ingredienti:['90g pasta integrale','Pesto: 40g rucola + 20g mandorle + 20g parmigiano + 2 cucchiai olio EVO + aglio + limone','100g tonno al naturale','80g pomodorini','Sale'],steps:['Cuoci la pasta al dente. Scola e raffredda in acqua fredda.','Frulla rucola, mandorle, parmigiano, olio, aglio e limone a pesto.','Condisci la pasta fredda con il pesto.','Aggiungi il tonno sbriciolato e i pomodorini.','Regola di sale. Ottima anche il giorno dopo.']},
+  {id:'nz21',name:'Sformato di Verdure e Quinoa',ico:'🫙',tags:['cena','veg','meal-prep'],time:'40 min',kcal:310,p:16,c:38,g:10,diff:'Media',alimenti:['quinoa','zucchine','peperoni','uova','parmigiano','origano'],desc:'Versione alta-proteina del flan di verdure. Si taglia a fette: perfetto per il meal prep.',ingredienti:['100g quinoa cotta','2 zucchine grattugiate','1 peperone arrostito a cubetti','3 uova','30g parmigiano','Origano secco','Aglio in polvere','Sale, pepe','Olio per la teglia'],steps:['Preriscalda forno a 180 gradi. Ungi una teglia da plumcake.','Strizza bene le zucchine grattugiate per togliere l acqua.','Mescola quinoa, zucchine, peperone, uova, parmigiano e spezie.','Versa nella teglia. Livella bene.','Cuoci 30-35 min finche solido e dorato. Raffredda prima di tagliare.']},
+  {id:'nz22',name:'Insalata di Lenticchie e Salmone',ico:'🥗',tags:['pranzo','definizione'],time:'20 min',kcal:400,p:36,c:32,g:12,diff:'Facile',alimenti:['lenticchie verdi','salmone','cetriolo','cipolla rossa','prezzemolo','limone','senape','olio EVO'],desc:'Due fonti di proteine in una sola insalata. Le lenticchie verdi si mantengono croccanti.',ingredienti:['150g lenticchie verdi cotte','150g salmone cotto (al vapore o al forno)','1/2 cetriolo','1/4 cipolla rossa','Prezzemolo fresco abbondante','Dressing: olio EVO + limone + senape + sale'],steps:['Assicurati che le lenticchie siano ben scolate e fredde.','Taglia cetriolo e cipolla. Mescola con le lenticchie.','Aggiungi il salmone sbriciolato.','Prepara il dressing emulsionando olio, limone e senape.','Condisci e aggiungi prezzemolo. Meglio riposato 10 min.']},
+  {id:'nz23',name:'Carne alla Pizzaiola Fit',ico:'🍅',tags:['cena','massa'],time:'20 min',kcal:360,p:44,c:12,g:12,diff:'Facile',alimenti:['fettine di manzo','passata di pomodoro','aglio','origano','olive','capperi'],desc:'Cinque ingredienti, venti minuti. La pizzaiola e il pasto del martedi sera perfetto.',ingredienti:['250g fettine di manzo magre','200g passata di pomodoro','3 spicchi aglio','Origano secco abbondante','20g olive nere','1 cucchiaio capperi','Olio EVO','Sale, pepe'],steps:['Scalda un filo di olio in padella. Rosola le fettine 2 min per lato. Metti da parte.','Soffriggi aglio nello stesso olio 1 min.','Aggiungi passata, origano, olive e capperi. Cuoci 8 min.','Rimetti la carne nel sugo. Cuoci 3 min.','Regola di sale. Servi con il sugo abbondante.']},
+  {id:'nz24',name:'Shakshuka Verde con Feta',ico:'🥬',tags:['colazione','cena','veg'],time:'20 min',kcal:280,p:20,c:12,g:16,diff:'Facile',alimenti:['uova','spinaci','zucchine','peperoni verdi','feta','aglio','cumino'],desc:'La versione verde della shakshuka: senza pomodoro, piu leggera e altrettanto soddisfacente.',ingredienti:['4 uova','200g spinaci freschi','1 zucchina a cubetti','1 peperone verde a cubetti','60g feta sbriciolata','3 spicchi aglio','Cumino 1 cucchiaino','Peperoncino','Olio EVO'],steps:['Soffriggi aglio e peperoncino in olio 1 min.','Aggiungi zucchina e peperone. Cuoci 4 min.','Aggiungi spinaci. Cuoci 2 min finche appassiti.','Crea fossette e rompi le uova. Copri con coperchio.','Cuoci 5-6 min. Aggiungi feta sopra. Servi subito.']},
+  {id:'nz25',name:'Sushi Bowl con Tonno Marinato',ico:'🍣',tags:['pranzo','definizione'],time:'15 min',kcal:440,p:34,c:46,g:10,diff:'Facile',alimenti:['riso sushi','tonno fresco','avocado','edamame','sesamo','salsa di soia','aceto di riso'],desc:'Il sushi bowl e il sushi democratico: tutti i sapori, senza la tecnica del rotolino.',ingredienti:['120g riso sushi cotto con aceto di riso','150g tonno sushi-grade a cubetti','1/2 avocado','40g edamame cotti','Sesamo nero','Salsa: soia + olio sesamo + miele + wasabi (opzionale)','Cipollotto e alga nori'],steps:['Prepara il riso sushi: cuoci e condisci con aceto di riso, zucchero e sale.','Marina il tonno nella salsa 10 min.','Dividi il riso in 2 bowl.','Disponi tonno, avocado ed edamame in sezioni.','Guarnisci con sesamo, cipollotto e striscioline di nori.']},
+  {id:'nz26',name:'Frittelle di Avena e Mela',ico:'🥞',tags:['colazione','spuntino'],time:'15 min',kcal:260,p:12,c:36,g:7,diff:'Facilissimo',alimenti:['avena','mele','uova','yogurt greco','cannella','miele'],desc:'Frittelle soffici senza farina. La mela grattugiata le rende umide e dolci naturalmente.',ingredienti:['80g fiocchi avena frullati','1 mela grattugiata (con la buccia)','2 uova','50g yogurt greco','1 cucchiaino cannella','1 cucchiaino lievito','Miele per servire'],steps:['Mescola avena frullata, uova, yogurt, mela grattugiata, cannella e lievito.','Lascia riposare 2 min: il composto si addensa.','Scalda padella antiaderente a fuoco medio-basso con velo di olio.','Versa cucchiaiate di impasto. Cuoci 2 min per lato.','Servi con un filo di miele.']},
+  {id:'nz27',name:'Minestra di Farro e Verdure Estive',ico:'🥣',tags:['pranzo','cena','veg','meal-prep'],time:'30 min',kcal:320,p:12,c:52,g:6,diff:'Facile',alimenti:['farro','pomodori','zucchine','fagiolini','basilico','aglio','olio EVO'],desc:'La minestra fredda estiva: ottima calda e ancora migliore il giorno dopo a temperatura ambiente.',ingredienti:['100g farro perlato','200g pomodori maturi a cubetti','1 zucchina a cubetti','80g fagiolini','2 spicchi aglio','Basilico fresco abbondante','Brodo vegetale 600ml','Olio EVO','Sale'],steps:['Porta il brodo a bollore con aglio.','Aggiungi il farro. Cuoci 15 min.','Aggiungi fagiolini e cuoci 5 min.','Aggiungi zucchine e pomodori. Cuoci 8 min.','Spegni. Aggiungi basilico abbondante e olio a crudo.']},
+  {id:'nz28',name:'Cous Cous di Cavolfiore con Gamberi',ico:'🍤',tags:['cena','definizione'],time:'20 min',kcal:280,p:30,c:18,g:8,diff:'Facile',alimenti:['cavolfiore','gamberoni','pomodorini','aglio','prezzemolo','limone','curcuma'],desc:'Il cavolfiore tritato diventa couscous: metà delle calorie, stessa soddisfazione.',ingredienti:['400g cavolfiore','150g gamberoni','100g pomodorini','3 spicchi aglio','Prezzemolo abbondante','Succo di limone','Curcuma 1 cucchiaino','Olio EVO','Sale'],steps:['Trita il cavolfiore nel robot fino a ottenere granuli simili al couscous.','Rosola in padella con olio e curcuma 5 min. Metti da parte.','Nella stessa padella cuoci aglio 1 min, aggiungi gamberoni 2 min per lato.','Aggiungi pomodorini e cuoci 2 min.','Combina cavolfiore e gamberi. Prezzemolo e limone. Servi subito.']},
+  {id:'nz29',name:'Omelette Soufflé Proteica',ico:'🥚',tags:['colazione','cena','rapido','definizione'],time:'10 min',kcal:250,p:26,c:4,g:14,diff:'Media',alimenti:['uova','albumi','ricotta','erba cipollina','salmone affumicato'],desc:'La versione soufflee dell omelette: albumi montati = volume doppio, macro identici.',ingredienti:['2 uova intere','3 albumi','2 cucchiai ricotta magra','60g salmone affumicato','Erba cipollina','Sale, pepe bianco'],steps:['Separa tuorli e albumi. Monta gli albumi a neve ferma con un pizzico di sale.','Mescola tuorli con ricotta, sale e pepe.','Incorpora gli albumi montati ai tuorli con movimenti delicati dal basso verso l alto.','Versa in padella antiaderente calda. Cuoci 2 min coperchia.','Aggiungi salmone ed erba cipollina. Piega a meta e servi subito.']},
+  {id:'nz30',name:'Zuppa di Pollo e Orzo Terapeutica',ico:'🍲',tags:['cena','massa','meal-prep'],time:'35 min',kcal:380,p:36,c:38,g:8,diff:'Facile',alimenti:['pollo','orzo','carote','sedano','cipolla','aglio','rosmarino','brodo di pollo'],desc:'La zuppa che guarisce tutto. Il brodo di pollo con orzo e la versione fitness della chicken soup.',ingredienti:['200g petto di pollo sfilacciato','80g orzo perlato','2 carote a rondelle','2 gambi sedano','1 cipolla','3 spicchi aglio','Rosmarino e alloro','Brodo di pollo 800ml','Olio EVO','Sale, pepe','Prezzemolo'],steps:['Soffriggi cipolla, sedano e aglio in olio 4 min.','Aggiungi carote, rosmarino e alloro. Cuoci 3 min.','Versa il brodo e porta a bollore.','Aggiungi orzo e cuoci 20 min.','Aggiungi il pollo sfilacciato. Regola di sale. Prezzemolo abbondante.']},
 ];
 
 let ricetteFilter='all';
+let ricetteIngFiltri=[];
+let ricetteSearchQ='';
+
+window.ricettaSearch = function(){
+  var inp = document.getElementById('ricette-search');
+  ricetteSearchQ = inp ? inp.value.toLowerCase().trim() : '';
+  renderRicette();
+};
+
 var RICETTE_CATS=[
   {id:'all',label:'Tutte'},
   {id:'massa',label:'💪 Massa'},
@@ -14155,52 +14490,164 @@ var RICETTE_CATS=[
   {id:'meal-prep',label:'📦 Meal Prep'},
 ];
 
+var RICETTE_ALIMENTI=[
+  /* ── PROTEINE ANIMALI ── */
+  {id:'pollo',label:'🍗 Pollo'},
+  {id:'manzo',label:'🥩 Manzo'},
+  {id:'tacchino',label:'🦃 Tacchino'},
+  {id:'salmone',label:'🐟 Salmone'},
+  {id:'tonno',label:'🐡 Tonno'},
+  {id:'gamberoni',label:'🍤 Gamberoni'},
+  {id:'uova',label:'🥚 Uova'},
+  {id:'polpo',label:'🐙 Polpo'},
+  {id:'merluzzo',label:'🐠 Merluzzo'},
+  {id:'prosciutto',label:'🥓 Prosciutto'},
+  {id:'bacon',label:'🥓 Bacon'},
+  /* ── LATTICINI ── */
+  {id:'yogurt greco',label:'🫙 Yogurt Greco'},
+  {id:'ricotta',label:'🧀 Ricotta'},
+  {id:'cottage cheese',label:'🧀 Cottage'},
+  {id:'parmigiano',label:'🧀 Parmigiano'},
+  {id:'feta',label:'🧀 Feta'},
+  {id:'latte',label:'🥛 Latte'},
+  /* ── PROTEINE VEGETALI ── */
+  {id:'tofu',label:'🟨 Tofu'},
+  {id:'tempeh',label:'🟤 Tempeh'},
+  {id:'ceci',label:'🫘 Ceci'},
+  {id:'lenticchie',label:'🫘 Lenticchie'},
+  {id:'fagioli',label:'🫘 Fagioli'},
+  {id:'edamame',label:'🫘 Edamame'},
+  {id:'whey',label:'🥛 Whey'},
+  /* ── CEREALI & CARBOIDRATI ── */
+  {id:'avena',label:'🌾 Avena'},
+  {id:'riso',label:'🍚 Riso'},
+  {id:'pasta integrale',label:'🍝 Pasta'},
+  {id:'pasta',label:'🍝 Pasta Bianc.'},
+  {id:'quinoa',label:'🌿 Quinoa'},
+  {id:'pane integrale',label:'🍞 Pane Integrale'},
+  {id:'patate',label:'🥔 Patate'},
+  {id:'patate dolci',label:'🍠 Patate Dolci'},
+  {id:'tortilla',label:'🫓 Tortilla'},
+  /* ── GRASSI & CONDIMENTI ── */
+  {id:'avocado',label:'🥑 Avocado'},
+  {id:'burro di arachidi',label:'🥜 Burro Arachidi'},
+  {id:'mandorle',label:'🌰 Mandorle'},
+  {id:'tahini',label:'🫙 Tahini'},
+  {id:'olio evo',label:'🫒 Olio EVO'},
+  {id:'sesamo',label:'🌱 Sesamo'},
+  /* ── FRUTTA & VERDURA ── */
+  {id:'banana',label:'🍌 Banana'},
+  {id:'mirtilli',label:'🫐 Mirtilli'},
+  {id:'fragole',label:'🍓 Fragole'},
+  {id:'spinaci',label:'🥬 Spinaci'},
+  {id:'broccoli',label:'🥦 Broccoli'},
+  {id:'zucchine',label:'🥒 Zucchine'},
+  {id:'peperoni',label:'🫑 Peperoni'},
+  {id:'pomodori',label:'🍅 Pomodori'},
+  {id:'cetriolo',label:'🥒 Cetriolo'},
+  {id:'carote',label:'🥕 Carote'},
+  {id:'mela',label:'🍎 Mela'},
+];
+
+function _ricettaMatchFiltri(r){
+  // Filtro per nome
+  if(ricetteSearchQ && !(r.name||'').toLowerCase().includes(ricetteSearchQ)) return false;
+  // Filtro per categoria
+  if(ricetteFilter!=='all' && !r.tags.includes(ricetteFilter)) return false;
+  // Filtro per ingredienti: cerca in alimenti[], ingredienti[], steps e desc
+  if(ricetteIngFiltri.length===0) return true;
+  var haystack=(
+    (r.alimenti||[]).join(' ')+' '+
+    (r.ingredienti||[]).join(' ')+' '+
+    (typeof r.steps==='string'?r.steps:(r.steps||[]).join(' '))+' '+
+    (r.desc||'')+' '+
+    (r.ing||[]).join(' ')
+  ).toLowerCase();
+  // partial match: "pollo" matcha anche "petto di pollo grigliato"
+  return ricetteIngFiltri.every(function(ing){
+    return haystack.indexOf(ing.toLowerCase())>=0;
+  });
+}
+
 function renderRicette(){
   const froot=document.getElementById('ricette-filters');
-  if(froot) froot.innerHTML=RICETTE_CATS.map(c=>`<button class="rf-chip${c.id===ricetteFilter?' on':''}" onclick="setRicetteFilter('${c.id}',this)">${c.label}</button>`).join('');
+  if(froot) froot.innerHTML=RICETTE_CATS.map(function(c){ var cid=c.id; return '<button class="rf-chip'+(cid===ricetteFilter?' on':'')+'" onclick="setRicetteFilter(\''+cid+'\',this)">'+c.label+'</button>'; }).join('');
+
+  const fing=document.getElementById('ricette-ing-filters');
+  if(fing){
+    const open=fing.getAttribute('data-open')==='1';
+    const ingBtns=RICETTE_ALIMENTI.map(function(a){
+      const sel=ricetteIngFiltri.indexOf(a.id)>=0;
+      return '<button onclick="toggleIngFiltro(\''+a.id+'\')" style="padding:5px 10px;border-radius:99px;font-size:12px;font-family:\'Syne\',sans-serif;font-weight:700;cursor:pointer;border:1.5px solid '+(sel?'var(--acc)':'var(--border2)')+';background:'+(sel?'rgba(200,245,60,.15)':'var(--bg3)')+';color:'+(sel?'var(--acc)':'var(--text2)')+'">'+a.label+'</button>';
+    }).join('');
+    fing.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(open?'8px':'0')+'">'
+      +'<button onclick="toggleIngFiltriPanel()" style="display:flex;align-items:center;gap:6px;background:'+(ricetteIngFiltri.length?'rgba(200,245,60,.15)':'var(--bg3)')+';border:1.5px solid '+(ricetteIngFiltri.length?'var(--acc)':'var(--border2)')+';color:'+(ricetteIngFiltri.length?'var(--acc)':'var(--text2)')+';padding:6px 12px;border-radius:99px;font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">'
+      +'🥦 Filtra per ingrediente'+(ricetteIngFiltri.length?' ('+ricetteIngFiltri.length+')':'')+'<span style="font-size:10px">'+(open?'▲':'▼')+'</span></button>'
+      +(ricetteIngFiltri.length?'<button onclick="clearIngFiltri()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:\'Syne\',sans-serif;">✕ Cancella</button>':'')
+      +'</div>'
+      +(open?'<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 8px;">'+ingBtns+'</div>':'');
+  }
+
   const list=document.getElementById('ricette-list');
   if(!list) return;
-  const filtered=ricetteFilter==='all'?RICETTE:RICETTE.filter(r=>r.tags.includes(ricetteFilter));
-  if(!filtered.length){list.innerHTML=`<div style="padding:32px;text-align:center;color:var(--text2)">Nessuna ricetta per questa categoria.</div>`;return;}
-  list.innerHTML=filtered.map((r,i)=>{
-    const tagBadges=r.tags.map(t=>{
-      const cat=RICETTE_CATS.find(c=>c.id===t);
-      return cat&&cat.id!=='all'?`<span class="recipe-tag" style="background:var(--acc3);color:var(--acc)">${cat.label||t}</span>`:'';
+  const filtered=RICETTE.filter(_ricettaMatchFiltri);
+  if(!filtered.length){
+    list.innerHTML='<div style="padding:32px;text-align:center;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔍</div>Nessuna ricetta con questi filtri.<br><button onclick="clearIngFiltri();setRicetteFilter(\'all\',document.querySelector(\'.rf-chip\'))" style="margin-top:12px;padding:8px 16px;background:var(--acc3);color:var(--acc);border:none;border-radius:99px;font-family:\'Syne\',sans-serif;font-weight:700;cursor:pointer;">Rimuovi filtri</button></div>';
+    return;
+  }
+  list.innerHTML=filtered.map(function(r,i){
+    const tagBadges=r.tags.map(function(t){
+      const cat=RICETTE_CATS.find(function(c){ return c.id===t; });
+      return cat&&cat.id!=='all'?'<span class="recipe-tag" style="background:var(--acc3);color:var(--acc)">'+cat.label+'</span>':'';
     }).join('');
-    return`<div class="recipe-card">
-      <div class="recipe-head" onclick="toggleRecipe('rc${i}',this)">
-        <div class="recipe-ico">${r.ico}</div>
-        <div class="recipe-info">
-          <div class="recipe-name">${r.name}</div>
-          <div class="recipe-tags">${tagBadges}<span class="recipe-tag" style="background:var(--bg4);color:var(--text2)">⏱ ${r.time}</span><span class="recipe-tag" style="background:var(--bg4);color:var(--text2)">${r.diff}</span></div>
-          <div class="recipe-desc">${r.desc}</div>
-        </div>
-      </div>
-      <div class="recipe-macros">
-        <div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--acc)">${r.kcal}</div><div class="recipe-macro-lbl">kcal</div></div>
-        <div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--green)">${r.p}g</div><div class="recipe-macro-lbl">proteine</div></div>
-        <div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--blue)">${r.c}g</div><div class="recipe-macro-lbl">carbs</div></div>
-        <div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--orange)">${r.g}g</div><div class="recipe-macro-lbl">grassi</div></div>
-      </div>
-      <div class="recipe-body" id="rc${i}">
-        <div class="recipe-ingredients">
-          <div class="ri-title">Ingredienti</div>
-          ${r.ingredienti.map(ing=>`<div class="ri-item"><div class="ri-dot"></div>${ing}</div>`).join('')}
-        </div>
-        <div class="recipe-steps">
-          <div class="ri-title" style="margin-top:12px">Preparazione</div>
-          ${r.steps.map((s,si)=>`<div class="rs-step"><div class="rs-num">${si+1}</div><div class="rs-txt">${s}</div></div>`).join('')}
-        </div>
-        <button style="margin-top:12px;width:100%;padding:11px;background:var(--green-d);color:var(--green);border:1px solid rgba(62,223,138,.2);border-radius:var(--r);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer" onclick="addRecipeToNutr('${r.id}')">+ Aggiungi ai pasti di oggi</button>
-      </div>
-    </div>`;
+    const ingMatch=(r.alimenti||[]).filter(function(a){ return ricetteIngFiltri.indexOf(a)>=0; }).map(function(a){ return '<span class="recipe-tag" style="background:rgba(200,245,60,.18);color:var(--acc);border:1px solid var(--acc)">'+a+'</span>'; }).join('');
+    return '<div class="recipe-card">'
+      +'<div class="recipe-head" onclick="toggleRecipe(\'rc'+i+'\',this)">'
+        +'<div class="recipe-ico">'+r.ico+'</div>'
+        +'<div class="recipe-info">'
+          +'<div class="recipe-name">'+r.name+'</div>'
+          +'<div class="recipe-tags">'+tagBadges+ingMatch+'<span class="recipe-tag" style="background:var(--bg4);color:var(--text2)">⏱ '+r.time+'</span><span class="recipe-tag" style="background:var(--bg4);color:var(--text2)">'+r.diff+'</span></div>'
+          +'<div class="recipe-desc">'+r.desc+'</div>'
+        +'</div>'
+      +'</div>'
+      +'<div class="recipe-macros">'
+        +'<div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--acc)">'+r.kcal+'</div><div class="recipe-macro-lbl">kcal</div></div>'
+        +'<div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--green)">'+r.p+'g</div><div class="recipe-macro-lbl">proteine</div></div>'
+        +'<div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--blue)">'+r.c+'g</div><div class="recipe-macro-lbl">carbs</div></div>'
+        +'<div class="recipe-macro"><div class="recipe-macro-val" style="color:var(--orange)">'+r.g+'g</div><div class="recipe-macro-lbl">grassi</div></div>'
+      +'</div>'
+      +'<div class="recipe-body" id="rc'+i+'">'
+        +'<div class="recipe-ingredients"><div class="ri-title">Ingredienti</div>'+r.ingredienti.map(function(ing){ return '<div class="ri-item"><div class="ri-dot"></div>'+ing+'</div>'; }).join('')+'</div>'
+        +'<div class="recipe-steps"><div class="ri-title" style="margin-top:12px">Preparazione</div>'+r.steps.map(function(s,si){ return '<div class="rs-step"><div class="rs-num">'+(si+1)+'</div><div class="rs-txt">'+s+'</div></div>'; }).join('')+'</div>'
+        +'<button style="margin-top:12px;width:100%;padding:11px;background:var(--green-d);color:var(--green);border:1px solid rgba(62,223,138,.2);border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;cursor:pointer" onclick="addRecipeToNutr(\''+r.id+'\')">+ Aggiungi ai pasti di oggi</button>'
+      +'</div>'
+    +'</div>';
   }).join('');
+}
+
+function toggleIngFiltriPanel(){
+  const fing=document.getElementById('ricette-ing-filters');
+  if(!fing) return;
+  fing.setAttribute('data-open', fing.getAttribute('data-open')==='1'?'0':'1');
+  renderRicette();
+}
+
+function toggleIngFiltro(id){
+  const idx=ricetteIngFiltri.indexOf(id);
+  if(idx>=0) ricetteIngFiltri.splice(idx,1);
+  else ricetteIngFiltri.push(id);
+  renderRicette();
+}
+
+function clearIngFiltri(){
+  ricetteIngFiltri=[];
+  renderRicette();
 }
 
 function setRicetteFilter(f,btn){
   ricetteFilter=f;
-  document.querySelectorAll('.rf-chip').forEach(c=>c.classList.remove('on'));
-  btn.classList.add('on');
+  document.querySelectorAll('.rf-chip').forEach(function(c){ c.classList.remove('on'); });
+  if(btn) btn.classList.add('on');
   renderRicette();
 }
 
@@ -30041,7 +30488,7 @@ function v43RenderEsercizi() {
   var froot = document.getElementById('lib-filters');
   if (froot) {
     froot.innerHTML = ALL_M.map(function(f) {
-      return '<button class="f-chip' + (f===activeFilter?' on':'') + '" onclick="window._v43SetFilter(''+f+'',this)">'+LBLS[f]+'</button>';
+      return '<button class="f-chip' + (f===activeFilter?' on':'') + '" onclick="window._v43SetFilter(\''+f+'\',this)">'+LBLS[f]+'</button>';
     }).join('');
   }
 
@@ -30091,7 +30538,7 @@ function v43RenderEsercizi() {
     var fundamentalBadge = e.fundamental
       ? '<span style="font-size:9px;font-weight:800;background:var(--acc3);color:var(--acc);border-radius:99px;padding:2px 6px;margin-left:6px;">★</span>'
       : '';
-    return '<div class="lib-card" onclick="openExDetail(''+e.id+'')">'
+    return '<div class="lib-card" onclick="openExDetail(\''+e.id+'\')">'
       + '<div class="lib-card-ico">' + (e.icon||'🏋️') + '</div>'
       + '<div style="flex:1;min-width:0;">'
         + '<div class="lib-card-nm">' + e.name + fundamentalBadge + '</div>'
@@ -30448,7 +30895,8 @@ if (window.GoogleSync.isConfigured()) {
 
   // SVG icone provider
   var GOOGLE_SVG = '<svg width="20" height="20" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-  var APPLE_SVG  = '<svg width="20" height="20" viewBox="0 0 814 1000" fill="currentColor" style="flex-shrink:0"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.8-155.5-127.4C46 790.2 0 665.7 0 542.3c0-190.2 124.5-290.7 247.2-290.7 66.5 0 121.8 43.4 163.4 43.4 39.5 0 101.9-46.1 176.2-46.1 28.4 0 130.9 2.6 198.3 99zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/></svg>';
+  var APPLE_SVG  = ''; // Apple rimosso
+
 
   // SVG icone azioni (upload / download / x)
   var UPLOAD_ICO = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>';
@@ -30482,8 +30930,7 @@ if (window.GoogleSync.isConfigured()) {
       // Pulsanti login social nel profilo (non loggato)
       '.ft-acc-btn-google{background:#fff;color:#3c4043;border:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.3);}',
       '.ft-acc-btn-google:hover{background:#f8f8f8;}',
-      '.ft-acc-btn-apple{background:#000;color:#fff;border:1px solid rgba(255,255,255,0.1)!important;}',
-      '.ft-acc-btn-apple:hover{background:#111;}',
+
     ].join('');
     document.head.appendChild(st);
   }
@@ -30558,10 +31005,7 @@ if (window.GoogleSync.isConfigured()) {
               '<button class="ft-acc-btn ft-acc-btn-google" onclick="localStorage.removeItem(\'ft_skip_google\'); if(typeof firebaseSignIn===\'function\'){ firebaseSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); } else { location.reload(); }">' +
                 GOOGLE_SVG + 'Accedi con Google' +
               '</button>' +
-              '<button class="ft-acc-btn ft-acc-btn-apple" onclick="if(typeof firebaseAppleSignIn===\'function\'){ firebaseAppleSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); }">' +
-                APPLE_SVG + 'Accedi con Apple' +
-              '</button>' +
-            '</div>' +
+                          '</div>' +
           '</div>' +
           '<div style="height:14px;"></div>' +
         '</div>';
@@ -32594,10 +33038,7 @@ console.log('[PWA] SW skip - standalone HTML file');
     }, 800);
   };
 
-  /* firebaseAppleSignIn — Apple locale */
-  window.firebaseAppleSignIn = function() {
-    window.firebaseSignIn();
-  };
+
 
   /* firebaseResetPassword */
   window.firebaseResetPassword = function() {
@@ -33838,10 +34279,11 @@ window.ftLogoutAndGoLogin = function() {
     var user = getAccountProvider();
 
     var GOOGLE_SVG = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
-    var APPLE_SVG  = '<svg width="18" height="18" viewBox="0 0 814 1000" fill="#fff" style="flex-shrink:0"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.8-155.5-127.4C46 790.2 0 665.7 0 542.3c0-190.2 124.5-290.7 247.2-290.7 66.5 0 121.8 43.4 163.4 43.4 39.5 0 101.9-46.1 176.2-46.1 28.4 0 130.9 2.6 198.3 99zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/></svg>';
+    var APPLE_SVG  = ''; // Apple rimosso
 
-    var isApple = user && (user.provider === 'apple' || user.providerData?.some?.(function(p){ return p.providerId === 'apple.com'; }));
-    var isGoogle = user && !isApple;
+
+    var isApple = false;
+    var isGoogle = !!user;
 
     var html = '<div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;padding:0 2px;">🔗 Account collegato</div>';
 
@@ -33886,7 +34328,7 @@ window.ftLogoutAndGoLogin = function() {
         '<div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Collega Google o Apple per sincronizzare i dati tra dispositivi e salvarli nel cloud.</div>' +
         '<div style="display:flex;flex-direction:column;gap:8px;">' +
           '<button onclick="localStorage.removeItem(\'ft_skip_google\'); if(typeof firebaseSignIn===\'function\'){ firebaseSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); } else { location.reload(); }" style="width:100%;padding:12px 16px;background:#fff;color:#3c4043;border:none;border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">' + GOOGLE_SVG + 'Accedi con Google</button>' +
-          '<button onclick="if(typeof firebaseAppleSignIn===\'function\'){ firebaseAppleSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); }" style="width:100%;padding:12px 16px;background:#000;color:#fff;border:1px solid rgba(255,255,255,0.1);border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;">' + APPLE_SVG + 'Accedi con Apple</button>' +
+          
         '</div>' +
       '</div>';
     }
