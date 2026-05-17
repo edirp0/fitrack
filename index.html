@@ -3386,6 +3386,11 @@ input:focus, textarea:focus, select:focus {
   onAuthStateChanged(auth, function(user) {
     if (user) {
       console.log('[Firestore] Auth OK -', user.displayName);
+      // Se appena resettato, non ricaricare dal cloud — mostra onboarding
+      if (localStorage.getItem('ft_just_reset') === '1') {
+        console.log('[Firestore] Reset in corso — skip cloud load');
+        return;
+      }
       // Load data on login (con piccolo delay per dare tempo all'app di inizializzare)
       setTimeout(function() {
         window.firestoreLoad().then(function(loaded) {
@@ -3602,6 +3607,18 @@ input:focus, textarea:focus, select:focus {
       };
       localStorage.setItem('ft_firebase_user', JSON.stringify(userData));
       localStorage.setItem('ft_google_user', JSON.stringify(userData));
+      // Se appena resettato: rimuovi il flag, nascondi login, mostra onboarding dall'inizio
+      if (localStorage.getItem('ft_just_reset') === '1') {
+        localStorage.removeItem('ft_just_reset');
+        console.log('[Reset] Utente autenticato dopo reset — avvio onboarding');
+        const loginScreen = document.getElementById('scr-google-login');
+        if (loginScreen) loginScreen.classList.remove('active');
+        const appScreen = document.getElementById('scr-app');
+        if (appScreen) appScreen.classList.remove('active');
+        const onboardScreen = document.getElementById('scr-onboard');
+        if (onboardScreen) onboardScreen.classList.add('active');
+        return; // blocca tutto il resto (no ftEnterApp, no firestoreLoad)
+      }
       const loginScreen = document.getElementById('scr-google-login');
       if (loginScreen) loginScreen.classList.remove('active');
       if (!document.getElementById('scr-app')?.classList.contains('active')) {
@@ -14692,14 +14709,17 @@ async function _doReset(){
     }
   }catch(e){}
 
-  // 6. Sign out da Firebase così dopo il reload parte dalla schermata di login → onboarding
+  // 6. Imposta flag "just reset" che sopravvive al reload e blocca il ricarico cloud
+  try{ localStorage.setItem('ft_just_reset','1'); }catch(e){}
+
+  // 7. Sign out da Firebase così dopo il reload parte dalla schermata di login → onboarding
   try{
     if(typeof firebaseSignOut==='function') await firebaseSignOut();
     else if(typeof signOut==='function'&&typeof auth!=='undefined') await signOut(auth);
   }catch(e){}
 
   showToast('✅ Account resettato — riavvio in corso...');
-  setTimeout(function(){location.reload();},1100);
+  setTimeout(function(){location.reload();},1200);
 }
 
 // ════════════════════════════════════════
@@ -15469,6 +15489,13 @@ async function boot(){
   const wait=Math.max(0,1400-(Date.now()-t));
   setTimeout(()=>{
     document.getElementById('scr-splash').classList.remove('active');
+    // Se appena resettato: il flag ft_just_reset viene consumato da onAuthStateChanged
+    // boot mostra il login Google così l'utente ri-autentica e parte l'onboarding
+    if (localStorage.getItem('ft_just_reset') === '1') {
+      // Nessun dato locale valido dopo reset — mostra login Google
+      document.getElementById('scr-google-login').classList.add('active');
+      return;
+    }
     // Check if user has already logged in with Google
     const googleUser = localStorage.getItem('ft_google_user');
     const skipGoogle = localStorage.getItem('ft_skip_google');
