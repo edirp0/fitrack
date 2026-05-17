@@ -14665,12 +14665,16 @@ async function _doReset(){
     }
   }catch(e){}
 
-  // 3. Svuota localStorage (tutte le chiavi ft_* e v45_*)
+  // 3. Svuota localStorage (tutte le chiavi ft_*, ft3_*, v45_* + chiavi auth)
   try{
     const toRemove=[];
     for(var i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith('ft_')||k.startsWith('ft3_')||k.startsWith('v45_')))toRemove.push(k);}
     toRemove.forEach(function(k){localStorage.removeItem(k);});
-    localStorage.removeItem('ft_google_token'); // blocca auto-save cloud durante reload
+    // Rimuovi esplicitamente tutte le chiavi di autenticazione e sessione
+    // così dopo il reload l'app riparte dalla schermata di login → onboarding completo
+    localStorage.removeItem('ft_google_token');
+    localStorage.removeItem('ft_google_user');
+    localStorage.removeItem('ft_skip_google');
   }catch(e){}
 
   // 4. Cancella dati su Firestore (sovrascrive con profilo vuoto)
@@ -14688,8 +14692,14 @@ async function _doReset(){
     }
   }catch(e){}
 
-  showToast('✅ Tutti i dati eliminati — anche dal cloud');
-  setTimeout(function(){location.reload();},900);
+  // 6. Sign out da Firebase così dopo il reload parte dalla schermata di login → onboarding
+  try{
+    if(typeof firebaseSignOut==='function') await firebaseSignOut();
+    else if(typeof signOut==='function'&&typeof auth!=='undefined') await signOut(auth);
+  }catch(e){}
+
+  showToast('✅ Account resettato — riavvio in corso...');
+  setTimeout(function(){location.reload();},1100);
 }
 
 // ════════════════════════════════════════
