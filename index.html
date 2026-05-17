@@ -11008,6 +11008,15 @@ async function finishOnboard() {
 
   await saveAll();
 
+  // ── Salva subito sul cloud (nuovo utente — priorità massima) ──
+  try {
+    if (typeof window.firestoreSave === 'function' && window._firebaseUser) {
+      await window.firestoreSave();
+    } else if (window.GoogleSync && window.GoogleSync.isConfigured()) {
+      window.GoogleSync.save().catch(function(){});
+    }
+  } catch(e) {}
+
   // ── Launch the app ──
   document.getElementById('scr-onboard').classList.remove('active');
   document.getElementById('scr-splash').classList.remove('active');
@@ -15347,11 +15356,94 @@ async function boot(){
 }
 
 /* ── Google Login Flow ── */
-function ftEnterApp() {
-  if(profile.name){
+async function ftEnterApp() {
+  // Se i dati locali ci sono già → entra subito
+  if (profile.name) {
     document.getElementById('scr-app').classList.add('active');
     initApp();
+    return;
+  }
+
+  // Nessun dato locale — potrebbe essere un nuovo dispositivo con account già configurato.
+  // Aspetta che Firebase Auth risponda (max 4s) e prova a scaricare dal cloud.
+  const googleUser = localStorage.getItem('ft_google_user');
+  const skipGoogle  = localStorage.getItem('ft_skip_google');
+
+  // Se ha saltato il login Google → onboarding diretto (nessun cloud da caricare)
+  if (skipGoogle && !googleUser) {
+    document.getElementById('scr-onboard').classList.add('active');
+    return;
+  }
+
+  // Mostra schermata di caricamento intermedia (non il login, non l'onboarding)
+  const splash = document.getElementById('scr-splash');
+  if (splash) {
+    splash.classList.add('active');
+    const splashTxt = splash.querySelector('.splash-sub, .splash-txt, p, div:last-child');
+    if (splashTxt) splashTxt.textContent = 'Recupero dati dal cloud…';
+  }
+
+  // Aspetta auth Firebase (max 4 secondi)
+  let cloudLoaded = false;
+  try {
+    cloudLoaded = await new Promise(function(resolve) {
+      var timeout = setTimeout(function() { resolve(false); }, 4000);
+      // Se firestoreLoad è già disponibile e l'utente è loggato, prova subito
+      if (typeof window.firestoreLoad === 'function') {
+        window.firestoreLoad().then(function(ok) {
+          clearTimeout(timeout);
+          resolve(ok);
+        }).catch(function() {
+          clearTimeout(timeout);
+          resolve(false);
+        });
+      } else {
+        // Aspetta onAuthStateChanged tramite evento custom o polling
+        var polls = 0;
+        var poll = setInterval(function() {
+          polls++;
+          if (typeof window.firestoreLoad === 'function') {
+            clearInterval(poll);
+            window.firestoreLoad().then(function(ok) {
+              clearTimeout(timeout);
+              resolve(ok);
+            }).catch(function() {
+              clearTimeout(timeout);
+              resolve(false);
+            });
+          } else if (polls > 35) { // ~3.5s
+            clearInterval(poll);
+            resolve(false);
+          }
+        }, 100);
+      }
+    });
+  } catch(e) { cloudLoaded = false; }
+
+  // Nascondi splash
+  if (splash) splash.classList.remove('active');
+
+  if (cloudLoaded) {
+    // Dati scaricati dal cloud — rileggi il profilo e vai all'app
+    try {
+      const savedProfile = await (typeof dbGet === 'function' ? dbGet('profile') : Promise.resolve(null));
+      if (savedProfile && savedProfile.name) {
+        profile = savedProfile;
+        if (typeof sanitizeRuntimeState === 'function') sanitizeRuntimeState();
+      }
+    } catch(e) {}
+
+    if (profile.name) {
+      // Utente già configurato — vai all'app
+      document.getElementById('scr-app').classList.add('active');
+      initApp();
+      if (typeof showToast === 'function') setTimeout(function(){ showToast('☁️ Dati sincronizzati dal cloud'); }, 800);
+    } else {
+      // Cloud vuoto o nuovo utente — onboarding
+      document.getElementById('scr-onboard').classList.add('active');
+    }
   } else {
+    // Nessun dato cloud raggiungibile — onboarding
     document.getElementById('scr-onboard').classList.add('active');
   }
 }
@@ -31602,22 +31694,31 @@ if (window.GoogleSync.isConfigured()) {
 (function patchSaveAllForGoogleSync() {
   var _origSaveAll = window.saveAll;
   if (typeof _origSaveAll !== 'function') return;
-  // NON usare async — saveAll può essere sia sync che async.
-  // Usiamo una versione che preserva il tipo di ritorno originale.
   window.saveAll = function saveAll() {
     var result;
     try { result = _origSaveAll.apply(this, arguments); } catch(e) { result = undefined; }
-    // Firestore debounce — non blocca il chiamante
     try {
       localStorage.setItem('ft_last_local_save', new Date().toISOString());
-      if (window._firebaseUser && typeof window.firestoreSave === 'function') {
-        clearTimeout(window._fsDebounce);
-        window._fsDebounce = setTimeout(function() {
-          try { window.firestoreSave().catch(function(){}); } catch(e) {}
-        }, 20000);
-      }
+      // Debounce cloud save — 5s dopo l'ultima modifica
+      clearTimeout(window._cloudSaveDebounce);
+      window._cloudSaveDebounce = setTimeout(function() {
+        try {
+          // Priorità 1: Firestore (utente Firebase loggato)
+          if (window._firebaseUser && typeof window.firestoreSave === 'function') {
+            window.firestoreSave().catch(function(){});
+          }
+          // Priorità 2: Google Drive (GoogleSync configurato)
+          else if (window.GoogleSync && typeof window.GoogleSync.save === 'function') {
+            // Solo se l'utente ha già autorizzato (token presente)
+            var cached = null;
+            try { cached = JSON.parse(localStorage.getItem('ft_google_token') || 'null'); } catch(e){}
+            if (cached && cached.t && cached.e && Date.now() < cached.e) {
+              window.GoogleSync.save().catch(function(){});
+            }
+          }
+        } catch(e) {}
+      }, 5000);
     } catch(e) {}
-    // Restituisce sempre quello che restituiva l'originale (Promise o undefined)
     return result;
   };
 })();
