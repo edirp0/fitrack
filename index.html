@@ -14635,7 +14635,7 @@ async function confirmReset(){
       <div style="background:var(--bg2);border:1.5px solid rgba(255,92,106,.3);border-radius:20px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
         <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
         <div style="font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;">Reset completo</div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:24px;">Tutti i dati (allenamenti, nutrizione, progressi) verranno <b>eliminati in modo irreversibile</b>. Non è possibile annullare questa azione.</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:24px;">Tutti i dati (allenamenti, nutrizione, progressi) verranno <b>eliminati in modo irreversibile</b> — <b style="color:var(--red)">anche dal cloud Google</b>. Non è possibile annullare questa azione.</div>
         <div style="display:flex;gap:10px;">
           <button id="_reset-cancel" style="flex:1;padding:13px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;">Annulla</button>
           <button id="_reset-confirm" style="flex:1;padding:13px;background:var(--red);color:#fff;border:none;border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">🗑 Elimina tutto</button>
@@ -14652,16 +14652,44 @@ async function confirmReset(){
 }
 
 async function _doReset(){
-  profile={
-    name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},
-    days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,
-    physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},
-    weeklyWorkoutsTarget:3,weightHistory:[]
-  };
-  sessions=[];nutrition={}; metrics={};pbs={};
-  await saveAll();
-  showToast('✅ Reset completato');
-  setTimeout(()=>location.reload(),800);
+  if(typeof showToast==='function') showToast('🗑 Reset in corso...');
+
+  // 1. Resetta variabili in memoria PRIMA di tutto
+  profile={name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},weeklyWorkoutsTarget:3,weightHistory:[]};
+  sessions=[];nutrition={};metrics={};pbs={};
+
+  // 2. Svuota IndexedDB
+  try{
+    if(typeof dbSet==='function'){
+      await Promise.all([dbSet('profile',profile),dbSet('sessions',[]),dbSet('nutrition',{}),dbSet('metrics',{}),dbSet('pbs',{})]);
+    }
+  }catch(e){}
+
+  // 3. Svuota localStorage (tutte le chiavi ft_* e v45_*)
+  try{
+    const toRemove=[];
+    for(var i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith('ft_')||k.startsWith('ft3_')||k.startsWith('v45_')))toRemove.push(k);}
+    toRemove.forEach(function(k){localStorage.removeItem(k);});
+    localStorage.removeItem('ft_google_token'); // blocca auto-save cloud durante reload
+  }catch(e){}
+
+  // 4. Cancella dati su Firestore (sovrascrive con profilo vuoto)
+  try{
+    if(typeof setDoc==='function'&&typeof doc==='function'&&typeof db!=='undefined'&&typeof auth!=='undefined'&&auth.currentUser){
+      const emptyCloud={profile:profile,sessions:[],nutrition:{},metrics:{},pbs:{},badges:{},settings:{},proStatus:{},updatedAt:new Date().toISOString(),appVersion:'RESET'};
+      await setDoc(doc(db,'users',auth.currentUser.uid,'data','main'),emptyCloud);
+    }
+  }catch(e){console.warn('[Reset] Firestore:',e.message);}
+
+  // 5. Cancella su Google Drive (salva backup vuoto sovrascrivendo)
+  try{
+    if(window.GoogleSync&&typeof window.GoogleSync.save==='function'){
+      await window.GoogleSync.save();
+    }
+  }catch(e){}
+
+  showToast('✅ Tutti i dati eliminati — anche dal cloud');
+  setTimeout(function(){location.reload();},900);
 }
 
 // ════════════════════════════════════════
@@ -14984,6 +15012,94 @@ var RICETTE=[
   {id:'nz28',name:'Cous Cous di Cavolfiore con Gamberi',ico:'🍤',tags:['cena','definizione'],time:'20 min',kcal:280,p:30,c:18,g:8,diff:'Facile',alimenti:['cavolfiore','gamberoni','pomodorini','aglio','prezzemolo','limone','curcuma'],desc:'Il cavolfiore tritato diventa couscous: metà delle calorie, stessa soddisfazione.',ingredienti:['400g cavolfiore','150g gamberoni','100g pomodorini','3 spicchi aglio','Prezzemolo abbondante','Succo di limone','Curcuma 1 cucchiaino','Olio EVO','Sale'],steps:['Trita il cavolfiore nel robot fino a ottenere granuli simili al couscous.','Rosola in padella con olio e curcuma 5 min. Metti da parte.','Nella stessa padella cuoci aglio 1 min, aggiungi gamberoni 2 min per lato.','Aggiungi pomodorini e cuoci 2 min.','Combina cavolfiore e gamberi. Prezzemolo e limone. Servi subito.']},
   {id:'nz29',name:'Omelette Soufflé Proteica',ico:'🥚',tags:['colazione','cena','rapido','definizione'],time:'10 min',kcal:250,p:26,c:4,g:14,diff:'Media',alimenti:['uova','albumi','ricotta','erba cipollina','salmone affumicato'],desc:'La versione soufflee dell omelette: albumi montati = volume doppio, macro identici.',ingredienti:['2 uova intere','3 albumi','2 cucchiai ricotta magra','60g salmone affumicato','Erba cipollina','Sale, pepe bianco'],steps:['Separa tuorli e albumi. Monta gli albumi a neve ferma con un pizzico di sale.','Mescola tuorli con ricotta, sale e pepe.','Incorpora gli albumi montati ai tuorli con movimenti delicati dal basso verso l alto.','Versa in padella antiaderente calda. Cuoci 2 min coperchia.','Aggiungi salmone ed erba cipollina. Piega a meta e servi subito.']},
   {id:'nz30',name:'Zuppa di Pollo e Orzo Terapeutica',ico:'🍲',tags:['cena','massa','meal-prep'],time:'35 min',kcal:380,p:36,c:38,g:8,diff:'Facile',alimenti:['pollo','orzo','carote','sedano','cipolla','aglio','rosmarino','brodo di pollo'],desc:'La zuppa che guarisce tutto. Il brodo di pollo con orzo e la versione fitness della chicken soup.',ingredienti:['200g petto di pollo sfilacciato','80g orzo perlato','2 carote a rondelle','2 gambi sedano','1 cipolla','3 spicchi aglio','Rosmarino e alloro','Brodo di pollo 800ml','Olio EVO','Sale, pepe','Prezzemolo'],steps:['Soffriggi cipolla, sedano e aglio in olio 4 min.','Aggiungi carote, rosmarino e alloro. Cuoci 3 min.','Versa il brodo e porta a bollore.','Aggiungi orzo e cuoci 20 min.','Aggiungi il pollo sfilacciato. Regola di sale. Prezzemolo abbondante.']},
+
+  // ══════════════════════════════════════════════════════════════
+  // 🍰 DOLCI FIT — Soddisfa la voglia di dolce senza sensi di colpa
+  // ══════════════════════════════════════════════════════════════
+
+  {id:'df1',name:'Torta al Cioccolato Proteica (Zero Farina)',ico:'🎂',tags:['dolci','spuntino','definizione'],time:'30 min',kcal:190,p:14,c:16,g:8,diff:'Facile',alimenti:['uova','cacao amaro','yogurt greco','ricotta','miele','cioccolato fondente'],desc:'La torta al cioccolato che puoi mangiare senza sensi di colpa. Zero farina, zero zucchero aggiunto, 14g di proteine a fetta.',ingredienti:['4 uova','3 cucchiai cacao amaro 100%','200g ricotta magra','100g yogurt greco 0%','3 cucchiai miele o sciroppo dacero','1 cucchiaino lievito','Vaniglia','Pizzico di sale','50g cioccolato fondente 85% tritato grossolanamente'],steps:['Preriscalda forno a 170°C. Fodera una teglia da 20cm.','Sbatti uova con miele e vaniglia per 2 minuti fino a che schiumano.','Aggiungi ricotta e yogurt. Mescola fino a crema liscia.','Incorpora cacao, lievito e sale setacciati.','Aggiungi il cioccolato tritato. Versa in teglia. Cuoci 22-25 min. Il centro deve essere leggermente mosso. Raffredda completamente prima di tagliare.']},
+
+  {id:'df2',name:'Cookies Proteici al Burro di Arachidi',ico:'🍪',tags:['dolci','spuntino','pre-workout','massa'],time:'20 min',kcal:160,p:9,c:14,g:7,diff:'Facilissimo',alimenti:['burro di arachidi','uova','miele','avena','cioccolato fondente','vaniglia'],desc:'4 ingredienti, 12 minuti in forno. I cookies più veloci e sani del mondo.',ingredienti:['200g burro di arachidi naturale (solo arachidi)','2 uova','3 cucchiai miele','1 cucchiaino vaniglia','60g fiocchi avena frullati','1 cucchiaino lievito','50g cioccolato fondente 85% a scaglie','Pizzico di sale'],steps:['Preriscalda forno a 175°C. Fodera una teglia.','Mescola burro di arachidi, uova, miele e vaniglia.','Aggiungi avena frullata, lievito e sale.','Incorpora le scaglie di cioccolato.','Forma 12 palline, appiattisci con la forchetta. Cuoci 10-12 min. Sembrano morbidi: si compattano raffreddandosi.']},
+
+  {id:'df3',name:'Cheesecake al Limone senza Cottura',ico:'🍋',tags:['dolci','definizione','spuntino'],time:'20 min',kcal:200,p:16,c:18,g:6,diff:'Facile',alimenti:['yogurt greco','ricotta','limone','miele','biscotti avena','gelatina'],desc:'Fresca, leggera, proteica. La cheesecake estiva per eccellenza. Prepara la sera, pronta al mattino.',ingredienti:['Base: 80g fiocchi avena frullati + 20g burro fuso + 1 cucchiaio miele','Crema: 250g ricotta magra + 150g yogurt greco 0% + scorza e succo di 2 limoni + 3 cucchiai miele + 2 fogli gelatina + 50ml latte caldo','Topping: frutti di bosco o composta'],steps:['Base: mescola avena, burro e miele. Pressa in teglia da 18cm. Frigo 15 min.','Ammolla la gelatina in acqua fredda 5 min. Scioglila nel latte caldo.','Frulla ricotta, yogurt, scorza limone, succo e miele a crema liscia.','Incorpora il latte con gelatina. Versa sulla base.','Frigo minimo 4 ore (meglio tutta la notte). Decora con frutti di bosco.']},
+
+  {id:'df4',name:'Brownies Proteici al Cioccolato e Fagioli',ico:'🍫',tags:['dolci','spuntino','massa'],time:'35 min',kcal:175,p:8,c:22,g:5,diff:'Facile',alimenti:['fagioli neri','cacao amaro','uova','miele','burro di mandorle','cioccolato fondente'],desc:'I brownies con i fagioli neri. Sembrano normali, hanno il doppio delle proteine. Nessuno lo indovinerà.',ingredienti:['400g fagioli neri in scatola (scolati e sciacquati)','3 cucchiai cacao amaro','2 uova','4 cucchiai miele','60g burro di mandorle','1 cucchiaino lievito','Vaniglia','Pizzico di sale','50g cioccolato fondente 85% a scaglie'],steps:['Preriscalda forno a 180°C. Fodera teglia 20x20cm.','Frulla fagioli, uova, miele, burro di mandorle, cacao, lievito e vaniglia a crema liscia.','Incorpora il cioccolato a scaglie con una spatola.','Versa in teglia. Cuoci 20-22 min. Il centro deve essere leggermente morbido.','Raffredda 30 min PRIMA di tagliare. Conserva in frigo 5 giorni.']},
+
+  {id:'df5',name:'Tiramisù Proteico Senza Zucchero',ico:'☕',tags:['dolci','spuntino','definizione'],time:'25 min',kcal:220,p:18,c:18,g:6,diff:'Media',alimenti:['yogurt greco','ricotta','caffè','savoiardi','cacao amaro','miele','albumi'],desc:'Il tiramisù che non sabota la dieta. La crema al mascarpone sostituita da ricotta+yogurt: stessa cremosità, metà dei grassi.',ingredienti:['Crema: 250g ricotta magra + 200g yogurt greco 0% + 3 cucchiai miele + scorza limone + vaniglia','Bagna: 200ml caffè espresso freddo + 1 cucchiaio rum (opzionale)','16-20 savoiardi (o biscotti avena)','Cacao amaro per spolverare'],steps:['Frulla ricotta, yogurt, miele e vaniglia a crema liscia e senza grumi.','Immergi rapidamente i savoiardi nel caffè freddo (1 secondo per lato, non imbibire troppo).','Strato di savoiardi in una teglia 20x20. Metà crema. Altro strato savoiardi. Altra crema.','Copri con pellicola. Frigo minimo 4 ore (tutta la notte è meglio).','Spolvera di cacao amaro abbondante solo prima di servire.']},
+
+  {id:'df6',name:'Gelato alla Fragola Senza Lattosio',ico:'🍓',tags:['dolci','spuntino','definizione'],time:'10 min',kcal:140,p:10,c:22,g:1,diff:'Facilissimo',alimenti:['fragole','yogurt greco','miele','banana','whey vaniglia'],desc:'Solo frullatore e freezer. Zero panna, zero zucchero. La banana congelata crea la consistenza cremosa.',ingredienti:['300g fragole congelate','2 banane congelate a pezzi','100g yogurt greco 0%','20g whey vaniglia','1 cucchiaio miele','Succo di 1/2 limone'],steps:['Tutti gli ingredienti nel frullatore potente.','Frulla 60 sec pulsando: prima sembra granulare, poi diventa cremoso.','Per soft-serve: consuma subito.','Per gelato solido: versa in contenitore e congela 2 ore. Rifrulla prima di servire.','Decorare con fragole fresche e foglioline di menta.']},
+
+  {id:'df7',name:'Mug Cake Proteica al Cioccolato (2 minuti)',ico:'☕',tags:['dolci','spuntino','rapido','massa'],time:'3 min',kcal:250,p:22,c:20,g:8,diff:'Facilissimo',alimenti:['uova','cacao amaro','yogurt greco','miele','whey cioccolato','lievito'],desc:'La torta più veloce del mondo: 2 minuti al microonde. Perfetta per la voglia di dolce improvvisa.',ingredienti:['1 uovo','2 cucchiai cacao amaro','20g whey cioccolato','2 cucchiai yogurt greco','1 cucchiaio miele','1/4 cucchiaino lievito','Pizzico di sale','Gocce di cioccolato fondente (opzionale)'],steps:['Mescola tutti gli ingredienti in una tazza capiente.','Aggiungi un cucchiaio di latte se troppo denso.','Microonde a potenza massima 90 secondi.','Controlla: deve essere ancora leggermente umido al centro.','Mangia direttamente dalla tazza. Aggiungi un cucchiaio di yogurt greco sopra.']},
+
+  {id:'df8',name:'Panna Cotta al Cocco con Mango',ico:'🥥',tags:['dolci','definizione','spuntino'],time:'15 min',kcal:170,p:12,c:20,g:4,diff:'Facile',alimenti:['latte di cocco','yogurt greco','gelatina','miele','mango','vaniglia'],desc:'Esotica, fresca e proteica. Il contrasto cocco freddo-mango caldo è irresistibile.',ingredienti:['200ml latte di cocco light','150g yogurt greco 0%','2 fogli gelatina (4g)','2 cucchiai miele','Vaniglia','Coulis: 150g mango fresco + succo di lime + 1 cucchiaino miele'],steps:['Ammolla la gelatina in acqua fredda 5 min.','Scalda il latte di cocco con il miele senza far bollire. Scioglie la gelatina.','Frulla yogurt con vaniglia. Aggiungi latte di cocco e mescola.','Versa in 4 bicchieri o stampi da budino. Frigo 3 ore minimo.','Coulis: frulla mango con lime e miele. Versa sulla panna cotta fredda prima di servire.']},
+
+  {id:'df9',name:'Crostata Fit con Marmellata Senza Zucchero',ico:'🥧',tags:['dolci','colazione','spuntino'],time:'40 min',kcal:210,p:10,c:26,g:7,diff:'Media',alimenti:['farina di avena','uova','yogurt greco','miele','marmellata','mandorle'],desc:'La crostata sana che puoi mangiare anche a colazione. La pasta frolla con avena e yogurt invece di burro.',ingredienti:['Frolla: 200g farina avena frullata + 2 uova + 60g yogurt greco + 2 cucchiai miele + vaniglia + pizzico di sale','Ripieno: 200g marmellata ai frutti di bosco senza zucchero aggiunto','20g mandorle a lamelle per decorare'],steps:['Preriscalda forno a 175°C.','Mescola farina di avena, uova, yogurt, miele e vaniglia a impasto omogeneo.','Stendi 3/4 dell impasto in teglia 22cm rivestita di carta forno.','Distribuisci la marmellata lasciando 1cm dal bordo.','Crea le strisce della griglia con il rimanente impasto. Aggiungi mandorle. Cuoci 25-28 min finché dorata.']},
+
+  {id:'df10',name:'Mousse di Ricotta e Frutti di Bosco',ico:'🫐',tags:['dolci','definizione','spuntino'],time:'10 min',kcal:160,p:14,c:16,g:3,diff:'Facilissimo',alimenti:['ricotta','yogurt greco','frutti di bosco','miele','vaniglia','limone'],desc:'Dessert in 10 minuti. La consistenza mousse si ottiene frullando ricotta e yogurt insieme.',ingredienti:['300g ricotta magra','100g yogurt greco 0%','2 cucchiai miele','Scorza di 1 limone','Vaniglia','200g frutti di bosco misti (fragole, mirtilli, lamponi, more)','Foglioline di menta'],steps:['Frulla ricotta, yogurt, miele, scorza limone e vaniglia fino a crema liscia e ariosa.','Versa in 4 bicchieri.','Disponi i frutti di bosco sopra in modo generoso.','Frigo almeno 30 min per una consistenza più compatta.','Guarnisci con menta e un filo di miele prima di servire.']},
+
+  {id:'df11',name:'Truffles al Cioccolato e Datteri',ico:'🍫',tags:['dolci','spuntino','pre-workout','veg'],time:'15 min',kcal:130,p:4,c:18,g:5,diff:'Facilissimo',alimenti:['datteri','cacao amaro','burro di mandorle','noci','cocco rapé','vaniglia'],desc:'Dolcificati solo con datteri. Ricarica di energia naturale senza picco glicemico.',ingredienti:['200g datteri Medjool denocciolati','3 cucchiai burro di mandorle','2 cucchiai cacao amaro','30g noci tritate','Vaniglia','Pizzico di sale marino','Copertura: 3 cucchiai cacao amaro O cocco rapé OR noci tritate'],steps:['Ammolla i datteri in acqua calda 5 min se sono secchi.','Frulla datteri, burro di mandorle, cacao, vaniglia e sale a pasta omogenea.','Aggiungi noci tritate grossolanamente e mescola.','Metti in frigo 20 min per rassodarsi.','Forma palline da 20g e rotolale nella copertura scelta. Conserva in frigo 2 settimane.']},
+
+  {id:'df12',name:'Tarte Tatin di Mele Fit',ico:'🍎',tags:['dolci','spuntino','colazione'],time:'45 min',kcal:230,p:8,c:32,g:7,diff:'Media',alimenti:['mele','uova','farina di avena','yogurt greco','miele','cannella','burro'],desc:'La tarte tatin francese rivisitata in chiave fit. Le mele caramellate naturalmente con il miele.',ingredienti:['4 mele golden pelate e a spicchi','Pasta: 150g farina avena + 2 uova + 50g yogurt greco + 2 cucchiai miele + vaniglia','Caramello fit: 3 cucchiai miele + 1/2 cucchiaino cannella + 5g burro'],steps:['Preriscalda forno 180°C. In teglia antiaderente da forno, scalda miele, burro e cannella sul fornello.','Disponi le mele a raggiera nel caramello. Cuoci sul fornello 5 min.','Prepara la pasta mescolando gli ingredienti fino a impasto morbido.','Stendi la pasta sulle mele. Rimbocca i bordi sotto le mele.','Forno 25 min. Raffredda 5 min PRIMA di capovolgerla sul piatto.']},
+
+  {id:'df13',name:'Budino di Avena al Cioccolato Fondente',ico:'🍮',tags:['dolci','colazione','spuntino'],time:'10 min',kcal:280,p:16,c:36,g:8,diff:'Facile',alimenti:['avena','latte','cacao amaro','whey','cioccolato fondente','miele','banana'],desc:'A metà tra porridge e budino. Caldo, cremoso, cioccolatoso. Colazione o dessert.',ingredienti:['70g fiocchi avena','250ml latte scremato o mandorla','1 cucchiaio cacao amaro','20g whey cioccolato','1 cucchiaio miele','1/2 banana schiacciata','30g cioccolato fondente 85% tritato','Pizzico di sale'],steps:['Cuoci avena nel latte a fuoco medio per 4 min mescolando.','Togli dal fuoco. Aggiungi cacao, whey e banana schiacciata.','Mescola energicamente fino a crema densa.','Aggiungi miele e mescola.','Versa in una bowl. Disponi il cioccolato tritato sopra: il calore lo fonde parzialmente.']},
+
+  {id:'df14',name:'Croissant Proteico (Senza Burro)',ico:'🥐',tags:['dolci','colazione','massa'],time:'50 min',kcal:200,p:14,c:22,g:5,diff:'Difficile',alimenti:['farina di avena','yogurt greco','uova','ricotta','miele','lievito'],desc:'Il croissant proteico. La texture non è identica all originale, ma è la versione più sana possibile.',ingredienti:['180g farina avena frullata fine','100g yogurt greco','1 uovo + 1 tuorlo','40g ricotta magra','1 cucchiaio miele','1 cucchiaino lievito istantaneo','Vaniglia','Pizzico di sale','1 tuorlo per spennellare'],steps:['Mescola farina, lievito e sale. Aggiungi yogurt, uovo, ricotta, miele e vaniglia.','Impasta fino a ottenere un panetto liscio. Frigo 20 min.','Stendi a cerchio. Taglia 8 triangoli come pizza.','Arrotola ogni triangolo dalla base verso la punta. Forma a mezzaluna.','Spennella con tuorlo. Forno 180°C per 16-18 min finché dorati.']},
+
+  {id:'df15',name:'Donuts Proteici al Forno',ico:'🍩',tags:['dolci','colazione','massa'],time:'25 min',kcal:180,p:12,c:20,g:5,diff:'Facile',alimenti:['farina di avena','uova','yogurt greco','whey vaniglia','miele','latte','cioccolato fondente'],desc:'I donuts al forno che sembrano fritti. Stampo specifico necessario, ma il risultato è spettacolare.',ingredienti:['130g farina avena frullata','30g whey vaniglia','2 uova','100g yogurt greco','2 cucchiai miele','50ml latte','1 cucchiaino lievito','Glassa: 50g cioccolato fondente 85% fuso + 1 cucchiaio olio cocco'],steps:['Preriscalda forno a 180°C. Ungi lo stampo per donuts.','Mescola ingredienti secchi (farina, whey, lievito).','Mescola ingredienti umidi (uova, yogurt, miele, latte).','Combina tutto fino a pastella omogenea. Versa nello stampo riempiendo 3/4.','Cuoci 12 min. Raffredda 5 min. Immergi la superficie nella glassa al cioccolato fuso.']},
+
+  {id:'df16',name:'Crème Brûlée Proteica',ico:'🔥',tags:['dolci','definizione','spuntino'],time:'60 min',kcal:180,p:16,c:14,g:5,diff:'Media',alimenti:['yogurt greco','uova','latte','miele','vaniglia'],desc:'L effetto caramellato si ottiene con un cannello da cucina. Dessert da ristorante a casa.',ingredienti:['300g yogurt greco 0%','2 uova intere + 2 tuorli','150ml latte scremato','3 cucchiai miele','1 stecca vaniglia (o estratto)','4 cucchiaini zucchero di canna per caramellare'],steps:['Preriscalda forno a 150°C. Prepara un bagnomaria.','Sbatti yogurt, uova, tuorli, latte, miele e vaniglia senza fare schiuma.','Versa in 4 cocotte da 120ml.','Cuoci a bagnomaria 35-40 min finché tremolano ma non liquide.','Raffredda, poi frigo 2 ore. Prima di servire: cospargi zucchero, caramella con cannello.']},
+
+  {id:'df17',name:'Barrette Energy Cocco e Limone',ico:'🍋',tags:['dolci','spuntino','pre-workout'],time:'15 min',kcal:145,p:6,c:16,g:6,diff:'Facilissimo',alimenti:['avena','cocco rapé','limone','miele','burro di mandorle','semi di chia'],desc:'Fresche, energizzanti, senza cottura. 8 barrette in 15 minuti più 1 ora di frigo.',ingredienti:['130g fiocchi avena frullati','40g cocco rapé non zuccherato','Scorza e succo di 2 limoni','3 cucchiai miele','50g burro di mandorle','1 cucchiaio semi di chia','Pizzico di sale'],steps:['Mescola tutti gli ingredienti in una ciotola.','Il composto deve essere compatto: aggiungi cucchiai di latte se troppo secco.','Versa in stampo 20x10cm rivestito di carta forno. Pressa bene.','Frigo 1 ora minimo.','Taglia in 8 barrette. Conserva in frigo 10 giorni o freezer 1 mese.']},
+
+  {id:'df18',name:'Parfait di Yogurt e Granola',ico:'🫙',tags:['dolci','colazione','spuntino','definizione'],time:'5 min',kcal:280,p:18,c:34,g:8,diff:'Facilissimo',alimenti:['yogurt greco','granola','frutti di bosco','miele','semi di chia'],desc:'Il dolce che puoi mangiare a colazione. Stratificato in bicchiere trasparente, sembra uscito da un bar.',ingredienti:['200g yogurt greco 0%','30g granola integrale (vedi ricetta nx19)','100g frutti di bosco misti','1 cucchiaio miele','1 cucchiaino semi di chia'],steps:['Versa metà yogurt in un bicchiere largo.','Strato di granola.','Metà frutti di bosco.','Altro yogurt, altra granola, altri frutti.','Finisci con miele e semi di chia. Consuma subito per la granola croccante o prepara la sera senza granola (aggiungila al mattino).']},
+
+  {id:'df19',name:'Semifreddo Proteico al Pistacchio',ico:'🍦',tags:['dolci','definizione','spuntino'],time:'20 min',kcal:210,p:16,c:18,g:8,diff:'Media',alimenti:['yogurt greco','ricotta','pistacchi','miele','albumi','vaniglia'],desc:'Il semifreddo italiano in versione fitness. Texture morbida grazie agli albumi montati.',ingredienti:['200g yogurt greco 0%','150g ricotta magra','60g pistacchi non salati tritati finemente','3 cucchiai miele','3 albumi','Vaniglia','Pizzico di sale'],steps:['Frulla yogurt, ricotta e miele a crema liscia. Incorpora i pistacchi tritati.','Monta gli albumi a neve fermissima con un pizzico di sale.','Incorpora gli albumi al composto con movimenti delicati dal basso verso l alto.','Versa in uno stampo da plumcake rivestito di pellicola.','Congela 4 ore. Tira fuori 10 min prima di servire. Taglia a fette.']},
+
+  {id:'df20',name:'Torta di Carote Proteica',ico:'🥕',tags:['dolci','colazione','spuntino','massa'],time:'45 min',kcal:200,p:12,c:22,g:7,diff:'Facile',alimenti:['carote','uova','farina di avena','yogurt greco','miele','noci','cannella'],desc:'La torta di carote è già fit per natura. Questa versione ha 12g di proteine a fetta.',ingredienti:['200g carote grattugiate finemente','3 uova','150g farina avena frullata','100g yogurt greco','3 cucchiai miele','40g noci tritate','1 cucchiaino cannella','1/2 cucchiaino zenzero in polvere','1 cucchiaino lievito','Vaniglia','Topping: 100g ricotta + 1 cucchiaio miele + scorza limone'],steps:['Preriscalda forno a 175°C. Fodera uno stampo da 20cm.','Sbatti uova e miele 2 min. Aggiungi yogurt e vaniglia.','Incorpora farina setacciata, lievito e spezie.','Aggiungi carote grattugiate e noci. Mescola con spatola.','Cuoci 30-35 min. Raffredda completamente. Distribuisci il topping di ricotta sulla superficie.']},
+
+  {id:'df21',name:'Frullato Proteico Stile Milkshake Oreo',ico:'🥛',tags:['dolci','post-workout','spuntino','massa'],time:'5 min',kcal:320,p:28,c:32,g:8,diff:'Facilissimo',alimenti:['yogurt greco','latte','whey vaniglia','banana','cacao amaro','biscotti avena'],desc:'Il post-workout che sembra un dessert da bar. Tutti i macro al posto giusto.',ingredienti:['200g yogurt greco 0%','150ml latte scremato','30g whey vaniglia','1 banana congelata','1 cucchiaio cacao amaro','4 cubetti ghiaccio','2 biscotti avena sbriciolati per decorare'],steps:['Metti yogurt, latte, whey, banana e ghiaccio nel frullatore.','Frulla 30 secondi ad alta potenza.','Assaggia: se vuoi più dolce aggiungi miele, se vuoi più cioccolato aggiungi cacao.','Versa in un bicchiere alto.','Spolvera i biscotti sbriciolati sopra. Bevi subito.']},
+
+  {id:'df22',name:'Crespelle Dolci alla Ricotta e Marmellata',ico:'🫔',tags:['dolci','colazione','spuntino'],time:'20 min',kcal:220,p:14,c:26,g:5,diff:'Facile',alimenti:['uova','ricotta','farina di avena','latte','marmellata','miele'],desc:'Le crepes dolci fit. Sottili, morbide, con ripieno di ricotta e frutta.',ingredienti:['Pastella: 2 uova + 150ml latte scremato + 50g farina avena frullata + vaniglia + pizzico di sale','Ripieno: 200g ricotta magra + 1 cucchiaio miele + scorza limone','Marmellata di frutti di bosco senza zucchero aggiunto q.b.'],steps:['Frulla tutti gli ingredienti della pastella fino a ottenere una pastella liscia.','Lascia riposare 5 min.','Cuoci le crespelle in padella piccola antiaderente, 1 min per lato.','Mescola ricotta, miele e scorza limone.','Farcisci ogni crespella con ricotta e un cucchiaio di marmellata. Piega in quarti.']},
+
+  {id:'df23',name:'Lava Cake Proteico al Cioccolato',ico:'🎂',tags:['dolci','spuntino','massa'],time:'25 min',kcal:270,p:20,c:20,g:10,diff:'Media',alimenti:['cioccolato fondente','uova','yogurt greco','farina di avena','miele','cacao amaro'],desc:'Il cuore fondente che cola. Tecnica semplice se rispetti i tempi di cottura.',ingredienti:['80g cioccolato fondente 85%','2 uova + 1 tuorlo','2 cucchiai yogurt greco','1 cucchiaio farina avena frullata','1 cucchiaio miele','Cacao per spolverare gli stampini'],steps:['Preriscalda forno a 200°C. Ungi 2 stampini rotondi e spolverali di cacao.','Sciogli il cioccolato a bagnomaria o microonde 30 sec.','Sbatti uova, tuorlo e miele. Aggiungi yogurt.','Incorpora il cioccolato fuso. Aggiungi farina.','Versa negli stampini. ESATTAMENTE 10-11 min in forno. Il bordo deve essere solido, il centro mosso. Capovolgi subito sul piatto.']},
+
+  {id:'df24',name:'Biscotti alla Cannella e Avena (Senza Burro)',ico:'🍪',tags:['dolci','colazione','spuntino','meal-prep'],time:'25 min',kcal:120,p:5,c:16,g:4,diff:'Facilissimo',alimenti:['avena','uova','mele','miele','cannella','noci','uvetta'],desc:'Biscotti morbidi stile americano. Senza burro, senza farina raffinata. 16 biscotti in 25 min.',ingredienti:['200g fiocchi avena grandi','1 uovo','1 mela grattugiata','3 cucchiai miele','1 cucchiaino cannella abbondante','30g noci tritate','30g uvetta','1 cucchiaino lievito','Vaniglia'],steps:['Preriscalda forno a 175°C. Fodera teglia.','Mescola tutti gli ingredienti in una ciotola. Il composto è morbido e appiccicoso.','Lascia riposare 3 min: l avena assorbe la mela.','Forma 16 palline, appiattisci leggermente.','Cuoci 12-14 min finché i bordi sono dorati. Al tatto sembrano morbidi, si compattano raffreddandosi.']},
+
+  {id:'df25',name:'Cheesecake Proteica ai Frutti di Bosco (al Forno)',ico:'🫐',tags:['dolci','spuntino','definizione'],time:'55 min',kcal:195,p:16,c:18,g:5,diff:'Media',alimenti:['ricotta','yogurt greco','uova','miele','frutti di bosco','farina di avena','vaniglia'],desc:'La cheesecake cotta: più simile all originale newyorkese. Soda fuori, cremosa dentro.',ingredienti:['Base: 80g avena frullata + 20g burro fuso + 1 cucchiaio miele','Ripieno: 400g ricotta magra + 150g yogurt greco + 3 uova + 4 cucchiai miele + scorza di 2 limoni + vaniglia + 1 cucchiaio farina avena','Topping: 150g frutti di bosco + 1 cucchiaio miele'],steps:['Preriscalda forno a 160°C. Teglia a cerchio apribile da 20cm.','Base: mescola avena, burro e miele. Pressa. Frigo.','Ripieno: frulla ricotta, yogurt, uova, miele, scorza limone e vaniglia. Aggiunge farina.','Versa sulla base. Cuoci a bagnomaria 40-45 min finché il bordo è solido.','Raffredda in forno spento con porta aperta 30 min. Frigo 4 ore. Coulis di frutti di bosco sopra.']},
+
+  // ══════════════════════════════════════════════════════════════
+  // 🍽️ NUOVE RICETTE PRINCIPALI — Varietà per tutti
+  // ══════════════════════════════════════════════════════════════
+
+  {id:'extra1',name:'Tacos Proteici di Manzo e Avocado',ico:'🌮',tags:['cena','pranzo','massa'],time:'20 min',kcal:480,p:36,c:36,g:18,diff:'Facile',alimenti:['manzo macinato','tortilla di mais','avocado','cipolla','lime','pomodori','yogurt greco'],desc:'I tacos fitness: tortilla di mais, macinato magro e avocado. Soddisfazione garantita.',ingredienti:['200g manzo macinato magro 5%','4 tortillas di mais piccole','1 avocado','100g pomodorini a dadini','1/4 cipolla rossa','Lime','Coriandolo','Mix spezie: cumino + paprika + aglio + peperoncino','Yogurt greco come crema acida'],steps:['Rosola il macinato spezzandolo con una forchetta 6-7 min.','Aggiungi spezie e 2 cucchiai di acqua. Cuoci 2 min a glassa.','Scalda le tortillas in padella asciutta 20 sec per lato.','Guacamole rapido: avocado schiacciato + lime + sale.','Assembla: tortilla + macinato + guacamole + pomodori + cipolla + coriandolo + yogurt.']},
+
+  {id:'extra2',name:'Polpo alla Griglia con Patate',ico:'🐙',tags:['cena','definizione','pranzo'],time:'40 min',kcal:360,p:38,c:28,g:8,diff:'Media',alimenti:['polpo','patate','limone','prezzemolo','aglio','olio EVO'],desc:'Pesce alto in proteine, quasi zero grassi. La pre-cottura a fuoco dolce è il segreto.',ingredienti:['400g polpo (già cotto o fresco)','300g patate lesse','Succo e scorza di 1 limone','Prezzemolo abbondante','3 spicchi aglio','30ml olio EVO','Paprika affumicata','Sale, pepe nero'],steps:['Se il polpo è crudo: cuoci in acqua bollente 35-40 min finché morbido.','Taglia il polpo a pezzi. Asciuga bene.','Griglia su padella caldissima 2-3 min per lato per la crosta esterna.','Patate lesse tagliate a cubetti, condite con olio, limone, aglio e prezzemolo.','Servi polpo sulle patate con altra limone e paprika affumicata.']},
+
+  {id:'extra3',name:'Pesto Rosso con Pasta Integrale e Ricotta',ico:'🍝',tags:['pranzo','cena','massa','veg'],time:'20 min',kcal:490,p:24,c:62,g:14,diff:'Facile',alimenti:['pasta integrale','pomodori secchi','ricotta','basilico','pinoli','parmigiano','aglio'],desc:'Il pesto rosso è più ricco di licopene del verde. Con la ricotta diventa cremoso e proteico.',ingredienti:['90g pasta integrale','Pesto rosso: 60g pomodori secchi + 30g basilico + 20g pinoli + 20g parmigiano + 2 spicchi aglio + 30ml olio EVO','2 cucchiai ricotta magra','Sale, pepe nero'],steps:['Frulla pomodori secchi, basilico, pinoli, parmigiano, aglio e olio a pesto grossolano.','Cuoci pasta al dente. Tieni 3 cucchiai acqua di cottura.','Scola pasta. Aggiungi pesto rosso e acqua di cottura.','Manteca. Aggiungi ricotta a tocchetti fuori dal fuoco.','Mescola con delicatezza. Parmigiano extra se vuoi.']},
+
+  {id:'extra4',name:'Risotto al Limone e Gamberi',ico:'🍚',tags:['cena','pranzo','definizione'],time:'30 min',kcal:420,p:32,c:48,g:8,diff:'Media',alimenti:['riso arborio','gamberi','limone','vino bianco','cipolla','brodo pesce','parmigiano'],desc:'Il risotto che sembra pesante ma non lo è. Gamberi e limone lo rendono leggero e aromatico.',ingredienti:['80g riso arborio','150g gamberi sgusciati','Scorza e succo di 1 limone','50ml vino bianco','1/2 cipolla','400ml brodo di pesce caldo','20g parmigiano','Sale, pepe','Prezzemolo'],steps:['Soffriggi la cipolla 3 min. Aggiungi riso e tosta 2 min.','Sfuma con vino bianco. Quando evaporato, inizia ad aggiungere brodo caldo un mestolo alla volta.','Continua mescolando e aggiungendo brodo per 16-18 min.','Ultimi 3 min: aggiungi i gamberi e la scorza di limone.','Fuori fuoco: succo di limone, parmigiano e prezzemolo. Manten cremoso.']},
+
+  {id:'extra5',name:'Pollo al Forno con Verdure Mediterranee',ico:'🍗',tags:['cena','massa','meal-prep'],time:'45 min',kcal:400,p:46,c:20,g:12,diff:'Facile',alimenti:['pollo','melanzane','zucchine','peperoni','pomodorini','olive','aglio','rosmarino'],desc:'Il pasto completo in una teglia. Tutto insieme in forno, zero sforzo.',ingredienti:['300g coscia di pollo disossata senza pelle','1 melanzana','2 zucchine','1 peperone','100g pomodorini','30g olive kalamata','4 spicchi aglio','Rosmarino, origano','30ml olio EVO','Sale, pepe nero'],steps:['Preriscalda forno a 200°C.','Taglia tutte le verdure a pezzi simili.','Disponi pollo e verdure in teglia grande. Non sovrapporre.','Condisci tutto con olio, aglio, rosmarino, origano, sale e pepe.','Cuoci 35-38 min girando le verdure a metà. Il pollo deve raggiungere 74°C al cuore.']},
+
+  {id:'extra6',name:'Sushi Bowl Proteica',ico:'🍣',tags:['pranzo','cena','definizione'],time:'25 min',kcal:450,p:34,c:46,g:10,diff:'Facile',alimenti:['riso','salmone','tonno','avocado','cetriolo','sesamo','salsa di soia','zenzero'],desc:'Il sushi senza arrotolare. Tutti i sapori in una bowl. Con il riso caldo è ancora meglio.',ingredienti:['120g riso per sushi cotto e condito (aceto di riso + miele + sale)','100g salmone fresco a cubetti','80g tonno fresco a cubetti','1/2 avocado','1/2 cetriolo','20g edamame','Zenzero sott aceto','Salsa: soia + wasabi + olio sesamo'],steps:['Cuoci e condisci il riso con aceto di riso, miele e sale.','Prepara la salsa mescolando soia, wasabi e olio sesamo.','Assembla: riso tiepido come base.','Disponi salmone, tonno, avocado, cetriolo ed edamame in sezioni separate.','Versa la salsa. Aggiungi sesamo, cipollotto e zenzero.']},
+
+  {id:'extra7',name:'Frittata di Pasta Integrale e Verdure',ico:'🍳',tags:['pranzo','cena','veg','meal-prep'],time:'25 min',kcal:380,p:26,c:42,g:10,diff:'Facile',alimenti:['pasta integrale','uova','albumi','zucchine','cipolla','parmigiano'],desc:'La frittata di pasta napoletana in versione fit. Il pasto del lunedi con gli avanzi del weekend.',ingredienti:['150g pasta integrale cotta avanzata','3 uova + 2 albumi','1 zucchina a dadini','1/2 cipolla','30g parmigiano','Sale, pepe','Origano','Olio EVO'],steps:['Rosola cipolla e zucchina in padella da forno 4 min.','Sbatti uova e albumi con parmigiano, sale, pepe e origano.','Aggiungi la pasta fredda alla padella con le verdure.','Versa le uova sbattute. Cuoci a fuoco dolce 5 min senza mescolare.','Trasferisci in forno a 180°C per 8-10 min finché la superficie è dorata.']},
+
+  {id:'extra8',name:'Spezzatino di Manzo con Ceci',ico:'🍲',tags:['cena','massa','meal-prep'],time:'50 min',kcal:440,p:44,c:28,g:14,diff:'Media',alimenti:['manzo a spezzatino','ceci','carote','sedano','cipolla','pomodori','rosmarino','vino rosso'],desc:'Piatto invernale nutriente. I ceci aggiungono fibre e proteine vegetali al manzo.',ingredienti:['300g spezzatino di manzo magro','200g ceci cotti','2 carote a rondelle','2 gambi sedano','1 cipolla','200g pomodori pelati','50ml vino rosso','Rosmarino e alloro','Brodo di carne 200ml','Olio EVO'],steps:['Asciuga la carne. Rosola a fuoco alto 5 min finché bruna su tutti i lati. Metti da parte.','Soffriggi cipolla, sedano e carote 5 min.','Sfuma con vino rosso. Aggiungi pomodori, rosmarino e alloro.','Rimetti la carne. Aggiungi brodo. Copri e cuoci a fuoco bassissimo 35 min.','Aggiungi ceci gli ultimi 10 min. Aggiusta di sale.']},
+
+  {id:'extra9',name:'Frittura di Pesce al Forno',ico:'🐟',tags:['cena','definizione'],time:'30 min',kcal:310,p:38,c:16,g:8,diff:'Facile',alimenti:['merluzzo','calamari','gamberi','pangrattato','limone','prezzemolo','uova'],desc:'La frittura di pesce senza friggere. Pangrattato + forno + calore alto = croccantezza senza olio.',ingredienti:['150g filetto merluzzo a bocconcini','100g anelli di calamaro','100g gamberoni','Impanatura: pangrattato integrale + prezzemolo + aglio + scorza limone + sale + pepe','2 uova sbattute','Olio spray','Limone per servire'],steps:['Preriscalda forno a 220°C con griglia.','Prepara 3 piatti: uova sbattute, impanatura, e teglia con carta forno.','Passa pesce nell uovo, poi nell impanatura premendo.','Disponi sulla teglia. Spruzza generosamente con olio spray.','Cuoci 12-15 min girando a metà. Ultimi 2 min grill per croccantezza.']},
+
+  {id:'extra10',name:'Piadina Proteica con Squacquerone e Rucola',ico:'🫓',tags:['pranzo','rapido','massa'],time:'10 min',kcal:420,p:30,c:36,g:16,diff:'Facilissimo',alimenti:['piadina integrale','squacquerone','prosciutto crudo','rucola','pomodori'],desc:'La piadina romagnola in versione fit. Con piadina integrale e meno squacquerone.',ingredienti:['1 piadina integrale grande','80g squacquerone magro','80g prosciutto crudo magro senza grasso','40g rucola fresca','4 pomodorini a fettine','Sale, olio EVO'],steps:['Scalda la piadina in padella asciutta 1 min per lato.','Spalma lo squacquerone su tutta la superficie.','Disponi il prosciutto crudo.','Aggiungi la rucola fresca e i pomodorini.','Piega a metà. Taglia in 2 e servi subito.']},
+
+  {id:'extra11',name:'Vellutata di Zucca e Zenzero',ico:'🎃',tags:['cena','definizione','veg','meal-prep'],time:'30 min',kcal:190,p:8,c:28,g:4,diff:'Facile',alimenti:['zucca','cipolla','zenzero','latte di cocco','brodo vegetale','curcuma'],desc:'Vellutata autunnale. La zucca è ricca di betacarotene e naturalmente dolce.',ingredienti:['500g zucca mantovana a cubetti','1 cipolla','3cm zenzero fresco','1 cucchiaino curcuma','200ml latte di cocco light','Brodo vegetale 400ml','Olio EVO','Sale, pepe nero','Semi di zucca tostati per guarnire'],steps:['Soffriggi cipolla e zenzero in olio 4 min.','Aggiungi zucca e curcuma. Cuoci 5 min.','Versa il brodo. Porta a bollore. Cuoci 20 min finché la zucca è morbidissima.','Aggiungi latte di cocco. Frulla con frullatore a immersione.','Regola di sale. Servi con semi di zucca tostati e un filo di olio EVO.']},
+
+  {id:'extra12',name:'Tagliatelle al Ragù di Cinghiale Fit',ico:'🍝',tags:['cena','massa'],time:'90 min',kcal:520,p:36,c:52,g:14,diff:'Difficile',alimenti:['cinghiale macinato','pasta integrale','carote','sedano','cipolla','pomodori','vino rosso','rosmarino'],desc:'Il ragù di cinghiale toscano in versione fit con pasta integrale. Per le occasioni speciali.',ingredienti:['300g cinghiale macinato (o spalla macinata)','90g tagliatelle integrali','Soffritto: carota, sedano, cipolla, aglio','100ml vino rosso','300g pomodori pelati','Rosmarino, alloro, bacche di ginepro','Olio EVO'],steps:['Rosola il cinghiale a fuoco alto 8 min finché ben rosolato. Sfuma con vino.','Prepara il soffritto in altra padella: carota, sedano, cipolla e aglio 6 min.','Unisci carne e soffritto. Aggiungi pomodori, rosmarino, alloro e ginepro.','Cuoci a fuoco bassissimo COPERTO 60 min mescolando ogni 15 min.','Cuoci le tagliatelle al dente. Condisci con il ragù abbondante.']},
+
+  {id:'extra13',name:'Gnocchi di Ricotta al Pesto di Basilico',ico:'🫙',tags:['pranzo','cena','veg','massa'],time:'30 min',kcal:430,p:26,c:44,g:14,diff:'Media',alimenti:['ricotta','farina di avena','uova','parmigiano','basilico','pinoli','olio EVO'],desc:'Gnocchi leggeri: senza patate, più proteici. Il pesto classico genovese li esalta al massimo.',ingredienti:['Gnocchi: 300g ricotta ben scolata + 100g farina avena frullata + 1 uovo + 30g parmigiano + sale + noce moscata','Pesto: 40g basilico + 30g pinoli + 30g parmigiano + 60ml olio EVO + 1 spicchio aglio + sale'],steps:['Mescola ricotta, farina, uovo, parmigiano e noce moscata a impasto omogeneo. Frigo 10 min.','Frulla pesto: basilico, pinoli, parmigiano, aglio e olio. Non frullare troppo.','Forma rotolini da 2cm, taglia gnocchi da 2cm.','Cuoci in acqua salata: pronti quando salgono a galla + 30 secondi.','Salta gnocchi nel pesto con acqua di cottura per legare.']},
+
+  {id:'extra14',name:'Polpettone di Tacchino al Forno',ico:'🍖',tags:['cena','massa','meal-prep'],time:'55 min',kcal:350,p:44,c:10,g:12,diff:'Media',alimenti:['tacchino macinato','uova','parmigiano','spinaci','aglio','pangrattato','pomodori'],desc:'Il polpettone americano in versione fit. Tagliato a fette si conserva 4 giorni in frigo.',ingredienti:['500g tacchino macinato','2 uova','40g pangrattato integrale','40g parmigiano','100g spinaci cotti e strizzati','2 spicchi aglio','Prezzemolo','Sale, pepe','Glassa: 2 cucchiai concentrato di pomodoro + 1 cucchiaio miele + paprika'],steps:['Preriscalda forno a 185°C.','Mescola tacchino, uova, pangrattato, parmigiano, spinaci, aglio e prezzemolo.','Forma un filone su teglia rivestita di carta forno.','Spennella con la glassa di pomodoro.','Cuoci 40-45 min. Fai riposare 10 min prima di tagliare.']},
+
+  {id:'extra15',name:'Salmone in Crosta di Mandorle',ico:'🐟',tags:['cena','definizione','massa'],time:'20 min',kcal:450,p:42,c:8,g:26,diff:'Facile',alimenti:['salmone','mandorle','prezzemolo','limone','aglio','senape','olio EVO'],desc:'La crosta di mandorle protegge il salmone e aggiunge croccantezza e grassi buoni.',ingredienti:['200g filetto di salmone con pelle','Crosta: 40g mandorle tritate + 2 cucchiai prezzemolo + scorza di 1 limone + 1 spicchio aglio tritato + sale','1 cucchiaio senape di Digione'],steps:['Preriscalda forno a 200°C.','Spalma la senape sul lato superiore del salmone (senza pelle).','Mescola mandorle, prezzemolo, scorza limone e aglio. Pressa sulla senape.','Disponi su teglia con carta forno, pelle in basso.','Cuoci 12-14 min. La crosta deve essere dorata, il salmone rosa al centro.']},
 ];
 
 let ricetteFilter='all';
@@ -15010,6 +15126,7 @@ var RICETTE_CATS=[
   {id:'rapido',label:'⏱ Rapido'},
   {id:'meal-prep',label:'📦 Meal Prep'},
   {id:'snack',label:'🍫 Snack'},
+  {id:'dolci',label:'🍰 Dolci Fit'},
 ];
 
 var RICETTE_ALIMENTI=[
@@ -35165,47 +35282,107 @@ function _doLogout() {
     if (user) {
       var providerName = isApple ? 'Apple ID' : 'Google';
       var providerIcon = isApple ? APPLE_SVG : GOOGLE_SVG;
-      var providerBg   = isApple ? 'background:#1c1c1e;border-color:rgba(255,255,255,0.08)' : 'background:rgba(66,133,244,0.08);border-color:rgba(66,133,244,0.20)';
-      var providerColor= isApple ? '#f5f5f7' : '#5b9cef';
       var email        = user.email || '';
       var name         = user.name  || email || 'Utente';
+      var initials     = name.split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase() || 'U';
+      var photo        = (window._firebaseUser && window._firebaseUser.photoURL) ? window._firebaseUser.photoURL : null;
       var lastSync     = localStorage.getItem('ft_last_sync');
-      var syncLabel    = lastSync ? new Date(lastSync).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : 'Sincronizzato';
+      var syncLabel    = lastSync
+        ? 'Sincronizzato · ' + new Date(lastSync).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+        : 'Sincronizzato · adesso';
 
-      html += '<div style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);overflow:hidden;">' +
-        // Provider badge pill
-        '<div style="padding:14px 16px 12px;display:flex;align-items:center;gap:12px;">' +
-          '<div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;' + providerBg + ';border:1.5px solid;flex-shrink:0;">' +
-            providerIcon +
-          '</div>' +
-          '<div style="flex:1;min-width:0;">' +
-            '<div style="font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + name + '</div>' +
-            (email ? '<div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + email + '</div>' : '') +
-            '<div style="margin-top:5px;display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;background:rgba(62,223,138,0.10);border:1px solid rgba(62,223,138,0.22);">' +
-              '<span style="width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block;"></span>' +
-              '<span style="font-size:10px;font-weight:800;color:var(--green);">' + syncLabel + '</span>' +
+      html +=
+        // ── CARD PRINCIPALE ──────────────────────────────────
+        '<div style="background:linear-gradient(145deg,var(--bg3),var(--bg4));border:1.5px solid var(--border2);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-card);">' +
+
+          // ── HEADER CON AVATAR + INFO ──
+          '<div style="position:relative;padding:20px 18px 16px;display:flex;align-items:center;gap:14px;">' +
+
+            // Glow decorativo sfondo
+            '<div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(66,133,244,0.12) 0%,transparent 70%);pointer-events:none;"></div>' +
+
+            // Avatar
+            '<div style="position:relative;flex-shrink:0;">' +
+              (photo
+                ? '<img src="' + photo + '" style="width:56px;height:56px;border-radius:50%;border:2.5px solid rgba(66,133,244,0.4);object-fit:cover;display:block;">'
+                : '<div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,rgba(66,133,244,0.25),rgba(168,126,248,0.25));border:2.5px solid rgba(66,133,244,0.35);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--blue);">' + initials + '</div>'
+              ) +
+              // Badge provider sovrapposto
+              '<div style="position:absolute;bottom:-2px;right:-4px;width:22px;height:22px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;">' +
+                '<svg width="14" height="14" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
+              '</div>' +
+            '</div>' +
+
+            // Nome + email + badge sync
+            '<div style="flex:1;min-width:0;">' +
+              '<div style="font-size:15px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">' + name + '</div>' +
+              (email ? '<div style="font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px;">' + email + '</div>' : '<div style="margin-bottom:8px;"></div>') +
+              '<div style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;background:rgba(62,223,138,0.10);border:1px solid rgba(62,223,138,0.25);">' +
+                '<span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 6px rgba(62,223,138,0.6);"></span>' +
+                '<span style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.02em;">' + syncLabel + '</span>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-          // Provider label pill
-          '<div style="padding:5px 10px;border-radius:99px;font-size:11px;font-weight:800;color:' + providerColor + ';' + providerBg + ';border:1.5px solid;display:flex;align-items:center;gap:5px;flex-shrink:0;">' +
-            (isApple ? '🍎' : '🔵') + ' ' + providerName +
+
+          // ── SEPARATORE ──
+          '<div style="height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);margin:0 16px;"></div>' +
+
+          // ── AZIONI PRINCIPALI ──
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px;">' +
+
+            // Sincronizza
+            '<button onclick="(async function(){ var btn=this; btn.style.opacity=\'.6\'; btn.style.pointerEvents=\'none\'; if(typeof firestoreSave===\'function\'){ try{ await firestoreSave(); localStorage.setItem(\'ft_last_sync\',new Date().toISOString()); if(typeof showToast===\'function\') showToast(\'☁️ Sincronizzato!\'); setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },200); }catch(e){ if(typeof showToast===\'function\') showToast(\'❌ Errore sync\'); } } btn.style.opacity=\'1\'; btn.style.pointerEvents=\'auto\'; }).call(this)" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 10px;background:rgba(200,245,60,0.07);border:1.5px solid rgba(200,245,60,0.20);border-radius:var(--r-lg);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:800;color:var(--acc);cursor:pointer;transition:all .2s;letter-spacing:.01em;" onmouseover="this.style.background=\'rgba(200,245,60,0.13)\';this.style.borderColor=\'rgba(200,245,60,0.35)\'" onmouseout="this.style.background=\'rgba(200,245,60,0.07)\';this.style.borderColor=\'rgba(200,245,60,0.20)\'">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>' +
+              'Sincronizza' +
+            '</button>' +
+
+            // Ripristina
+            '<button onclick="(async function(){ var btn=this; btn.style.opacity=\'.6\'; btn.style.pointerEvents=\'none\'; if(typeof firestoreLoad===\'function\'){ try{ await firestoreLoad(); if(typeof showToast===\'function\') showToast(\'📥 Dati ripristinati!\'); setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); if(typeof initApp===\'function\') initApp(); },300); }catch(e){ if(typeof showToast===\'function\') showToast(\'❌ Errore ripristino\'); } } btn.style.opacity=\'1\'; btn.style.pointerEvents=\'auto\'; }).call(this)" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 10px;background:rgba(91,156,239,0.07);border:1.5px solid rgba(91,156,239,0.20);border-radius:var(--r-lg);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:800;color:var(--blue);cursor:pointer;transition:all .2s;letter-spacing:.01em;" onmouseover="this.style.background=\'rgba(91,156,239,0.14)\';this.style.borderColor=\'rgba(91,156,239,0.35)\'" onmouseout="this.style.background=\'rgba(91,156,239,0.07)\';this.style.borderColor=\'rgba(91,156,239,0.20)\'">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+              'Ripristina' +
+            '</button>' +
           '</div>' +
-        '</div>' +
-        // Action row
-        '<div style="display:flex;gap:8px;padding:0 14px 14px;">' +
-          '<button onclick="(async function(){ if(typeof firestoreSave===\'function\'){ try{ await firestoreSave(); localStorage.setItem(\'ft_last_sync\',new Date().toISOString()); if(typeof showToast===\'function\') showToast(\'☁️ Sincronizzato!\'); setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },200); }catch(e){} } })()" style="flex:1;padding:10px;background:rgba(200,245,60,0.08);border:1.5px solid rgba(200,245,60,0.22);border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:800;color:var(--acc);cursor:pointer;">☁️ Sincronizza</button>' +
-          '<button onclick="(async function(){ if(typeof firestoreLoad===\'function\'){ try{ await firestoreLoad(); if(typeof showToast===\'function\') showToast(\'📥 Ripristinati!\'); setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); if(typeof initApp===\'function\') initApp(); },300); }catch(e){} } })()" style="flex:1;padding:10px;background:rgba(91,156,239,0.07);border:1.5px solid rgba(91,156,239,0.18);border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:800;color:var(--blue);cursor:pointer;">📥 Ripristina</button>' +
-        '</div>' +
-      '</div>';
+
+          // ── DISCONNETTI ──
+          '<div style="padding:0 16px 16px;">' +
+            '<button onclick="if(typeof firebaseSignOut===\'function\'){ firebaseSignOut().then(function(){ if(typeof showToast===\'function\') showToast(\'👋 Disconnesso\'); setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); } else if(typeof auth!==\'undefined\'&&auth.signOut){ auth.signOut(); }" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:rgba(255,92,106,0.06);border:1.5px solid rgba(255,92,106,0.18);border-radius:var(--r-lg);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;color:var(--red);cursor:pointer;transition:all .2s;letter-spacing:.01em;" onmouseover="this.style.background=\'rgba(255,92,106,0.12)\';this.style.borderColor=\'rgba(255,92,106,0.32)\'" onmouseout="this.style.background=\'rgba(255,92,106,0.06)\';this.style.borderColor=\'rgba(255,92,106,0.18)\'">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>' +
+              'Disconnetti account' +
+            '</button>' +
+          '</div>' +
+
+        '</div>';
+
     } else {
-      html += '<div style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);padding:18px 16px;">' +
-        '<div style="font-size:13px;font-weight:800;margin-bottom:4px;">Nessun account collegato</div>' +
-        '<div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Collega Google o Apple per sincronizzare i dati tra dispositivi e salvarli nel cloud.</div>' +
-        '<div style="display:flex;flex-direction:column;gap:8px;">' +
-          '<button onclick="localStorage.removeItem(\'ft_skip_google\'); if(typeof firebaseSignIn===\'function\'){ firebaseSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); } else { location.reload(); }" style="width:100%;padding:12px 16px;background:#fff;color:#3c4043;border:none;border-radius:var(--r);font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">' + GOOGLE_SVG + 'Accedi con Google</button>' +
-          
-        '</div>' +
-      '</div>';
+      // ── STATO NON LOGGATO ──
+      html +=
+        '<div style="background:linear-gradient(145deg,var(--bg3),var(--bg4));border:1.5px solid var(--border2);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-card);">' +
+
+          '<div style="padding:22px 18px 16px;">' +
+
+            // Icona cloud
+            '<div style="width:52px;height:52px;border-radius:var(--r-lg);background:rgba(91,156,239,0.10);border:1.5px solid rgba(91,156,239,0.20);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">' +
+              '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5b9cef" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>' +
+            '</div>' +
+
+            '<div style="font-size:16px;font-weight:800;letter-spacing:-.2px;margin-bottom:6px;">Sincronizza i tuoi dati</div>' +
+            '<div style="font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:18px;">Collega il tuo account Google per sincronizzare allenamenti, nutrizione e progressi tra tutti i tuoi dispositivi.</div>' +
+
+            // Feature pills
+            '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">' +
+              '<span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(200,245,60,0.08);border:1px solid rgba(200,245,60,0.18);color:var(--acc);">☁️ Cloud backup</span>' +
+              '<span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(91,156,239,0.08);border:1px solid rgba(91,156,239,0.18);color:var(--blue);">🔄 Multi-device</span>' +
+              '<span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(62,223,138,0.08);border:1px solid rgba(62,223,138,0.18);color:var(--green);">🔒 Sicuro</span>' +
+            '</div>' +
+
+            // Bottone Google
+            '<button onclick="localStorage.removeItem(\'ft_skip_google\'); if(typeof firebaseSignIn===\'function\'){ firebaseSignIn().then(function(){ setTimeout(function(){ if(typeof renderProfilePage===\'function\') renderProfilePage(); },400); }).catch(function(){}); } else { location.reload(); }" style="width:100%;padding:13px 16px;background:#fff;color:#3c4043;border:none;border-radius:var(--r-lg);font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,0.25);transition:box-shadow .2s;" onmouseover="this.style.boxShadow=\'0 4px 20px rgba(0,0,0,0.35)\'" onmouseout="this.style.boxShadow=\'0 2px 12px rgba(0,0,0,0.25)\'">' +
+              '<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>' +
+              'Continua con Google' +
+            '</button>' +
+
+          '</div>' +
+        '</div>';
     }
 
     section.innerHTML = html;
