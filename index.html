@@ -3239,8 +3239,7 @@ input:focus, textarea:focus, select:focus {
     }
   }, { passive: true });
 
-  console.log('[FitTrack V45 Premium UX] ✅ Loaded — 12 micro-interaction modules active');
-
+  
   // Init
   setTimeout(animateStats, 600);
   setTimeout(animateBars, 700);
@@ -3315,7 +3314,6 @@ input:focus, textarea:focus, select:focus {
       };
 
       await setDoc(doc(db, 'users', user.uid, 'data', 'main'), data);
-      console.log('[Firestore] ✅ Salvato -', new Date().toLocaleTimeString());
       // Badge cloud nella navbar
       const badge = document.getElementById('ft-cloud-badge');
       if (badge) { badge.textContent = '☁️'; badge.title = 'Sync ' + new Date().toLocaleTimeString(); }
@@ -3330,7 +3328,7 @@ input:focus, textarea:focus, select:focus {
     if (!user) return false;
     try {
       const snap = await getDoc(doc(db, 'users', user.uid, 'data', 'main'));
-      if (!snap.exists()) { console.log('[Firestore] Nessun dato cloud — nuovo utente'); return false; }
+      if (!snap.exists()) return false;
       const data = snap.data();
 
       // Merge intelligente: usa cloud solo se più recente
@@ -3358,12 +3356,10 @@ input:focus, textarea:focus, select:focus {
         if (data.badges)   localStorage.setItem('ft_badges', JSON.stringify(data.badges));
         if (data.settings) { localStorage.setItem('ft_v45_settings', JSON.stringify(data.settings)); localStorage.setItem('v45_settings', JSON.stringify(data.settings)); }
         if (data.proStatus) localStorage.setItem('ft_pro_status', JSON.stringify(data.proStatus));
-        console.log('[Firestore] ✅ Caricato dal cloud (' + cloudUpdated + ')');
       } else {
         // Cloud più vecchio: carica solo PRO status (dati sensibili)
         if (data.proStatus) localStorage.setItem('ft_pro_status', JSON.stringify(data.proStatus));
-        console.log('[Firestore] Locale più recente — skip merge dati');
-      }
+        }
 
       // Espone helper per verifica PRO
       window._fsGetDoc = async function(path) {
@@ -3385,31 +3381,18 @@ input:focus, textarea:focus, select:focus {
   // Auto-save every 2 minutes when logged in
   onAuthStateChanged(auth, function(user) {
     if (user) {
-      console.log('[Firestore] Auth OK -', user.displayName);
-      // Se appena resettato, non ricaricare dal cloud — mostra onboarding
-      if (localStorage.getItem('ft_just_reset') === '1') {
-        console.log('[Firestore] Reset in corso — skip cloud load');
-        return;
-      }
+      // Guard reset: non ricaricare dal cloud se siamo in fase di reset
+      if (localStorage.getItem('ft_just_reset') === '1') return;
       // Load data on login (con piccolo delay per dare tempo all'app di inizializzare)
       setTimeout(function() {
         window.firestoreLoad().then(function(loaded) {
           if (loaded) {
-            console.log('[Firestore] ✅ Sync completato al login');
-            // Ricarica l'app con i dati freschi
             if (typeof initApp === 'function') try { initApp(); } catch(e) {}
           }
         });
       }, 800);
 
-      // Auto-save ogni 3 minuti (meno aggressivo, rispetta quota Firestore)
-      clearInterval(window._fsAutoSaveInterval);
-      window._fsAutoSaveInterval = setInterval(function() {
-        if (auth.currentUser) {
-          localStorage.setItem('ft_last_local_save', new Date().toISOString());
-          window.firestoreSave();
-        }
-      }, 180000);
+      // Auto-save ogni 3 minuti — gestito dal secondo onAuthStateChanged
 
       // Aggiungi badge cloud nella navbar
       setTimeout(function() {
@@ -3610,8 +3593,7 @@ input:focus, textarea:focus, select:focus {
       // Se appena resettato: rimuovi il flag, nascondi login, mostra onboarding dall'inizio
       if (localStorage.getItem('ft_just_reset') === '1') {
         localStorage.removeItem('ft_just_reset');
-        console.log('[Reset] Utente autenticato dopo reset — avvio onboarding');
-        const loginScreen = document.getElementById('scr-google-login');
+          const loginScreen = document.getElementById('scr-google-login');
         if (loginScreen) loginScreen.classList.remove('active');
         const appScreen = document.getElementById('scr-app');
         if (appScreen) appScreen.classList.remove('active');
@@ -3633,7 +3615,7 @@ input:focus, textarea:focus, select:focus {
       // Auto-save ogni 3 minuti
       clearInterval(window._fsAutoSaveInterval);
       window._fsAutoSaveInterval = setInterval(function() {
-        if (auth.currentUser && window.firestoreSave) {
+        if (auth.currentUser && window.firestoreSave && localStorage.getItem('ft_just_reset') !== '1') {
           localStorage.setItem('ft_last_local_save', new Date().toISOString());
           window.firestoreSave();
         }
@@ -6360,7 +6342,7 @@ if (typeof FOOD_DB === 'undefined') window.FOOD_DB = [];
 if (typeof PRESETS_DATA === 'undefined') window.PRESETS_DATA = [];
 if (typeof renderWoExs === 'undefined') window.renderWoExs = function() {};
 if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = function() { return null; };
-if (typeof calShiftWeek === 'undefined') window.calShiftWeek = function(d) { console.log('[guard] calShiftWeek called before init'); };
+if (typeof calShiftWeek === 'undefined') window.calShiftWeek = function(d) {};
 
 // #region agent log
 // #endregion
@@ -9757,7 +9739,6 @@ gymV44.forEach(p => {
     if (!PRESETS_DATA.find(x=>x.id===p.id)) PRESETS_DATA.push(p);
     if (typeof WORKOUT_PRESETS !== 'undefined' && !WORKOUT_PRESETS.find(x=>x.id===p.id)) WORKOUT_PRESETS.push(p);
   });
-  console.log('[V6] Iniettati', v6MachinePresets.length, 'preset machine-only. Totale PRESETS_DATA:', PRESETS_DATA.length);
 })();
 
 (function addV45Presets() {
@@ -9970,7 +9951,6 @@ gymV44.forEach(p => {
     if (!PRESETS_DATA.find(x=>x.id===p.id)) PRESETS_DATA.push(p);
     if (typeof WORKOUT_PRESETS !== 'undefined' && !WORKOUT_PRESETS.find(x=>x.id===p.id)) WORKOUT_PRESETS.push(p);
   });
-  console.log('[V45] Iniettati', v45Presets.length, 'nuovi preset match. Totale PRESETS_DATA:', PRESETS_DATA.length);
 })();
 
 
@@ -10254,6 +10234,8 @@ function sanitizeRuntimeState(){
   if(!nutrition || typeof nutrition !== 'object') nutrition = {};
   if(!metrics || typeof metrics !== 'object') metrics = {};
   if(!pbs || typeof pbs !== 'object') pbs = {};
+  // Protezione extra: rimuovi sessioni corrotte (senza date valide)
+  sessions = sessions.filter(function(s){ return s && s.date; });
   if(profile.generatedPlan && !Array.isArray(profile.generatedPlan.schedule)){
     profile.generatedPlan = null;
   }
@@ -10264,7 +10246,6 @@ function updateGoals(newGoals){
   profile.goalsMeta = { ...profile.goalsMeta, ...newGoals };
   if(newGoals.calories !== undefined)
     profile.kcalTarget = safeKcal(newGoals.calories) || profile.kcalTarget;
-  console.log('[Goals] goalsMeta aggiornato:', profile.goalsMeta);
   saveAll();
 }
 
@@ -10516,7 +10497,6 @@ function updateWeight(newWeight) {
   _ensureGoals();
   if(w !== null) profile.goalsMeta.weight = w;
 
-  console.log('[Weight] Aggiornato:', w, 'kg — storico:', profile.weightHistory.length, 'voci');
   saveAll();
 }
 
@@ -11097,6 +11077,8 @@ function launchApp(){
   initApp();
 }
 function goPage(p){
+  // Guard reset: non navigare durante un reset in corso
+  if (localStorage.getItem('ft_just_reset') === '1') return;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bni').forEach(el=>el.classList.remove('on'));
   const pageEl = document.getElementById('page-'+p);
@@ -14687,11 +14669,13 @@ async function _doReset(){
     const toRemove=[];
     for(var i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(k.startsWith('ft_')||k.startsWith('ft3_')||k.startsWith('v45_')))toRemove.push(k);}
     toRemove.forEach(function(k){localStorage.removeItem(k);});
-    // Rimuovi esplicitamente tutte le chiavi di autenticazione e sessione
+    // Rimuovi tutte le chiavi di autenticazione e sessione
     // così dopo il reload l'app riparte dalla schermata di login → onboarding completo
-    localStorage.removeItem('ft_google_token');
-    localStorage.removeItem('ft_google_user');
-    localStorage.removeItem('ft_skip_google');
+    ['ft_google_token','ft_google_user','ft_skip_google',
+     'ft_firebase_user','ft_last_local_save','ft_last_sync',
+     'ft_badges','ft_pro_status','ft_v45_settings','v45_settings',
+     'ft3_profile','ft3_sessions','ft3_nutrition','ft3_metrics','ft3_pbs'
+    ].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
   }catch(e){}
 
   // 4. Cancella dati su Firestore (sovrascrive con profilo vuoto)
@@ -14709,8 +14693,12 @@ async function _doReset(){
     }
   }catch(e){}
 
-  // 6. Imposta flag "just reset" che sopravvive al reload e blocca il ricarico cloud
-  try{ localStorage.setItem('ft_just_reset','1'); }catch(e){}
+  // 6. Imposta flag "just reset" e azzera il timestamp locale
+  // così al prossimo login il cloud (già azzerato) risulterà più recente
+  try{
+    localStorage.setItem('ft_just_reset','1');
+    localStorage.removeItem('ft_last_local_save'); // forza cloudIsNewer=false sul prossimo load
+  }catch(e){}
 
   // 7. Sign out da Firebase così dopo il reload parte dalla schermata di login → onboarding
   try{
@@ -15538,6 +15526,11 @@ async function ftEnterApp() {
   }
 
   // Aspetta auth Firebase (max 4 secondi)
+  // Guard: se siamo in fase di reset, non caricare dal cloud
+  if (localStorage.getItem('ft_just_reset') === '1') {
+    document.getElementById('scr-onboard').classList.add('active');
+    return;
+  }
   let cloudLoaded = false;
   try {
     cloudLoaded = await new Promise(function(resolve) {
@@ -16172,8 +16165,6 @@ function showPwCycleModal(dayName) {
   document.getElementById('pw-modal-suggestion').textContent     = pd.suggestion;
 
   // Log (richiesto dalla spec)
-  console.log(`[CicloPost] Allenamento completato in fase ${faseName} (${mod})`);
-  console.log(`[CicloPost] Suggerimento: ${pd.suggestion}`);
 
   // Show
   const modal = document.getElementById('pw-cycle-modal');
@@ -17602,7 +17593,6 @@ function getProgressiveWeight(exId, targetReps) {
       ? Math.max(0.5, Math.round(lastWeight * 0.025 * 2) / 2) // 2.5%, arrotondato a 0.5 kg
       : 0; // bodyweight → rimane 0 (progressione gestita dalle reps)
     const newWeight = Math.round((lastWeight + increment) * 10) / 10;
-    console.log(`[Progressione] ${exId}: ${lastReps}/${lastTarget} reps → +${increment} kg → nuovo peso: ${newWeight} kg`);
     return newWeight;
   }
 
@@ -17610,11 +17600,9 @@ function getProgressiveWeight(exId, targetReps) {
   // Se era ben sotto (< 60% del target) riduci leggermente
   if (lastWeight > 0 && lastReps < lastTarget * 0.6) {
     const reduced = Math.max(0, Math.round((lastWeight * 0.95) * 10) / 10);
-    console.log(`[Progressione] ${exId}: ${lastReps}/${lastTarget} reps (sotto 60%) → riduzione a ${reduced} kg`);
     return reduced;
   }
 
-  console.log(`[Progressione] ${exId}: ${lastReps}/${lastTarget} reps → mantieni ${lastWeight} kg`);
   return lastWeight;
 }
 
@@ -17675,7 +17663,6 @@ async function saveWorkoutToLog() {
     recordExercisePerformance(ex.id, estimatedReps, currentWeight, targetReps);
   });
   await saveExerciseLog();
-  console.log('[ExerciseLog] Storico aggiornato per', (exs||[]).length, 'esercizi');
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -17732,7 +17719,6 @@ function calculateProgramScore(program) {
   const score = { total: 0, breakdown: {} };
 
   if (days.length === 0) {
-    console.log('[ProgramScore] Nessun giorno attivo → score: 0');
     return score;
   }
 
@@ -17805,14 +17791,6 @@ function calculateProgramScore(program) {
   score.breakdown.penalties = penalties;
   score.total = Math.max(0, Math.min(100, score.total));
 
-  console.log(
-    `[ProgramScore] Score: ${score.total}/100\n` +
-    `  Muscoli (${muscleScore}/40): ${presentMuscles.join(', ')||'nessuno'}\n` +
-    `  Equilibrio (${balanceScore}/20): petto=${chestVol} serie, schiena=${backVol} serie\n` +
-    `  Volume (${volumeScore}/20): ${Math.round(avgSetsPerSession)} serie/sessione media\n` +
-    `  Frequenza (${freqScore}/20): 2x → ${trainedFreqOk.join(', ')||'nessuno'}\n` +
-    (penalties.length ? `  Penalità: ${penalties.join(' | ')}` : '  Nessuna penalità')
-  );
 
   return score;
 }
@@ -17881,11 +17859,8 @@ function analyzeAndSuggest(program) {
 
   // Output
   if (suggestions.length === 0) {
-    console.log(`[Suggerimenti] ✅ Programma ben bilanciato! Score: ${score.total}/100`);
-  } else {
-    console.log(`[Suggerimenti] Score: ${score.total}/100 — ${suggestions.length} suggerimenti:`);
-    (suggestions||[]).forEach((s, i) => console.log(`  ${i+1}. ${s}`));
-  }
+    } else {
+      }
 
   return { score, suggestions };
 }
@@ -20098,7 +20073,6 @@ const _v17origObGoFinal = typeof obGo !== 'undefined' ? obGo : null; // referenc
         WORKOUT_PRESETS.push(p);
       }
     });
-    console.log(`[V19] Iniettati ${newPresets.length} nuovi preset. Totale: ${WORKOUT_PRESETS.length}`);
   }
 })();
 
@@ -20156,7 +20130,6 @@ const _v17origObGoFinal = typeof obGo !== 'undefined' ? obGo : null; // referenc
     });
     
     scored.sort((a,b) => b.score - a.score);
-    console.log('[V19] Top 3 preset match:', scored.slice(0,3).map(s => `${s.id}(${s.score})`).join(', '));
     return scored[0]?.id || 'ppl';
   };
 
@@ -20284,7 +20257,6 @@ const _v17origObGoFinal = typeof obGo !== 'undefined' ? obGo : null; // referenc
       const sign = goalType === 'cut' ? '📉' : goalType === 'bulk' ? '📈' : '⚖️';
       showToast(`${sign} Aggiornato: ${newCalories.toLocaleString()} kcal · ${protein}g prot · Programma: ${bestPreset?.name || 'Adattato'}`);
       
-      console.log('[V19] Goals aggiornati:', { goalType, newCalories, protein, carbs, fats, program: bestPreset?.name });
       
     } catch(err) {
       console.error('[V19] updateGoalsAndProgram error:', err);
@@ -22356,7 +22328,6 @@ function renderSettingsPanelV21(){
     if(sp && sp.innerHTML.length > 50) renderSettingsPanelV21();
   }, 200);
 
-  console.log('[V21] Booted ✓ — Theme:', v21CurrentTheme, '· Mode:', v21CurrentMode, '· Lang:', v21CurrentLang);
 })();
 </script>
 
@@ -22575,7 +22546,6 @@ function renderSettingsPanelV21(){
   };
   Object.assign(EX_GUIDES, newGuides);
 
-  console.log('[V23] EX_DB esteso — totale esercizi:', EX_DB.length);
 })();
 
 /* ══════════════════════════════════════════════════════════
@@ -22667,7 +22637,6 @@ function renderSettingsPanelV21(){
   ];
   const existingFoodIds = new Set(FOOD_DB.map(f=>f.id));
   extra.forEach(f => { if(!existingFoodIds.has(f.id)) FOOD_DB.push(f); });
-  console.log('[V23] FOOD_DB esteso — totale alimenti:', FOOD_DB.length);
 })();
 
 /* ══════════════════════════════════════════════════════════
@@ -22734,7 +22703,6 @@ function renderSettingsPanelV21(){
   // Aggiorna categorie se necessario
   if(!RICETTE_CATS.find(c=>c.id==='snack')) RICETTE_CATS.push({id:'snack',label:'🍎 Snack'});
 
-  console.log('[V23] RICETTE estese — totale ricette:', RICETTE.length);
 })();
 
 /* ══════════════════════════════════════════════════════════
@@ -23656,7 +23624,6 @@ window.deleteCFFood=function(id){
   ];
   const ids=new Set(FOOD_DB.map(f=>f.id));
   extra.forEach(f=>{if(!ids.has(f.id)){FOOD_DB.push(f);ids.add(f.id);}});
-  console.log('[V25] FOOD_DB totale:',FOOD_DB.length,'alimenti');
 })();
 
 /* ══ 5. ESPANSIONE EX DB ════════════════════════════════════════ */
@@ -23694,7 +23661,6 @@ window.deleteCFFood=function(id){
   ];
   const ids=new Set(EX_DB.map(e=>e.id));
   extra.forEach(e=>{if(!ids.has(e.id)){EX_DB.push(e);ids.add(e.id);}});
-  console.log('[V25] EX_DB totale:',EX_DB.length,'esercizi');
 })();
 
 /* ══ 6. STEP EQUIPAGGIAMENTO ONBOARDING ═══════════════════════ */
@@ -23808,7 +23774,6 @@ function v25Init(){
   try{const eq=JSON.parse(localStorage.getItem('ft_equipment')||'[]');if(eq.length&&typeof profile!=='undefined')profile.equipment=eq;}catch(e){}
   // Patch editGoalsPrompt globally
   window.editGoalsPrompt=openGoalsModal;
-  console.log('[V25] ✅ Macro auto-adattivi · Alimenti custom · DB+' + ' · Equipment OB · V25 ready');
 }
 
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',v25Init);
@@ -23929,7 +23894,6 @@ function safeN(v,mn,mx,fb){const n=parseFloat(v);return(isNaN(n)||!isFinite(n))?
   if(typeof FOOD_DB!=='undefined'){
     const ids=new Set(FOOD_DB.map(f=>f.id));
     extra.forEach(f=>{if(!ids.has(f.id)){FOOD_DB.push(f);}});
-    console.log('[V27] FOOD_DB totale:',FOOD_DB.length,'alimenti');
   }
 })();
 
@@ -24006,7 +23970,6 @@ function safeN(v,mn,mx,fb){const n=parseFloat(v);return(isNaN(n)||!isFinite(n))?
   if(typeof EX_DB!=='undefined'){
     const ids=new Set(EX_DB.map(e=>e.id));
     extra.forEach(e=>{if(!ids.has(e.id)){EX_DB.push(e);}});
-    console.log('[V27] EX_DB totale:',EX_DB.length,'esercizi');
   }
 })();
 
@@ -25360,7 +25323,6 @@ function waitReady(fn){ if(document.readyState==='loading') document.addEventLis
     const ids=new Set(EX_DB.map(e=>e.id));
     extra.forEach(e=>{if(!ids.has(e.id)){EX_DB.push(e);ids.add(e.id);}});
     if(window.EX_DB) window.EX_DB=EX_DB;
-    console.log('[V29] EX_DB totale:',EX_DB.length,'esercizi');
   }
 })();
 
@@ -25439,7 +25401,6 @@ function waitReady(fn){ if(document.readyState==='loading') document.addEventLis
     const ids=new Set(FOOD_DB.map(f=>f.id));
     extra.forEach(f=>{if(!ids.has(f.id)){FOOD_DB.push(f);ids.add(f.id);}});
     if(window.FOOD_DB) window.FOOD_DB=FOOD_DB;
-    console.log('[V29] FOOD_DB totale:',FOOD_DB.length,'alimenti');
   }
 })();
 
@@ -25761,7 +25722,6 @@ function waitReady(fn){ if(document.readyState==='loading') document.addEventLis
     // Sync alias
     if(typeof WORKOUT_PRESETS!=='undefined') window.WORKOUT_PRESETS=PRESETS_DATA;
     window.PRESETS_DATA=PRESETS_DATA;
-    console.log('[V29] PRESETS_DATA totale:',PRESETS_DATA.length,'programmi');
   }
 })();
 
@@ -26099,7 +26059,6 @@ window.showMissingEquipmentAlert = function(presetName, missingLabels){
     const ids = new Set(RICETTE.map(r => r.id));
     nuove.forEach(r => { if(!ids.has(r.id)){ RICETTE.push(r); ids.add(r.id); }});
     window.RICETTE = RICETTE;
-    console.log('[V30] RICETTE totale:', RICETTE.length, 'ricette');
   }
 })();
 
@@ -26259,60 +26218,7 @@ if(typeof window.qs !== 'function'){
   window.qs = function(id){ return document.getElementById(id); };
 }
 
-/* ── 2. CONFIRM RESET FIX ─────────────────────────────── */
-// Sovrascrive con versione che usa modal custom invece di confirm()
-window.confirmReset = async function(){
-  document.getElementById('v31-reset-modal')?.remove();
-  const modal = document.createElement('div');
-  modal.id = 'v31-reset-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px);padding:20px;box-sizing:border-box;';
-  modal.innerHTML = `
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:24px;width:100%;max-width:360px;padding:28px 22px;text-align:center;">
-    <div style="font-size:42px;margin-bottom:12px;">⚠️</div>
-    <div style="font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px;">Reset completo</div>
-    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;">
-      Tutti i tuoi dati verranno eliminati definitivamente:<br>
-      <strong style="color:var(--text)">allenamenti, nutrizione, progressi, profilo.</strong><br>
-      Questa azione è <strong style="color:var(--red)">irreversibile</strong>.
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button id="v31-reset-confirm" style="padding:14px;background:var(--red);color:#fff;border:none;border-radius:14px;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">
-        🗑 Sì, elimina tutto
-      </button>
-      <button onclick="document.getElementById('v31-reset-modal').remove();" style="padding:14px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:14px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">
-        Annulla
-      </button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
-  document.getElementById('v31-reset-confirm').onclick = async function(){
-    modal.remove();
-    // Esegui reset
-    if(typeof profile !== 'undefined'){
-      window.profile = {
-        name:'',level:'intermediate',
-        goals:{calories:2500,weight:70,goalType:'maintain'},
-        goalsMeta:{calories:2500,weight:70,goalType:'maintain'},
-        days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,
-        physique:{age:20,weight:70,height:175,sex:'m',activity:1.55},
-        weeklyWorkoutsTarget:3,weightHistory:[]
-      };
-    }
-    if(typeof sessions   !== 'undefined') window.sessions   = [];
-    if(typeof nutrition  !== 'undefined') window.nutrition  = {};
-    if(typeof metrics    !== 'undefined') window.metrics    = {};
-    if(typeof pbs        !== 'undefined') window.pbs        = {};
-    // Clear IndexedDB
-    try{ indexedDB.deleteDatabase('FitTrackDBv3'); }catch(e){}
-    // Clear localStorage
-    try{
-      Object.keys(localStorage).filter(k=>k.startsWith('ft')).forEach(k=>localStorage.removeItem(k));
-    }catch(e){}
-    if(typeof showToast === 'function') showToast('✅ Reset completato');
-    setTimeout(()=>location.reload(), 900);
-  };
-};
+// [confirmReset deduplicata — usa la definizione consolidata sopra];
 
 /* ── 3. EXPORT DATA FIX ──────────────────────────────── */
 window.exportData = function(){
@@ -26896,7 +26802,6 @@ window.openExDetailInWorkout = function(exId){
     const ids = new Set(PRESETS_DATA.map(p=>p.id));
     extra.forEach(p=>{ if(!ids.has(p.id)){ PRESETS_DATA.push(p); ids.add(p.id); }});
     window.PRESETS_DATA = PRESETS_DATA;
-    console.log('[V31] PRESETS totale:', PRESETS_DATA.length, 'programmi');
   }
 })();
 
@@ -27936,7 +27841,6 @@ V35.forEach(p => {
 // Aggiorna anche WORKOUT_PRESETS alias
 if(typeof WORKOUT_PRESETS !== 'undefined') window.WORKOUT_PRESETS = PRESETS_DATA;
 
-console.log('[V35] Preset totali:', PRESETS_DATA.length);
 })(); // end addV35Presets
 
 /* ═══════════════════════════════════════════════════════════════
@@ -30843,14 +30747,7 @@ window.goPage = function goPage(p) {
    STRIP ALL DEAD console.log CALLS
    (runtime patch — silences all [Vx] debug logs)
 ───────────────────────────────────────── */
-const _v41_nativeLog = console.log.bind(console);
-console.log = function(...args) {
-  // Allow only non-versioning logs through
-  if (typeof args[0] === 'string' && /^\[V\d+\]/.test(args[0])) return;
-  // Silence all agent markers
-  if (typeof args[0] === 'string' && /^\[Weekly|^\[Ciclo|^\[Fitness|^\[Goals|^\[Weight|^\[Training/.test(args[0])) return;
-  _v41_nativeLog(...args);
-};
+// Tutti i console.log con marker [*] sono già stati rimossi — no override necessario
 
 /* ─────────────────────────────────────────
    DEDUPLICATION GUARD — renderWoExs
@@ -31058,18 +30955,16 @@ let _swReg = null;
     console.warn('[PWA] Service Worker non supportato');
     return;
   }
-  if (true) { console.log('[PWA] SW skip - standalone mode'); return; }
+  return; // skip SW in standalone HTML mode
   try {
     _swReg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-    console.log('[PWA] SW registrato ✅', _swReg.scope);
-
+  
     /* Aggiorna SW silenziosamente quando disponibile */
     _swReg.addEventListener('updatefound', () => {
       const newWorker = _swReg.installing;
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('[PWA] Nuovo SW disponibile');
-          newWorker.postMessage({ type: 'SKIP_WAITING' });
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
         }
       });
     });
@@ -31389,8 +31284,7 @@ window.FitReminder = (function () {
       _deferredPrompt.prompt();
       const { outcome } = await _deferredPrompt.userChoice;
       _deferredPrompt = null;
-      console.log('[PWA] Install outcome:', outcome);
-    });
+        });
 
     document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
       banner.remove();
@@ -31407,11 +31301,9 @@ window.FitReminder = (function () {
 
   /* Rilevamento standalone */
   if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('[PWA] Running as installed app ✅');
-  }
+      }
 })();
 
-console.log('[FitTrack AI] PWA Bootstrap completato ✅');
 </script>
 
 <!-- ════════════════════════════════════════════════════════════
@@ -31579,8 +31471,13 @@ function v43PatchOpenExDetail() {
 
 // Try patching now and at various times
 var _patchAttempts = 0;
+var _patchAttempts = 0;
 var _patchTimer = setInterval(function() {
-  if (v43PatchOpenExDetail() || _patchAttempts++ > 50) clearInterval(_patchTimer);
+  try {
+    if ((typeof v43PatchOpenExDetail === 'function' && v43PatchOpenExDetail()) || _patchAttempts++ > 50) {
+      clearInterval(_patchTimer);
+    }
+  } catch(e) { clearInterval(_patchTimer); }
 }, 150);
 
 /* ══════════════════════════════════════════════════════════
@@ -31839,16 +31736,15 @@ window.renderProfilePage = function() {
   setTimeout(v43InjectSyncSection, 100);
 };
 
-// Auto-sync ogni 30 min se configurato
-if (window.GoogleSync.isConfigured()) {
-  setInterval(function() { window.GoogleSync.save().catch(function(){}); }, 30 * 60 * 1000);
-}
+// Auto-sync ogni 30 min — gestito da saveAll debounce patch
 
 /* ── Auto-sync on saveAll (patch) ── */
 (function patchSaveAllForGoogleSync() {
   var _origSaveAll = window.saveAll;
   if (typeof _origSaveAll !== 'function') return;
   window.saveAll = function saveAll() {
+    // Non salvare mai durante un reset in corso
+    if (localStorage.getItem('ft_just_reset') === '1') return;
     var result;
     try { result = _origSaveAll.apply(this, arguments); } catch(e) { result = undefined; }
     try {
@@ -32293,7 +32189,6 @@ if (window.GoogleSync.isConfigured()) {
       if (typeof PRESETS_DATA !== 'undefined' && !PRESETS_DATA.find(x=>x.id===p.id)) PRESETS_DATA.push(p);
       if (typeof WORKOUT_PRESETS !== 'undefined' && !WORKOUT_PRESETS.find(x=>x.id===p.id)) WORKOUT_PRESETS.push(p);
     });
-    console.log('[V45] +10 preset strategici. Totale:', typeof PRESETS_DATA!=='undefined'?PRESETS_DATA.length:'?');
   }, 200);
 })();
 
@@ -32485,7 +32380,6 @@ if (window.GoogleSync.isConfigured()) {
       const totalEx   = activeDays.reduce((acc,d)=>acc+(d.exercises||[]).length,0);
       const estKcal   = totalSets * 15; // rough estimate per set
       const weekVol   = activeDays.length;
-      console.log(`[V45 Stats] ${p.name}: ${weekVol} gg/sett, ${totalEx} esercizi, ${totalSets} serie, ~${estKcal} kcal/sett`);
     } catch(e){}
   };
 })();
@@ -32612,7 +32506,6 @@ window.obPickVal = function(el, field, val) {
   if (typeof obSel !== 'undefined') obSel[field] = val;
 };
 
-console.log('[V45 FINAL] ✅ Tutti i moduli installati — FitTrack V45 ready');
 })();
 </script>
 
@@ -33195,7 +33088,6 @@ console.log('[V45 FINAL] ✅ Tutti i moduli installati — FitTrack V45 ready');
   };
 })();
 
-console.log('[V45 MEGA UX] ✅ 11 moduli installati — FitTrack V45 store-ready 🚀');
 })();
 </script>
 
@@ -33421,8 +33313,7 @@ console.log('[V45 MEGA UX] ✅ 11 moduli installati — FitTrack V45 store-ready
 (function installCoachChat(){
   var chatHistory=[];
   window.sendCoachMessage = function() {
-    console.log('[Coach] AI chat rimosso — usa i consigli statici');
-  };
+    };
 
 // Patch finishWorkout to show mobility advice after completion
 var _origFinish = window.finishWorkout;
@@ -33583,8 +33474,7 @@ if (typeof _origRenderHome === 'function') {
 // Boot
 setTimeout(function() {
   injectExtraSection();
-  console.log('[FitTrack V46] ✅ Mobilità post-allenamento + Allenamenti Extra attivi');
-}, 600);
+  }, 600);
 
 })();
 })();
@@ -33938,17 +33828,24 @@ if(typeof _rh==='function')window.renderHome=function(){_rh.apply(this,arguments
 var _rp=window.renderProgressi;
 if(typeof _rp==='function')window.renderProgressi=function(){_rp.apply(this,arguments);setTimeout(renderProgressionTimeline,150);};
 
-var _fw=window.finishWorkout;
-if(typeof _fw==='function')window.finishWorkout=async function(){await _fw.apply(this,arguments);setTimeout(function(){var d=checkProgressionReady();if(d)setTimeout(function(){showProgressionBanner(d);},2000);},500);};
+(function(){
+  var _fw=window.finishWorkout;
+  if(typeof _fw!=='function') return;
+  window.finishWorkout=async function(){
+    await _fw.apply(this,arguments);
+    setTimeout(function(){
+      try{ var d=checkProgressionReady(); if(d) setTimeout(function(){ showProgressionBanner(d); },2000); }catch(e){}
+    },500);
+  };
+})();
 
-setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgressionBanner(d); } catch(e){} console.log('[FitTrack V47] ✅ Progressione adattiva attiva'); },1000);
+setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgressionBanner(d); } catch(e){} },1000);
 })();
 </script>
 
 
 <script>
 /* SW registration disabled - standalone HTML mode */
-console.log('[PWA] SW skip - standalone HTML file');
 </script>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -34248,7 +34145,6 @@ console.log('[PWA] SW skip - standalone HTML file');
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
       // obGo consolidata già impostata — nessun override necessario
-      console.log('[FitTrack] obGo consolidata attiva:', typeof window.obGo);
     }, 500);
   });
 
@@ -34273,7 +34169,6 @@ console.log('[PWA] SW skip - standalone HTML file');
     if (homeEmpty) homeEmpty.style.display = 'none';
   });
 
-  console.log('[FitTrack BootFix] ✅ Patch caricata — login, Firebase stub, boot guard attivi');
 
   /* ──────────────────────────────────────────
      9. RUNTIME OVERFLOW FIX
