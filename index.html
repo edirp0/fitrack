@@ -3035,22 +3035,11 @@ input:focus, textarea:focus, select:focus {
     if (el && navigator.vibrate) navigator.vibrate(8);
   }, { passive: true });
 
-  /* ── 2. Smooth page transitions ── */
+  /* ── 2. Smooth page transitions (no delay — evita blocco input) ── */
   var _origGoPage = window.goPage;
   if (_origGoPage) {
     window.goPage = function(p) {
-      var prev = document.querySelector('.page.active');
-      if (prev) {
-        prev.style.transition = 'opacity 0.15s ease';
-        prev.style.opacity = '0';
-        setTimeout(function() {
-          prev.style.opacity = '';
-          prev.style.transition = '';
-          _origGoPage(p);
-        }, 140);
-      } else {
-        _origGoPage(p);
-      }
+      _origGoPage(p);
     };
   }
 
@@ -3139,8 +3128,7 @@ input:focus, textarea:focus, select:focus {
       });
     }
     setTimeout(observeCards, 400);
-    // Re-observe on page change
-    setInterval(observeCards, 1500);
+    // Re-observe on page change — rimosso setInterval per evitare interferenze con input
   }
 
   /* ── 7. Progress bar fill animation ── */
@@ -3154,7 +3142,7 @@ input:focus, textarea:focus, select:focus {
     });
   }
   setTimeout(animateBars, 500);
-  setInterval(animateBars, 2000);
+  // rimosso setInterval(animateBars) — le barre vengono animate al cambio pagina
 
   /* ── 8. Smooth scroll to active nav ── */
   document.querySelectorAll('.bni').forEach(function(btn) {
@@ -3381,12 +3369,15 @@ input:focus, textarea:focus, select:focus {
   // Auto-save every 2 minutes when logged in
   onAuthStateChanged(auth, function(user) {
     if (user) {
-      // Guard reset: non ricaricare dal cloud se siamo in fase di reset
+      // Guard reset e onboarding
       if (localStorage.getItem('ft_just_reset') === '1') return;
-      // Load data on login (con piccolo delay per dare tempo all'app di inizializzare)
+      if (window._ftOnboardingActive) return;
       setTimeout(function() {
-        window.firestoreLoad().then(function(loaded) {
-          if (loaded) {
+        if (window._ftOnboardingActive) return;
+        // NON chiamare initApp se l'app è già attiva — disturberebbe l'utente durante l'inserimento dati
+        var appAlreadyActive = document.getElementById('scr-app')?.classList.contains('active');
+        if (window.firestoreLoad) window.firestoreLoad().then(function(loaded) {
+          if (loaded && !window._ftOnboardingActive && !appAlreadyActive) {
             if (typeof initApp === 'function') try { initApp(); } catch(e) {}
           }
         });
@@ -3417,7 +3408,7 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import {
-    getAuth, signInWithRedirect, getRedirectResult,
+    getAuth, signInWithPopup, signInWithRedirect, getRedirectResult,
     GoogleAuthProvider,
     onAuthStateChanged, signOut,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -3451,10 +3442,35 @@ input:focus, textarea:focus, select:focus {
     };
     localStorage.setItem('ft_firebase_user', JSON.stringify(userData));
     localStorage.setItem('ft_google_user', JSON.stringify(userData));
+
     const loginScreen = document.getElementById('scr-google-login');
     if (loginScreen) loginScreen.classList.remove('active');
+
+    // Caso RESET: rimuovi il flag e avvia onboarding dall'inizio
+    // senza chiamare ftEnterApp (che bloccherebbe) né firestoreLoad
+    if (localStorage.getItem('ft_just_reset') === '1') {
+      localStorage.removeItem('ft_just_reset');
+      localStorage.removeItem('ft_pending_google_login');
+      // Azzera variabili RAM — protezione extra contro dati vecchi in memoria
+      try {
+        if(typeof profile !== 'undefined') profile = {name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},weeklyWorkoutsTarget:3,weightHistory:[]};
+        if(typeof sessions !== 'undefined') sessions = [];
+        if(typeof nutrition !== 'undefined') nutrition = {};
+        if(typeof metrics !== 'undefined') metrics = {};
+        if(typeof pbs !== 'undefined') pbs = {};
+        if(typeof obSel !== 'undefined') obSel = {};
+        if(typeof obGoals !== 'undefined') obGoals = [];
+        if(typeof obCurStep !== 'undefined') obCurStep = 0;
+      } catch(e) {}
+      // Avvia onboarding pulito dall'inizio
+      _startOnboarding();
+      if (typeof showToast === 'function') showToast('👋 Ciao ' + (user.displayName || user.email).split(' ')[0] + '! Configura il tuo profilo');
+      return;
+    }
+
+    // Caso NORMALE: entra nell'app
     if (typeof ftEnterApp === 'function') ftEnterApp();
-    if (typeof showToast === 'function') showToast('Benvenuto ' + (user.displayName || user.email) + '!');
+    if (typeof showToast === 'function') showToast('Bentornato ' + (user.displayName || user.email).split(' ')[0] + '!');
   }
 
   // Helper: mostra errore nel form
@@ -3470,23 +3486,41 @@ input:focus, textarea:focus, select:focus {
   // ── GOOGLE LOGIN (redirect — funziona su GitHub Pages) ──
   window.firebaseSignIn = async function() {
     const btnG = document.getElementById('google-signin-btn');
-    if (btnG) { btnG.disabled = true; btnG.textContent = 'Reindirizzamento…'; }
+    if (btnG) { btnG.disabled = true; btnG.textContent = 'Connessione…'; }
     document.getElementById('auth-loading') && (document.getElementById('auth-loading').style.display = 'block');
     document.getElementById('auth-error-msg') && (document.getElementById('auth-error-msg').style.display = 'none');
+
+    const isReset = localStorage.getItem('ft_just_reset') === '1';
+    localStorage.setItem('ft_pending_google_login', isReset ? 'reset' : '1');
+
     try {
-      // Salva stato prima del redirect
-      localStorage.setItem('ft_pending_google_login', '1');
-      await signInWithRedirect(auth, provider);
-      // La pagina si ricarica — il risultato viene gestito da getRedirectResult sotto
+      // Prova prima con popup (funziona su mobile senza problemi di sessionStorage)
+      const result = await signInWithPopup(auth, provider);
+      localStorage.removeItem('ft_pending_google_login');
+      _onLoginSuccess(result.user);
     } catch(e) {
-      console.error('Google login error:', e);
-      const msgs = {
-        'auth/network-request-failed': 'Errore di rete. Controlla la connessione.',
-        'auth/cancelled-popup-request': 'Richiesta annullata. Riprova.',
-        'auth/unauthorized-domain': 'Dominio non autorizzato in Firebase Console.'
-      };
-      _showAuthError(msgs[e.code] || 'Errore Google: ' + e.message);
-      if (btnG) { btnG.disabled = false; btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill=\"#EA4335\" d=\"M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z\"/><path fill=\"#4285F4\" d=\"M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z\"/><path fill=\"#FBBC05\" d=\"M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z\"/><path fill=\"#34A853\" d=\"M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z\"/></svg> Continua con Google'; }
+      // Se popup bloccato, fallback a redirect
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+        try {
+          if (btnG) btnG.textContent = 'Reindirizzamento…';
+          await signInWithRedirect(auth, provider);
+          // La pagina si ricarica — risultato gestito da getRedirectResult
+          return;
+        } catch(e2) {
+          _showAuthError('Errore Google: ' + (e2.message || e2.code));
+        }
+      } else {
+        const msgs = {
+          'auth/network-request-failed': 'Errore di rete. Controlla la connessione.',
+          'auth/unauthorized-domain': 'Dominio non autorizzato in Firebase Console.',
+          'auth/cancelled-popup-request': 'Richiesta annullata. Riprova.',
+        };
+        _showAuthError(msgs[e.code] || 'Errore Google: ' + e.message);
+      }
+      if (btnG) {
+        btnG.disabled = false;
+        btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
+      }
     }
   };
 
@@ -3499,9 +3533,14 @@ input:focus, textarea:focus, select:focus {
         _onLoginSuccess(result.user);
       }
     } catch(e) {
-      if (e.code !== 'auth/no-current-user') {
-        console.error('Redirect result error:', e);
-        _showAuthError('Errore accesso Google: ' + (e.message || e.code));
+      if (e.code && e.code !== 'auth/no-current-user') {
+        const redirectErrMsgs = {
+          'auth/network-request-failed': 'Errore di rete. Controlla la connessione e riprova.',
+          'auth/unauthorized-domain': 'Dominio non autorizzato. Contatta il supporto.',
+          'auth/user-disabled': 'Account disabilitato.',
+          'auth/operation-not-allowed': 'Accesso Google non abilitato.',
+        };
+        _showAuthError(redirectErrMsgs[e.code] || 'Errore accesso: riprova o usa email/password.');
       }
     }
   })();
@@ -3595,21 +3634,24 @@ input:focus, textarea:focus, select:focus {
         localStorage.removeItem('ft_just_reset');
           const loginScreen = document.getElementById('scr-google-login');
         if (loginScreen) loginScreen.classList.remove('active');
-        const appScreen = document.getElementById('scr-app');
-        if (appScreen) appScreen.classList.remove('active');
-        const onboardScreen = document.getElementById('scr-onboard');
-        if (onboardScreen) onboardScreen.classList.add('active');
+        _startOnboarding();
         return; // blocca tutto il resto (no ftEnterApp, no firestoreLoad)
       }
       const loginScreen = document.getElementById('scr-google-login');
       if (loginScreen) loginScreen.classList.remove('active');
-      if (!document.getElementById('scr-app')?.classList.contains('active')) {
+      // Non entrare nell'app se l'onboarding è in corso
+      if (!window._ftOnboardingActive && !document.getElementById('scr-app')?.classList.contains('active')) {
         if (typeof ftEnterApp === 'function') setTimeout(ftEnterApp, 500);
       }
-      // Firestore sync
+      // Firestore sync — solo se onboarding NON è attivo
       setTimeout(function() {
+        if (window._ftOnboardingActive) return;
+        // NON chiamare initApp se l'app è già attiva — disturberebbe l'utente durante l'inserimento dati
+        var appAlreadyActive = document.getElementById('scr-app')?.classList.contains('active');
         if (window.firestoreLoad) window.firestoreLoad().then(function(loaded) {
-          if (loaded && typeof initApp === 'function') try { initApp(); } catch(e) {}
+          if (loaded && !window._ftOnboardingActive && !appAlreadyActive && typeof initApp === 'function') {
+            try { initApp(); } catch(e) {}
+          }
         });
       }, 800);
       // Auto-save ogni 3 minuti
@@ -4781,7 +4823,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
         <button onclick="obSelectAllGym()" style="flex:1;min-width:140px;padding:11px 14px;background:var(--acc);color:#080810;border:none;border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🏋️ Seleziona palestra completa</button>
         <button onclick="obSelectMachinesOnly()" style="flex:1;min-width:140px;padding:11px 14px;background:var(--bg4);color:var(--acc);border:1px solid var(--acc);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🤖 Solo macchinari</button>
-        <button onclick="obClearEquip()" style="padding:11px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;">✕ Azzera</button>
+        <button onclick="obFullResetAndRestart()" style="padding:11px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;">✕ Azzera</button>
       </div>
       <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Corpo libero</div>
       <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
@@ -4806,7 +4848,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
     <div class="ob-step" id="ob_s8">
       <div class="ob-eyebrow">Passo 9 di 16</div>
       <div class="ob-ttl">Quanti giorni ti alleni?</div>
-      <div class="ob-sub">Scegli quante sessioni vuoi fare a settimana. Poi potrai scegliere i giorni esatti.</div>
+      <div class="ob-sub">Scegli quante sessioni vuoi fare a settimana. Puoi selezionare anche un <strong>range</strong> (es. 3 e 4) e il sistema sceglierà il numero ottimale per te.</div>
 
       <!-- Selezione numero giorni -->
       <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Sessioni a settimana</div>
@@ -4868,7 +4910,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
           <span style="font-size:11px;font-weight:800;color:var(--text2)">DOM</span>
         </div>
       </div>
-      <div id="ob-days-hint" style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:16px;">Seleziona il numero di giorni o i giorni specifici</div>
+      <div id="ob-days-hint" style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:16px;">Seleziona quante sessioni vuoi fare (anche un range)</div>
       <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(7)">← Indietro</button><button class="btn btn-acc" onclick="obConfirmDays()">Continua →</button></div>
     </div>
 
@@ -5149,118 +5191,17 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
           <div style="font-size:14px;color:var(--text2);line-height:1.7">Questa sezione è per il ciclo mestruale.<br>Procedi al passo successivo per il tuo programma.</div>
         </div>
       </div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button><button class="btn btn-acc" onclick="obNext(14.5)">Continua →</button></div>
-    </div>
-
-    <!-- ── STEP 14.5: Nutrizione & Intolleranze ── -->
-    <div class="ob-step" id="ob_s14_5">
-      <div class="ob-eyebrow">Passo 15 di 16 — Nutrizione</div>
-      <div class="ob-ttl">Le tue preferenze alimentari</div>
-      <div class="ob-sub">Personalizziamo le ricette e i consigli nutrizionali in base a quello che mangi davvero.</div>
-
-      <!-- Preferenza proteica -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Fonte proteica principale</div>
-      <div class="ob-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:18px;">
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','meat')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🥩</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Carne</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','fish')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🐟</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Pesce</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','eggs')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🥚</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Uova</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','legumes')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🫘</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Legumi</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','dairy')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🧀</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Latticini</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'protSource','whey')" style="text-align:center;padding:18px 8px">
-          <span class="ob-card-ico" style="font-size:28px">🥛</span>
-          <div class="ob-card-nm" style="font-size:11px;margin-top:6px">Integratori</div>
-        </div>
-      </div>
-
-      <!-- Dieta -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Stile alimentare</div>
-      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
-        <div class="ob-card" onclick="obPickNutri(this,'diet','omnivore')">
-          <span class="ob-card-ico">🍽️</span><div class="ob-card-nm">Onnivoro</div><div class="ob-card-sub">Mangio tutto</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'diet','vegetarian')">
-          <span class="ob-card-ico">🌿</span><div class="ob-card-nm">Vegetariano</div><div class="ob-card-sub">No carne/pesce</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'diet','vegan')">
-          <span class="ob-card-ico">🌱</span><div class="ob-card-nm">Vegano</div><div class="ob-card-sub">Solo vegetale</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'diet','keto')">
-          <span class="ob-card-ico">🥑</span><div class="ob-card-nm">Keto / Low-carb</div><div class="ob-card-sub">Sotto 50g carbs</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'diet','mediterranean')">
-          <span class="ob-card-ico">🫒</span><div class="ob-card-nm">Mediterranea</div><div class="ob-card-sub">Pesce, verdure, olio</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'diet','flexible')">
-          <span class="ob-card-ico">🎲</span><div class="ob-card-nm">Flessibile / IIFYM</div><div class="ob-card-sub">Se rientra nei macro, va bene</div>
-        </div>
-      </div>
-
-      <!-- Intolleranze -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Intolleranze e allergie</div>
-      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_glutine')">
-          <span class="ob-card-ico">🌾</span><div class="ob-card-nm">Glutine</div><div class="ob-card-sub">Celiachia o sensibilità</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_lattosio')">
-          <span class="ob-card-ico">🥛</span><div class="ob-card-nm">Lattosio</div><div class="ob-card-sub">Latte e derivati</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_fruttasecca')">
-          <span class="ob-card-ico">🥜</span><div class="ob-card-nm">Frutta secca</div><div class="ob-card-sub">Arachidi, noci, mandorle</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_uova')">
-          <span class="ob-card-ico">🥚</span><div class="ob-card-nm">Uova</div><div class="ob-card-sub">Albume o tuorlo</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_pesce')">
-          <span class="ob-card-ico">🐟</span><div class="ob-card-nm">Pesce / Crostacei</div><div class="ob-card-sub">Allergia ittica</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_soia')">
-          <span class="ob-card-ico">🌱</span><div class="ob-card-nm">Soia</div><div class="ob-card-sub">Tofu, tempeh, edamame</div>
-        </div>
-        <div class="ob-card ob-multi" onclick="obMultiNutri(this,'intoll_none')" style="border-color:rgba(200,245,60,.3)">
-          <span class="ob-card-ico">✅</span><div class="ob-card-nm">Nessuna</div><div class="ob-card-sub">Mangio tutto senza problemi</div>
-        </div>
-      </div>
-
-      <!-- Budget spesa -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Budget settimanale spesa</div>
-      <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:4px;">
-        <div class="ob-card" onclick="obPickNutri(this,'budget','low')">
-          <span class="ob-card-ico">💰</span><div class="ob-card-nm">Economico</div><div class="ob-card-sub">Sotto €30/sett.</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'budget','medium')">
-          <span class="ob-card-ico">💰💰</span><div class="ob-card-nm">Moderato</div><div class="ob-card-sub">€30–60/sett.</div>
-        </div>
-        <div class="ob-card" onclick="obPickNutri(this,'budget','high')">
-          <span class="ob-card-ico">💎</span><div class="ob-card-nm">Flessibile</div><div class="ob-card-sub">Oltre €60/sett.</div>
-        </div>
-      </div>
-
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14)">← Indietro</button><button class="btn btn-acc" onclick="obSaveNutriPrefs();obNext(15)">Continua →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button><button class="btn btn-acc" onclick="obNext(15)">Continua →</button></div>
     </div>
 
     <!-- ── STEP 15: Scheda generata ── -->
     <div class="ob-step" id="ob_s15">
-      <div class="ob-eyebrow">Passo 16 di 16 — Il tuo programma</div>
+      <div class="ob-eyebrow">Passo 15 di 15 — Il tuo programma</div>
       <div class="ob-ttl">Scheda generata ✨</div>
       <div class="ob-sub">Basata su livello, obiettivi, massimali e giorni di allenamento. Si evolve automaticamente ogni settimana man mano che migliori.</div>
       <div id="ob-generated-plan" style="margin-bottom:16px"></div>
       <div id="ob-preset-rec" style="display:none;margin-bottom:16px" class="preset-rec"></div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14.5)">← Indietro</button><button class="btn btn-acc btn-full" id="ob-finish-btn" onclick="finishOnboard()">Inizia →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(14)">← Indietro</button><button class="btn btn-acc btn-full" id="ob-finish-btn" onclick="finishOnboard()">Inizia →</button></div>
     </div>
 
   </div>
@@ -6341,7 +6282,7 @@ if (typeof EX_DB === 'undefined') window.EX_DB = [];
 if (typeof FOOD_DB === 'undefined') window.FOOD_DB = [];
 if (typeof PRESETS_DATA === 'undefined') window.PRESETS_DATA = [];
 if (typeof renderWoExs === 'undefined') window.renderWoExs = function() {};
-if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = function() { return null; };
+// guard getRecommendedPreset già presente nello script precedente
 if (typeof calShiftWeek === 'undefined') window.calShiftWeek = function(d) {};
 
 // #region agent log
@@ -10647,6 +10588,30 @@ function calcWeightGoal() {
 
 // ── ONBOARDING ────────────────────────────
 let obSel={}, obGoals=[], obCurStep=0;
+window._ftOnboardingActive = false; // true mentre onboarding è aperto
+
+// Safety: se _ftOnboardingActive resta true per più di 15 minuti, resetta
+(function() {
+  var _obWatchdog = null;
+  Object.defineProperty(window, '_ftOnboardingActive', {
+    get: function() { return window.__ftOBActive; },
+    set: function(v) {
+      window.__ftOBActive = v;
+      clearTimeout(_obWatchdog);
+      if (v === true) {
+        // Onboarding avviato — watchdog 15 minuti
+        _obWatchdog = setTimeout(function() {
+          if (window.__ftOBActive) {
+            console.warn('[FitTrack] _ftOnboardingActive watchdog scattato — reset forzato');
+            window.__ftOBActive = false;
+          }
+        }, 15 * 60 * 1000);
+      }
+    },
+    configurable: true
+  });
+})();
+
 const OB_TOTAL = 16; // steps 0..15
 
 // New sequential navigation using ob_s{N} IDs
@@ -10658,34 +10623,39 @@ function obNext(step) {
       if(inp){ inp.style.borderColor='var(--red)'; setTimeout(()=>inp.style.borderColor='',1800); inp.focus(); }
       showToast('⚠️ Inserisci il tuo nome!'); return;
     }
-    // Step 1 — sesso obbligatorio
+    // Step 1 — ob_s1 = LIVELLO (obbligatorio)
     if(obCurStep===1) {
-      const hasSex = document.querySelector('.ob-card.on[data-sex]') ||
-                     document.querySelector('#ob_s1 .ob-card.on') ||
-                     (typeof obSel!=='undefined' && obSel.sex);
-      if(!hasSex) {
-        const cards = document.querySelectorAll('#ob_s1 .ob-card');
-        cards.forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
-        showToast('⚠️ Seleziona il sesso per continuare'); return;
+      const hasLevel = document.querySelector('#ob_s1 .ob-card.sel') ||
+                       (typeof obSel!=='undefined' && obSel.level);
+      if(!hasLevel) {
+        document.querySelectorAll('#ob_s1 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
+        showToast('⚠️ Seleziona il tuo livello per continuare'); return;
       }
     }
-    // Step 2 — almeno un obiettivo obbligatorio
+    // Step 2 — ob_s2 = SESSO (obbligatorio)
     if(obCurStep===2) {
-      const hasGoal = document.querySelector('#ob_s2 .ob-card.on') ||
+      const hasSex = document.querySelector('#ob_s2 .ob-card.sel') ||
+                     (typeof obSel!=='undefined' && obSel.sex);
+      if(!hasSex) {
+        document.querySelectorAll('#ob_s2 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
+        showToast('⚠️ Seleziona il tuo sesso per continuare'); return;
+      }
+    }
+    // Step 3 — ob_s3 = OBIETTIVI (almeno uno obbligatorio)
+    if(obCurStep===3) {
+      const hasGoal = document.querySelector('#ob_s3 .ob-card.sel') ||
                       (typeof obGoals!=='undefined' && obGoals && obGoals.length>0);
       if(!hasGoal) {
-        const cards = document.querySelectorAll('#ob_s2 .ob-card');
-        cards.forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
+        document.querySelectorAll('#ob_s3 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
         showToast('⚠️ Seleziona almeno un obiettivo'); return;
       }
     }
-    // Step 3 — dove ti alleni (obbligatorio)
-    if(obCurStep===3) {
-      const hasEnv = document.querySelector('#ob_s3 .ob-card.on') ||
+    // Step 4 — ob_s4 = AMBIENTE (obbligatorio)
+    if(obCurStep===4) {
+      const hasEnv = document.querySelector('#ob_s4 .ob-card.sel') ||
                      (typeof obSel!=='undefined' && obSel.env);
       if(!hasEnv) {
-        const cards = document.querySelectorAll('#ob_s3 .ob-card');
-        cards.forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
+        document.querySelectorAll('#ob_s4 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
         showToast('⚠️ Seleziona dove ti alleni'); return;
       }
     }
@@ -10813,8 +10783,9 @@ function ftProgressionCheck(exerciseId, lastSets) {
 window.ftProgressionCheck = ftProgressionCheck;
 
 function obPick(el,k,v){
-  el.closest('.ob-grid').querySelectorAll('.ob-card').forEach(c=>c.classList.remove('sel'));
-  el.classList.add('sel');obSel[k]=v;
+  el.closest('.ob-grid').querySelectorAll('.ob-card').forEach(c=>{ c.classList.remove('sel'); c.classList.remove('on'); });
+  el.classList.add('sel');
+  obSel[k]=v;
 }
 function obToggle(el,k){
   el.classList.toggle('sel');
@@ -10914,20 +10885,7 @@ function obSaveNutriPrefs() {
   if (typeof saveAll === 'function') saveAll();
 }
 
-// Intercetta obNext per gestire step 14.5 (id="ob_s14_5")
-var _origObNext = window.obNext;
-window.obNext = function(n) {
-  if (n === 14.5) {
-    // Nascondi tutti gli step
-    document.querySelectorAll('.ob-step').forEach(function(s){ s.classList.remove('active'); });
-    var el = document.getElementById('ob_s14_5');
-    if (el) el.classList.add('active');
-    // Progress bar: seg 15
-    document.querySelectorAll('.ob-prog-seg').forEach(function(s,i){ s.classList.toggle('on', i<=15); });
-    return;
-  }
-  if (typeof _origObNext === 'function') _origObNext(n);
-};
+// ob_s14_5 rimosso — obNext passa direttamente
 
 async function finishOnboard() {
   const btn = document.getElementById('ob-finish-btn');
@@ -11015,9 +10973,13 @@ async function finishOnboard() {
   } catch(e) {}
 
   // ── Launch the app ──
+  window._ftOnboardingActive = false;
   document.getElementById('scr-onboard').classList.remove('active');
   document.getElementById('scr-splash').classList.remove('active');
   document.getElementById('scr-app').classList.add('active');
+  // Pulisci tutti i flag temporanei
+  localStorage.removeItem('ft_just_reset');
+  localStorage.removeItem('ft_pending_google_login');
   initApp();
   if(typeof showToast==='function') showToast('👋 Benvenuto, '+name+'! Il tuo programma è pronto.');
 }
@@ -11077,8 +11039,9 @@ function launchApp(){
   initApp();
 }
 function goPage(p){
-  // Guard reset: non navigare durante un reset in corso
+  // Guard reset e onboarding
   if (localStorage.getItem('ft_just_reset') === '1') return;
+  if (window._ftOnboardingActive) return;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.bni').forEach(el=>el.classList.remove('on'));
   const pageEl = document.getElementById('page-'+p);
@@ -11113,6 +11076,7 @@ function closeSub(id){document.getElementById(id).classList.remove('open');}
 
 // ── INIT ──────────────────────────────────
 function initApp(){
+  if(window._ftOnboardingActive) return; // blocca durante onboarding
   const n=profile.name||'Atleta';
   const _tbAv=document.getElementById('tb-av'); if(_tbAv) _tbAv.textContent=n[0].toUpperCase();
   const _moto=document.getElementById('moto-txt'); if(_moto) _moto.textContent=MOTO[Math.floor(Math.random()*MOTO.length)];
@@ -12091,7 +12055,7 @@ async function finishWorkout(){
   _clearAutoSave();
   const dur=Math.round((Date.now()-woStart)/60000);
   const exs=woDayData.exercises||[];
-  let vol=0;exs.forEach(ex=>{vol+=safeSets(ex.s)*safeReps(ex.r);});
+  let vol=0;(Array.isArray(exs)?exs:[]).forEach(ex=>{vol+=safeSets(ex.s)*safeReps(ex.r);});
   const completedSets={};
   Object.keys(woSets).forEach(k=>{if(woSets[k])completedSets[k]=true;});
   const totalSets=exs.reduce((a,ex)=>a+safeSets(ex.s),0);
@@ -14686,12 +14650,8 @@ async function _doReset(){
     }
   }catch(e){console.warn('[Reset] Firestore:',e.message);}
 
-  // 5. Cancella su Google Drive (salva backup vuoto sovrascrivendo)
-  try{
-    if(window.GoogleSync&&typeof window.GoogleSync.save==='function'){
-      await window.GoogleSync.save();
-    }
-  }catch(e){}
+  // 5. Google Drive reset — skip: il token è già stato rimosso dal localStorage
+  //    GoogleSync.save() fallirebbe con "Error creating iframe id" su mobile
 
   // 6. Imposta flag "just reset" e azzera il timestamp locale
   // così al prossimo login il cloud (già azzerato) risulterà più recente
@@ -14700,13 +14660,12 @@ async function _doReset(){
     localStorage.removeItem('ft_last_local_save'); // forza cloudIsNewer=false sul prossimo load
   }catch(e){}
 
-  // 7. Sign out da Firebase così dopo il reload parte dalla schermata di login → onboarding
-  try{
-    if(typeof firebaseSignOut==='function') await firebaseSignOut();
-    else if(typeof signOut==='function'&&typeof auth!=='undefined') await signOut(auth);
-  }catch(e){}
+  // 7. Non fare signOut Firebase — causa "Error creating iframe id" su mobile.
+  // Il flag ft_just_reset + localStorage svuotato sono sufficienti.
+  // L'utente dovrà scegliere di nuovo l'account Google al prossimo login.
+  // Il provider Google ha già prompt:'select_account' — l'utente vedrà la scelta account al prossimo login
 
-  showToast('✅ Account resettato — riavvio in corso...');
+  showToast('✅ Account resettato — scegli di nuovo il tuo account Google');
   setTimeout(function(){location.reload();},1200);
 }
 
@@ -15357,7 +15316,7 @@ function updateWoProgressBar(){
   // Volume: somma tutti i pesi fatti (se disponibili)
   if(statVol){
     let vol = 0;
-    exs.forEach((ex, ei) => {
+    (Array.isArray(exs)?exs:[]).forEach((ex, ei) => {
       for(let si=0; si<safeSets(ex.s); si++){
         const key=`${ei}_${si}`;
         if(woSets[key]){
@@ -15471,17 +15430,25 @@ async function boot(){
   const t=Date.now();
   await initDB();
   const [sp,ss,sn,sm,spb,sprog]=await Promise.all([dbGet('profile'),dbGet('sessions'),dbGet('nutrition'),dbGet('metrics'),dbGet('pbs'),dbGet('program')]);
-  if(sp)profile=sp;if(ss)sessions=ss;if(sn)nutrition=sn;if(sm)metrics=sm;if(spb)pbs=spb;
+  if(sp)profile=sp;
+  sessions = Array.isArray(ss) ? ss : [];
+  if(sn)nutrition=sn;if(sm)metrics=sm;if(spb)pbs=spb;
   if(sprog && sprog.days) woProgram=sprog;
   sanitizeRuntimeState();
   const wait=Math.max(0,1400-(Date.now()-t));
   setTimeout(()=>{
     document.getElementById('scr-splash').classList.remove('active');
-    // Se appena resettato: il flag ft_just_reset viene consumato da onAuthStateChanged
-    // boot mostra il login Google così l'utente ri-autentica e parte l'onboarding
+
+    // Ripristina ft_just_reset se il redirect era partito durante un reset
+    // (il redirect ricarica la pagina, il flag potrebbe essere sopravvissuto o meno)
+    const pendingLogin = localStorage.getItem('ft_pending_google_login');
+    if (pendingLogin === 'reset' && !localStorage.getItem('ft_just_reset')) {
+      localStorage.setItem('ft_just_reset', '1');
+    }
+
+    // Se appena resettato — mostra login Google, onboarding parte dopo il login
     if (localStorage.getItem('ft_just_reset') === '1') {
-      // Nessun dato locale valido dopo reset — mostra login Google
-      document.getElementById('scr-google-login').classList.add('active');
+      document.getElementById('scr-google-login')?.classList.add('active');
       return;
     }
     // Check if user has already logged in with Google
@@ -15497,10 +15464,43 @@ async function boot(){
   },wait);
 }
 
+/* ── Onboarding launcher — unico punto di ingresso ── */
+function _startOnboarding() {
+  window._ftOnboardingActive = true;
+  // Azzera stato onboarding
+  try {
+    if(typeof obSel !== 'undefined') obSel = {};
+    if(typeof obGoals !== 'undefined') obGoals = [];
+    if(typeof obCurStep !== 'undefined') obCurStep = 0;
+    if(typeof _tempKcal !== 'undefined') window._tempKcal = null;
+    if(typeof _tempMacros !== 'undefined') window._tempMacros = null;
+    if(typeof _tempPhysique !== 'undefined') window._tempPhysique = null;
+  } catch(e) {}
+  // Resetta tutti gli step — solo ob_s0 attivo
+  document.querySelectorAll('.ob-step').forEach(function(s){ s.classList.remove('active'); });
+  var s0 = document.getElementById('ob_s0');
+  if (s0) s0.classList.add('active');
+  // Pulisci input nome
+  var nameInp = document.getElementById('ob-name');
+  if (nameInp) nameInp.value = '';
+  // Pulisci selezioni precedenti
+  document.querySelectorAll('.ob-card.sel').forEach(function(c){ c.classList.remove('sel'); });
+  document.querySelectorAll('.ob-card.on').forEach(function(c){ c.classList.remove('on'); });
+  // Nascondi splash, login; mostra onboarding
+  document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
+  var obScreen = document.getElementById('scr-onboard');
+  if (obScreen) obScreen.classList.add('active');
+}
+
 /* ── Google Login Flow ── */
 async function ftEnterApp() {
+  // Se reset in corso → onboarding
+  if (localStorage.getItem('ft_just_reset') === '1') { _startOnboarding(); return; }
+  // Se onboarding già attivo → non fare niente
+  if (window._ftOnboardingActive) return;
   // Se i dati locali ci sono già → entra subito
   if (profile.name) {
+    window._ftOnboardingActive = false;
     document.getElementById('scr-app').classList.add('active');
     initApp();
     return;
@@ -15513,7 +15513,7 @@ async function ftEnterApp() {
 
   // Se ha saltato il login Google → onboarding diretto (nessun cloud da caricare)
   if (skipGoogle && !googleUser) {
-    document.getElementById('scr-onboard').classList.add('active');
+    _startOnboarding();
     return;
   }
 
@@ -15528,7 +15528,7 @@ async function ftEnterApp() {
   // Aspetta auth Firebase (max 4 secondi)
   // Guard: se siamo in fase di reset, non caricare dal cloud
   if (localStorage.getItem('ft_just_reset') === '1') {
-    document.getElementById('scr-onboard').classList.add('active');
+    _startOnboarding();
     return;
   }
   let cloudLoaded = false;
@@ -15582,16 +15582,27 @@ async function ftEnterApp() {
 
     if (profile.name) {
       // Utente già configurato — vai all'app
+      window._ftOnboardingActive = false;
       document.getElementById('scr-app').classList.add('active');
       initApp();
       if (typeof showToast === 'function') setTimeout(function(){ showToast('☁️ Dati sincronizzati dal cloud'); }, 800);
     } else {
       // Cloud vuoto o nuovo utente — onboarding
-      document.getElementById('scr-onboard').classList.add('active');
+      _startOnboarding();
     }
   } else {
-    // Nessun dato cloud raggiungibile — onboarding
-    document.getElementById('scr-onboard').classList.add('active');
+    // Nessun dato cloud raggiungibile
+    let localProfile = null;
+    try { localProfile = typeof dbGet === 'function' ? await dbGet('profile') : null; } catch(e) {}
+    if (localProfile && localProfile.name && !localStorage.getItem('ft_just_reset')) {
+      profile = localProfile;
+      if (typeof sanitizeRuntimeState === 'function') sanitizeRuntimeState();
+      window._ftOnboardingActive = false;
+      document.getElementById('scr-app').classList.add('active');
+      if (typeof initApp === 'function') initApp();
+    } else {
+      _startOnboarding();
+    }
   }
 }
 
@@ -15676,8 +15687,15 @@ async function _ftGoogleLogin_DISABLED() {
 
 function ftSkipGoogleLogin() {
   localStorage.setItem('ft_skip_google', '1');
-  document.getElementById('scr-google-login').classList.remove('active');
-  ftEnterApp();
+  // Azzera RAM
+  try {
+    if(typeof profile !== 'undefined') profile = {name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},weeklyWorkoutsTarget:3,weightHistory:[]};
+    if(typeof sessions !== 'undefined') sessions = [];
+    if(typeof nutrition !== 'undefined') nutrition = {};
+    if(typeof metrics !== 'undefined') metrics = {};
+    if(typeof pbs !== 'undefined') pbs = {};
+  } catch(e) {}
+  _startOnboarding();
 }
 
 /* Logout Google — resetla lo stato e mostra di nuovo il login */
@@ -16239,13 +16257,23 @@ function obToggleDay(el, dow) {
 }
 
 function obConfirmDays() {
-  if (obSelectedDayIndices.length === 0) {
-    if (typeof showToast === 'function') showToast('⚠️ Seleziona almeno un giorno');
+  // Permetti di procedere se almeno il numero di giorni è stato scelto
+  if (obSelectedDayIndices.length === 0 && (!window._obDaysRange || window._obDaysRange.size === 0)) {
+    if (typeof showToast === 'function') showToast('⚠️ Seleziona almeno un numero di giorni');
     return;
   }
-  obTrainingDays = obSelectedDayIndices.length;
-  obSel.days = String(obTrainingDays);
-  obSel.specificDays = [...obSelectedDayIndices];
+  if (obSelectedDayIndices.length > 0) {
+    obTrainingDays = obSelectedDayIndices.length;
+    obSel.days = String(obTrainingDays);
+    obSel.specificDays = [...obSelectedDayIndices];
+  } else {
+    // Solo numero/range selezionato — usa il valore già calcolato automaticamente
+    obSel.days = String(obTrainingDays || 3);
+    // Genera specifici giorni dal preset automatico
+    var presets = {2:[0,2],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,3,4],6:[0,1,2,3,4,5],7:[0,1,2,3,4,5,6]};
+    obSel.specificDays = presets[obTrainingDays || 3] || [0,2,4];
+    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [...obSel.specificDays];
+  }
   obNext(9);
 }
 
@@ -16474,6 +16502,9 @@ function obSkipAll() {
   profile.level = profile.level || 'beginner';
   profile.recPreset = profile.recPreset || 'cali-starter';
   dbSet('profile', profile);
+  window._ftOnboardingActive = false;
+  localStorage.removeItem('ft_just_reset');
+  localStorage.removeItem('ft_pending_google_login');
   document.getElementById('scr-onboard').classList.remove('active');
   document.getElementById('scr-app').classList.add('active');
   initApp();
@@ -16538,6 +16569,62 @@ function obClearEquip() {
   document.querySelectorAll('#ob25 .ob-multi.sel').forEach(el => el.classList.remove('sel'));
   showToast('✕ Attrezzatura azzerata');
 }
+
+/* ─── obFullResetAndRestart: Azzera TUTTO e ritorna all'onboarding ─── */
+function obFullResetAndRestart() {
+  if (!confirm('Vuoi azzerare tutto e ricominciare dall\'inizio? Tutti i dati verranno eliminati.')) return;
+  // 1. Svuota localStorage
+  try {
+    const toRemove = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('ft_') || k.startsWith('ft3_') || k.startsWith('v45_'))) toRemove.push(k);
+    }
+    toRemove.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+    ['ft_google_token','ft_google_user','ft_skip_google','ft_firebase_user',
+     'ft_last_local_save','ft_last_sync','ft_badges','ft_pro_status',
+     'ft_v45_settings','v45_settings','ft3_profile','ft3_sessions',
+     'ft3_nutrition','ft3_metrics','ft3_pbs'].forEach(function(k) {
+      try { localStorage.removeItem(k); } catch(e) {}
+    });
+    localStorage.setItem('ft_just_reset','1');
+  } catch(e) {}
+  // 2. Resetta variabili RAM
+  try {
+    if (typeof profile !== 'undefined') {
+      profile = {name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},weeklyWorkoutsTarget:3,weightHistory:[]};
+    }
+    if (typeof sessions !== 'undefined') sessions = [];
+    if (typeof nutrition !== 'undefined') nutrition = {};
+    if (typeof metrics !== 'undefined') metrics = {};
+    if (typeof pbs !== 'undefined') pbs = {};
+  } catch(e) {}
+  // 3. Svuota IndexedDB
+  try {
+    if (typeof dbSet === 'function') {
+      dbSet('profile', {name:''});
+      dbSet('sessions', []);
+      dbSet('nutrition', {});
+      dbSet('metrics', {});
+      dbSet('pbs', {});
+    }
+  } catch(e) {}
+  // 4. Torna all'onboarding senza reload (evita "Error creating iframe id" su mobile)
+  try {
+    window._ftOnboardingActive = false;
+    if (typeof obSel !== 'undefined') obSel = {};
+    if (typeof obGoals !== 'undefined') obGoals = [];
+    if (typeof obTrainingDays !== 'undefined') obTrainingDays = 3;
+    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
+    if (typeof obTrainingIntensity !== 'undefined') obTrainingIntensity = 'moderate';
+    if (typeof _startOnboarding === 'function') _startOnboarding();
+    localStorage.removeItem('ft_just_reset');
+    if (typeof showToast === 'function') showToast('✅ App azzerata — ricomincia!');
+  } catch(e) {
+    location.reload();
+  }
+}
+window.obFullResetAndRestart = obFullResetAndRestart;
 
 // Patch obMulti to also track eqs
 // obMulti override v44 (eq_) — neutralizzato, gestito da obMulti consolidata
@@ -16858,7 +16945,7 @@ function obFinalizeSmartDays() {
 var _origObMulti = window.obMulti; // kept for reference only
 
 function showDaysPreview(n) { /* no-op — kept for compatibility */ }
-function obPickDays(el, n) { obTrainingDays = n; obSel.days = String(n); }
+// obPickDays rimossa (mai chiamata, sostituita da obPickNDays)
 
 function onSexChange() {
   const sex = document.getElementById('ob-sex')?.value;
@@ -17638,7 +17725,7 @@ function recordExercisePerformance(exId, repsCompleted, weightUsed, targetReps) 
  * Usa woSets (set completati) e woDayData (esercizi programmati).
  */
 async function saveWorkoutToLog() {
-  const exs = woDayData?.exercises || [];
+  const exs = Array.isArray(woDayData?.exercises) ? woDayData.exercises : [];
   exs.forEach((ex, ei) => {
     const sets = safeSets(ex.s);
     const targetReps = safeReps(ex.r);
@@ -18096,7 +18183,7 @@ function openNotifPanel() {
   renderNotifList();
   document.getElementById('notif-panel').style.display = 'block';
   // Mark all as read
-  _notifications.forEach(n => n.read = true);
+  (Array.isArray(_notifications)?_notifications:[]).forEach(n => n.read = true);
   saveNotifications();
   setTimeout(updateNotifBadge, 200);
 }
@@ -25935,12 +26022,15 @@ window.showMissingEquipmentAlert = function(presetName, missingLabels){
       }
     };
   }
-  // MutationObserver per rilevare quando compaiono le card preset
-  const observer = new MutationObserver(()=>{
+  // MutationObserver solo sul container preset, non su tutto il body
+  const observer = new MutationObserver(()=>{ 
     clearTimeout(window._v30BadgeTimer);
-    window._v30BadgeTimer = setTimeout(applyCompatibilityBadges, 200);
+    window._v30BadgeTimer = setTimeout(applyCompatibilityBadges, 400);
   });
-  observer.observe(document.body, { childList:true, subtree:true });
+  const _presetTarget = document.getElementById('preset-list') || document.getElementById('preset-explorer') || document.getElementById('scr-app') || document.body;
+  if (_presetTarget && _presetTarget.nodeType === Node.ELEMENT_NODE) {
+    observer.observe(_presetTarget, { childList:true, subtree:true });
+  }
 })();
 
 /* ══ NUOVE RICETTE V30 (+25) ════════════════════════════════════ */
@@ -28535,6 +28625,7 @@ window.finishOnboard = async function(){
       var onboard = document.getElementById('scr-onboard');
       var app = document.getElementById('scr-app');
       if(onboard) onboard.classList.remove('active');
+      window._ftOnboardingActive = false;
       if(app) { app.classList.add('active'); if(typeof initApp==='function') initApp(); }
     }
   }
@@ -28747,7 +28838,7 @@ window.getRecommendedPresetV34 = function(profile){
   });
 
   scored.sort((a,b)=>b.score-a.score);
-  console.log('[V34] Top 5:', scored.slice(0,5).map(s=>`${s.id}(${s.score})`).join(', '));
+  // Top presets selezionati silenziosamente
   return scored[0]?.id || (env==='gym'?'gym-ppl':'ppl');
 };
 
@@ -30236,6 +30327,7 @@ function _setHTML(id, val) { const e = _el(id); if (e) e.innerHTML = val; }
    Single call — no more wrapper chain.
 ───────────────────────────────────────── */
 window.renderHome = function renderHome() {
+  if (window._ftOnboardingActive) return; // blocca durante onboarding
   // ── 1. CTA Banner & streak warning (base) ──
   if (typeof renderHomeCta === 'function') renderHomeCta();
   if (typeof renderStreakWarning === 'function') renderStreakWarning();
@@ -30362,6 +30454,7 @@ window.renderHome = function renderHome() {
          + weeklyGoal + v40
 ───────────────────────────────────────── */
 window.initApp = function initApp() {
+  if (window._ftOnboardingActive) return; // blocca sempre durante onboarding
   if (typeof profile === 'undefined') return;
 
   // Avatar
@@ -30578,7 +30671,7 @@ const _v41_baseRenderWoExs = (function() {
       return `<div class="wo-ex-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div class="wo-ex-nm" style="margin-bottom:0">${exD.name}${progBadge}</div>
-          <button onclick="if(typeof openExDetailInWorkout==='function')openExDetailInWorkout('${ex.id}')" style="background:var(--bg4);border:1px solid var(--border);border-radius:99px;padding:5px 10px;font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0;">📋 Guida</button>
+
         </div>
         ${weightBadge}
         ${setRows}
@@ -30777,8 +30870,8 @@ function v41Boot() {
   };
 
   waitDB(() => {
-    // Re-run initApp to pick up clean consolidated version
-    if (typeof initApp === 'function') try { initApp(); } catch(e) {}
+    // Re-run initApp only if not in onboarding AND app not already active
+    if (!window._ftOnboardingActive && !document.getElementById('scr-app')?.classList.contains('active') && typeof initApp === 'function') try { initApp(); } catch(e) {}
 
     // Deferred extras (after first paint)
     requestAnimationFrame(() => {
@@ -32768,6 +32861,7 @@ window.obPickVal = function(el, field, val) {
   const _origRenderHome = window.renderHome;
   if (_origRenderHome) {
     window.renderHome = function() {
+      if(window._ftOnboardingActive) return;
       if(typeof profile==='undefined') return;
       try { _origRenderHome.apply(this, arguments); } catch(e) {}
       setTimeout(() => {
@@ -33315,17 +33409,7 @@ window.obPickVal = function(el, field, val) {
   window.sendCoachMessage = function() {
     };
 
-// Patch finishWorkout to show mobility advice after completion
-var _origFinish = window.finishWorkout;
-if (typeof _origFinish === 'function') {
-  window.finishWorkout = async function() {
-    var dayDataSnapshot = (typeof woDayData !== 'undefined') ? JSON.parse(JSON.stringify(woDayData || {})) : {};
-    await _origFinish.apply(this, arguments);
-    setTimeout(function() {
-      window.showMobilityAdvice(dayDataSnapshot);
-    }, 1500);
-  };
-}
+// showMobilityAdvice patch rimosso (funzione non definita)
 
 /* ══════════════════════════════════════════
    ALLENAMENTI EXTRA
@@ -33976,12 +34060,7 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
   };
 
   /* ftSkipGoogleLogin */
-  window.ftSkipGoogleLogin = function() {
-    localStorage.setItem('ft_skip_google', '1');
-    var scr = document.getElementById('scr-google-login');
-    if (scr) scr.classList.remove('active');
-    if (typeof ftEnterApp === 'function') ftEnterApp();
-  };
+  window.ftSkipGoogleLogin = ftSkipGoogleLogin; // usa la definizione consolidata
 
   /* ftGoogleLogout */
   window.ftGoogleLogout = function() {
@@ -34023,22 +34102,29 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
     }
 
     function emergencyBoot(silent) {
+      if (window._ftOnboardingActive) return; // non interrompere onboarding in corso
       if (!silent) console.warn('[BootFix] Emergency boot attivato');
       var splash = document.getElementById('scr-splash');
       if (splash && splash.classList) splash.classList.remove('active');
+      // Se lo schermo onboarding è visibile, non fare nulla
+      if (document.getElementById('scr-onboard')?.classList.contains('active')) return;
       var googleUser = localStorage.getItem('ft_google_user');
       var skipGoogle = localStorage.getItem('ft_skip_google');
       if (googleUser || skipGoogle) {
-        if (typeof ftEnterApp === 'function') {
-          ftEnterApp();
-        } else {
-          var app = document.getElementById('scr-app');
-          if (app && app.classList) app.classList.add('active');
-          if (typeof initApp === 'function') initApp();
+        if (!window._ftOnboardingActive) {
+          if (typeof ftEnterApp === 'function') {
+            ftEnterApp();
+          } else {
+            var app = document.getElementById('scr-app');
+            if (app && app.classList) app.classList.add('active');
+            if (typeof initApp === 'function') initApp();
+          }
         }
       } else {
-        var loginScr = document.getElementById('scr-google-login');
-        if (loginScr && loginScr.classList) loginScr.classList.add('active');
+        if (!window._ftOnboardingActive) {
+          var loginScr = document.getElementById('scr-google-login');
+          if (loginScr && loginScr.classList) loginScr.classList.add('active');
+        }
       }
     }
 
@@ -34053,7 +34139,9 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
   window.v41Boot = function() {
     /* Timeout di sicurezza: se dopo 5s db ancora non pronto, forza avvio */
     var safetyTimer = setTimeout(function() {
-      console.warn('[BootFix] v41Boot timeout — forzando initApp');
+      if (window._ftOnboardingActive) return; // non interrompere onboarding
+      // Non chiamare initApp se l'app è già attiva (utente sta usando l'app)
+      if (document.getElementById('scr-app')?.classList.contains('active')) return;
       if (typeof initApp === 'function') {
         try { initApp(); } catch(e) {}
       }
@@ -34181,8 +34269,8 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
     root = root || document;
     var vw = document.documentElement.clientWidth;
 
-    /* Fix tutti gli elementi che escono dalla larghezza viewport */
-    root.querySelectorAll('*').forEach(function(el) {
+    /* Fix solo elementi non-input che escono dalla larghezza viewport */
+    root.querySelectorAll('*:not(input):not(textarea):not(select)').forEach(function(el) {
       var rect = el.getBoundingClientRect();
       if (rect.right > vw + 2) {
         el.style.maxWidth = '100%';
@@ -34209,27 +34297,17 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
   }
 
   /* Esegui fix periodico per i primi 10 secondi dopo il boot */
+  /* Solo 3 run al boot, non ogni secondo per 10s — evita reflow continui */
   var fixCount = 0;
   var fixInterval = setInterval(function() {
     fixOverflow();
     fixCount++;
-    if (fixCount >= 10) clearInterval(fixInterval);
-  }, 1000);
+    if (fixCount >= 3) clearInterval(fixInterval);
+  }, 1500);
 
   /* MutationObserver: corregge overflow ogni volta che il DOM cambia */
   if (typeof MutationObserver !== 'undefined') {
-    var observer = new MutationObserver(function(mutations) {
-      var hasNewNodes = mutations.some(function(m) {
-        return m.addedNodes && m.addedNodes.length > 0;
-      });
-      if (hasNewNodes) {
-        clearTimeout(observer._debounce);
-        observer._debounce = setTimeout(fixOverflow, 100);
-      }
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-      observer.observe(document.body, { childList: true, subtree: true });
-    });
+    /* MutationObserver rimosso — causava reflow ad ogni keystroke */
   }
 
 })();
@@ -34671,111 +34749,12 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
    5. Scorciatoia: imposta preset consigliato con 1 tap
 ══════════════════════════════════════════════════════════ */
 
-/* ── 1. TIMER RIPOSO ────────────────────────────────────── */
+/* ── 1. TIMER RIPOSO (duplicato rimosso — usa il sistema nativo skipRest/startRest) ── */
 (function installRestTimer() {
   'use strict';
-  let _restInterval = null;
-  let _restEl = null;
-
-  window.startRestTimer = function(seconds) {
-    if (_restInterval) { clearInterval(_restInterval); }
-    seconds = seconds || 90;
-    let remaining = seconds;
-
-    // Crea o aggiorna overlay
-    if (!_restEl) {
-      _restEl = document.createElement('div');
-      _restEl.id = 'ft-rest-timer';
-      _restEl.style.cssText = `
-        position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-        background:rgba(11,11,24,0.97);border:1.5px solid var(--acc);
-        border-radius:999px;padding:12px 24px;display:flex;align-items:center;gap:14px;
-        z-index:9999;box-shadow:0 0 30px rgba(200,245,60,0.2);
-        font-family:'Syne',sans-serif;animation:slideUp .3s ease;min-width:200px;
-      `;
-      document.body.appendChild(_restEl);
-    }
-    _restEl.style.display = 'flex';
-
-    function update() {
-      if (!_restEl) return;
-      const m = Math.floor(remaining / 60);
-      const s = remaining % 60;
-      const pct = (remaining / seconds) * 100;
-      const color = remaining <= 10 ? 'var(--red)' : remaining <= 30 ? 'var(--orange)' : 'var(--acc)';
-      _restEl.innerHTML = `
-        <div style="font-size:11px;color:var(--text2);font-weight:700;">⏱ RIPOSO</div>
-        <div style="font-size:22px;font-weight:800;color:${color};letter-spacing:-.5px;font-family:'DM Mono',monospace;">
-          ${m > 0 ? m + ':' : ''}${String(s).padStart(2,'0')}
-        </div>
-        <div style="flex:1;height:4px;background:var(--bg4);border-radius:99px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${color};transition:width .9s linear;border-radius:99px;"></div>
-        </div>
-        <button onclick="stopRestTimer()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
-      `;
-    }
-    update();
-
-    _restInterval = setInterval(function() {
-      remaining--;
-      update();
-      if (remaining <= 0) {
-        stopRestTimer();
-        // Vibrazione se supportata
-        if (navigator.vibrate) navigator.vibrate([200,100,200]);
-        if (typeof showToast === 'function') showToast('✅ Riposo completato! Prossima serie.');
-      }
-    }, 1000);
-  };
-
-  window.stopRestTimer = function() {
-    if (_restInterval) { clearInterval(_restInterval); _restInterval = null; }
-    if (_restEl) { _restEl.style.display = 'none'; }
-  };
-
-  // Hook automatico: avvia timer 90s dopo ogni serie registrata
-  const _origLogSet = window.logSet;
-  if (typeof _origLogSet === 'function') {
-    window.logSet = function() {
-      const result = _origLogSet.apply(this, arguments);
-      const restTime = (typeof profile !== 'undefined' && profile.restTime) || 90;
-      window.startRestTimer(restTime);
-      return result;
-    };
-  }
-
-  // Aggiunge bottone timer nel workout attivo dopo init
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      const header = document.querySelector('.wo-header, #wo-header, .workout-header');
-      if (header && !document.getElementById('ft-rest-btn')) {
-        const btn = document.createElement('button');
-        btn.id = 'ft-rest-btn';
-        btn.title = 'Avvia timer riposo';
-        btn.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;font-family:\'Syne\',sans-serif;';
-        btn.innerHTML = '⏱ Riposo';
-        btn.onclick = function() {
-          // Mini-picker riposo in-app invece di prompt() nativo
-          const _old = document.getElementById('_ft-rest-picker');
-          if(_old){ _old.remove(); return; }
-          const picker = document.createElement('div');
-          picker.id = '_ft-rest-picker';
-          picker.style.cssText = 'position:fixed;bottom:calc(var(--nav-h,68px)+80px);left:50%;transform:translateX(-50%);background:var(--bg2);border:1.5px solid var(--border2);border-radius:16px;padding:14px 16px;z-index:9700;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);';
-          picker.innerHTML = '<span style="font-size:13px;font-weight:700;color:var(--text2);">⏱ Riposo:</span>'
-            + [30,45,60,90,120,180].map(s =>
-                `<button onclick="window.startRestTimer(${s});document.getElementById('_ft-rest-picker').remove()"
-                  style="padding:7px 12px;border-radius:99px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s;"
-                  onmouseover="this.style.borderColor='var(--acc)';this.style.color='var(--acc)'"
-                  onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text)'">${s}s</button>`
-              ).join('')
-            + '<button onclick="document.getElementById(\'_ft-rest-picker\').remove()" style="padding:7px 10px;border:none;background:none;color:var(--text3);cursor:pointer;font-size:16px;">✕</button>';
-          document.body.appendChild(picker);
-          setTimeout(() => { if(document.getElementById('_ft-rest-picker')) document.getElementById('_ft-rest-picker').remove(); }, 8000);
-        };
-        header.appendChild(btn);
-      }
-    }, 2000);
-  });
+  // Sistema duplicato disabilitato — il timer di riposo è gestito da restInterval + rest-modal
+  window.startRestTimer = function(seconds) { /* no-op: usa il rest-modal nativo */ };
+  window.stopRestTimer  = function()         { /* no-op */ };
 })();
 
 /* ── 2. NOTE RAPIDE PER SESSIONE ────────────────────────── */
@@ -35032,45 +35011,7 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
    FITTRACK — Funzioni extra: timer riposo, note, recap, progressione
 ══════════════════════════════════════════════════════════ */
 
-/* ── TIMER RIPOSO ───────────────────────────────────────── */
-(function installRestTimer() {
-  'use strict';
-  let _ri = null, _rEl = null;
-  window.startRestTimer = function(seconds) {
-    if(_ri) clearInterval(_ri);
-    seconds = seconds || 90;
-    let rem = seconds;
-    if(!_rEl){
-      _rEl = document.createElement('div');
-      _rEl.id = 'ft-rest-timer';
-      _rEl.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(11,11,24,.97);border:1.5px solid var(--acc);border-radius:999px;padding:12px 24px;display:flex;align-items:center;gap:14px;z-index:9999;box-shadow:0 0 30px rgba(200,245,60,.2);font-family:\'Syne\',sans-serif;min-width:210px;';
-      document.body.appendChild(_rEl);
-    }
-    _rEl.style.display = 'flex';
-    function upd(){
-      if(!_rEl) return;
-      const m=Math.floor(rem/60), s=rem%60;
-      const pct=Math.min(100,(rem/seconds)*100);
-      const col=rem<=10?'#ff6b6b':rem<=30?'#ffd43b':'var(--acc)';
-      _rEl.innerHTML=`<div style="font-size:10px;color:var(--text2);font-weight:700;">⏱ RIPOSO</div><div style="font-size:22px;font-weight:800;color:${col};font-family:'DM Mono',monospace;">${m>0?m+':':''}${String(s).padStart(2,'0')}</div><div style="flex:1;height:4px;background:var(--bg4);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};transition:width .9s linear;border-radius:99px;"></div></div><button onclick="window.stopRestTimer()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;">✕</button>`;
-    }
-    upd();
-    _ri = setInterval(function(){
-      rem--;
-      upd();
-      if(rem<=0){
-        window.stopRestTimer();
-        if(navigator.vibrate) navigator.vibrate([200,100,200]);
-        if(typeof showToast==='function') showToast('✅ Riposo finito! Prossima serie.');
-      }
-    }, 1000);
-  };
-  window.stopRestTimer = function(){
-    if(_ri){ clearInterval(_ri); _ri=null; }
-    if(_rEl) _rEl.style.display='none';
-  };
-})();
-
+/* ── TIMER RIPOSO (terzo duplicato — rimosso) ────────────── */
 /* ── NOTE SESSIONE ──────────────────────────────────────── */
 window.openSessionNotes = function(){
   const existing=document.getElementById('ft-notes-modal');
@@ -35338,33 +35279,65 @@ function _doLogout() {
 
 <script>
 /* ── FitTrack: patch rotella nutrizione ── */
-/* ── obPickNDays: selezione numero giorni onboarding ── */
+/* ── obPickNDays v2: range multi-selezione + logica automatica ── */
+
+// Mantiene i giorni selezionati nel range
+if (typeof window._obDaysRange === 'undefined') window._obDaysRange = new Set();
+
 window.obPickNDays = function(el, n) {
-  // deseleziona altre card nel grid
   var grid = document.getElementById('ob-ndays-grid');
-  if (grid) grid.querySelectorAll('.ob-card').forEach(function(c){ c.classList.remove('on'); });
-  el.classList.add('on');
-  // aggiorna variabile globale
-  obTrainingDays = n;
-  if (typeof obSel !== 'undefined') obSel.days = String(n);
-  // hint
+  var range = window._obDaysRange;
+
+  // Toggle: se già selezionato, deseleziona; altrimenti aggiunge al range
+  if (range.has(n)) {
+    range.delete(n);
+    el.classList.remove('on');
+  } else {
+    range.add(n);
+    el.classList.add('on');
+  }
+
+  // Aggiorna hint
   var hint = document.getElementById('ob-days-hint');
-  if (hint) hint.textContent = n + ' giorn' + (n===1?'o':'i') + ' selezionat' + (n===1?'o':'i');
-  // auto-seleziona giorni nella griglia: LUN-MER-VEN per 3gg, ecc.
+  if (range.size === 0) {
+    if (hint) hint.textContent = 'Seleziona quante sessioni vuoi fare (anche un range)';
+    obTrainingDays = 3;
+    if (typeof obSel !== 'undefined') obSel.days = '3';
+    return;
+  }
+
+  // Calcola min e max del range
+  var sorted = Array.from(range).sort(function(a,b){return a-b;});
+  var minD = sorted[0], maxD = sorted[sorted.length-1];
+
+  // Usa la logica automatica per scegliere il numero ottimale nel range
+  var smartN = obAutoPickDaysInRange(minD, maxD);
+  obTrainingDays = smartN;
+  if (typeof obSel !== 'undefined') obSel.days = String(smartN);
+  if (typeof obSel !== 'undefined') { obSel.daysMin = minD; obSel.daysMax = maxD; }
+
+  if (hint) {
+    if (minD === maxD) {
+      hint.textContent = smartN + ' giorn' + (smartN===1?'o':'i') + ' selezionat' + (smartN===1?'o':'i');
+    } else {
+      hint.textContent = 'Range: ' + minD + '–' + maxD + ' giorni → il sistema sceglierà ' + smartN + ' 🤖';
+    }
+    hint.style.color = 'var(--acc)';
+  }
+
+  // Auto-seleziona giorni nella griglia con il numero scelto automaticamente
   var presets = {
     2:[0,2], 3:[0,2,4], 4:[0,1,3,4], 5:[0,1,2,3,4], 6:[0,1,2,3,4,5], 7:[0,1,2,3,4,5,6]
   };
   var pills = document.querySelectorAll('#ob-days-grid .ob-day-pill');
-  if (pills.length && presets[n]) {
-    // reset
+  if (pills.length && presets[smartN]) {
+    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
     pills.forEach(function(p){
       p.style.border = '1.5px solid var(--border2)';
       p.style.background = 'var(--bg3)';
       p.querySelector('span').style.color = 'var(--text2)';
-      if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
     });
-    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
-    presets[n].forEach(function(dow){
+    presets[smartN].forEach(function(dow){
       var pill = document.querySelector('#ob-days-grid [data-dow="'+dow+'"]');
       if (pill) {
         pill.style.border = '2px solid var(--acc)';
@@ -35374,8 +35347,57 @@ window.obPickNDays = function(el, n) {
       }
     });
   }
+
   el.style.transform = 'scale(0.96)';
   setTimeout(function(){ el.style.transform = ''; }, 130);
+};
+
+/* Funzione di logica automatica: dato un range [min, max], sceglie
+   il numero ottimale di giorni in base a obiettivi, livello e intensità */
+window.obAutoPickDaysInRange = function(minD, maxD) {
+  if (minD === maxD) return minD;
+
+  var level     = (typeof obSel !== 'undefined' && obSel.level) || 'intermediate';
+  var goals     = (typeof obGoals !== 'undefined' && obGoals.length) ? obGoals : ['hypertrophy'];
+  var intensity = (typeof obTrainingIntensity !== 'undefined' && obTrainingIntensity) || 'moderate';
+  var sports    = (typeof obSel !== 'undefined' && obSel.multi && obSel.multi.sports) ? obSel.multi.sports : [];
+
+  // Score base per intensità
+  var intensityScore = { minimal:0, moderate:1, serious:2, hardcore:3 };
+  var score = intensityScore[intensity] || 1;
+
+  // Aggiustamento per livello
+  if (level === 'beginner') score -= 1;
+  if (level === 'advanced' || level === 'athlete') score += 1;
+
+  // Aggiustamento per obiettivo
+  if (goals.includes('weight_loss') || goals.includes('endurance')) score += 0.5;
+  if (goals.includes('strength') || goals.includes('hypertrophy')) score += 0.3;
+  if (goals.includes('maintain') || goals.includes('mobility')) score -= 0.3;
+
+  // Se ha sport ad alto volume → riduce
+  var highVolSports = ['sport_calcio','sport_basket','sport_nuoto','sport_corsa','sport_ciclismo'];
+  if (sports.some(function(s){ return highVolSports.indexOf(s) >= 0; })) score -= 1;
+
+  // Mappa lo score sul range disponibile
+  var rangeSize = maxD - minD;
+  // Normalizza score in [0..1]
+  var norm = Math.max(0, Math.min(1, (score + 1) / 4));
+  var chosen = Math.round(minD + norm * rangeSize);
+  return Math.max(minD, Math.min(maxD, chosen));
+};
+
+/* Reset del range quando si entra nello step 8 */
+var _origObNext = window.obNext;
+window.obNext = function(step) {
+  if (step === 8) {
+    window._obDaysRange = new Set();
+    var grid = document.getElementById('ob-ndays-grid');
+    if (grid) grid.querySelectorAll('.ob-card').forEach(function(c){ c.classList.remove('on'); });
+    var hint = document.getElementById('ob-days-hint');
+    if (hint) { hint.textContent = 'Seleziona quante sessioni vuoi fare (anche un range)'; hint.style.color = 'var(--text2)'; }
+  }
+  if (typeof _origObNext === 'function') return _origObNext(step);
 };
 
 window.ftNutrSettings = function() {
