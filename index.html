@@ -2961,6 +2961,115 @@ input:focus, textarea:focus, select:focus {
   border-radius: var(--r-lg);
   overflow: hidden;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   FITTRACK — PATCH QUALITÀ: Performance · UX · Accessibilità
+   ───────────────────────────────────────────────────────────── */
+
+/* 1. REDUCED MOTION — rispetta preferenze sistema */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 2. FOCUS VISIBILE — accessibilità tastiera e screen reader */
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+button:focus-visible, [onclick]:focus-visible,
+.ob-card:focus-visible, .bni:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(200,245,60,0.18);
+}
+
+/* 3. TOUCH TARGET MINIMI 44×44px — iOS/Android HIG */
+.bni                { min-height: 52px; min-width: 52px; }
+.tb-avatar          { min-height: 44px; min-width: 44px; }
+.ob-day-pill        { min-height: 52px; }
+.al-tab             { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
+.wo-set-chk         { min-height: 44px; min-width: 44px; display:flex; align-items:center; justify-content:center; }
+.btn-sm             { min-height: 40px; }
+
+/* 4. MICROINTERAZIONI — feedback tattile migliorato */
+.ob-card {
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+.ob-card:active  { transform: scale(.95); transition-duration: 0.08s; }
+.bni             { will-change: transform; }
+.bni:active      { transform: scale(.80); }
+
+/* Ripple su bottoni principali */
+.btn-acc { overflow: hidden; position: relative; }
+.btn-acc::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.25) 0%, transparent 70%);
+  opacity: 0; transform: scale(0);
+  transition: opacity 0.4s, transform 0.4s;
+  pointer-events: none;
+}
+.btn-acc:active::before { opacity: 1; transform: scale(2.5); transition-duration: 0s; }
+
+/* Animazione check serie completata */
+@keyframes setDone {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35) rotate(-8deg); }
+  70%  { transform: scale(0.92) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.wo-set-chk.done-anim { animation: setDone 0.35s cubic-bezier(.22,1,.36,1); }
+
+/* Shimmer su skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+/* 5. PERFORMANCE — hint GPU compositing solo dove serve */
+.ob-step.active     { will-change: opacity, transform; }
+.sheet-modal        { will-change: transform; }
+
+/* 6. ONBOARDING — highlight step corrente nella progress bar */
+.ob-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: .12em;
+  color: var(--acc); text-transform: uppercase; margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+/* 7. LIGHT MODE — fix componenti aggiunti di recente */
+body.light-theme .wo-ex-card,
+body.light-theme .wo-set-row { background: #fff; border-color: rgba(0,0,0,0.08); }
+body.light-theme .wo-set-chk { color: #111; }
+body.light-theme .ob-day-pill { background: #f5f5f0; border-color: rgba(0,0,0,0.1); }
+body.light-theme .ob-day-pill span { color: #555; }
+body.light-theme .rest-modal,
+body.light-theme [id*="rpe"] { background: rgba(244,244,240,0.97); color: #111; }
+
+/* 8. SCROLL PERFORMANCE */
+.page-content, .ob-wrap, .sheet-body, .ex-list {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+}
+
+/* 9. TESTO SELEZIONABILE SOLO DOVE UTILE */
+.ob-ttl, .ob-sub, .card-title, .ex-desc, .preset-desc { user-select: text; }
+button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
+
+/* 10. ACCESSIBILITÀ — nascondi visivamente ma mantieni per screen reader */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
 </style>
 
 <script>
@@ -5960,12 +6069,12 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
   </div><!-- /app-content -->
 
   <nav class="bnav">
-    <button class="bni on" id="bni-home" onclick="goPage('home')"><span class="bni-ico">🏠</span><span class="bni-lbl">Home</span></button>
-    <button class="bni" id="bni-allenamento" onclick="goPage('allenamento')"><span class="bni-ico">🏋️</span><span class="bni-lbl">Allenamento</span></button>
-    <button class="bni" id="bni-nutrizione" onclick="goPage('nutrizione')"><span class="bni-ico">🥗</span><span class="bni-lbl">Nutrizione</span></button>
-    <button class="bni" id="bni-ricette" onclick="goPage('ricette')"><span class="bni-ico">🍽️</span><span class="bni-lbl">Ricette</span></button>
-    <button class="bni" id="bni-progressi" onclick="goPage('progressi')"><span class="bni-ico">📈</span><span class="bni-lbl">Progressi</span></button>
-    <button class="bni" id="bni-profile" onclick="goPage('profile')"><span class="bni-ico">👤</span><span class="bni-lbl">Profilo</span></button>
+    <button class="bni on" id="bni-home" onclick="goPage('home')" aria-label="Home" aria-current="page"><span class="bni-ico" aria-hidden="true">🏠</span><span class="bni-lbl">Home</span></button>
+    <button class="bni" id="bni-allenamento" onclick="goPage('allenamento')" aria-label="Allenamento"><span class="bni-ico" aria-hidden="true">🏋️</span><span class="bni-lbl">Allenamento</span></button>
+    <button class="bni" id="bni-nutrizione" onclick="goPage('nutrizione')" aria-label="Nutrizione"><span class="bni-ico" aria-hidden="true">🥗</span><span class="bni-lbl">Nutrizione</span></button>
+    <button class="bni" id="bni-ricette" onclick="goPage('ricette')" aria-label="Ricette"><span class="bni-ico" aria-hidden="true">🍽️</span><span class="bni-lbl">Ricette</span></button>
+    <button class="bni" id="bni-progressi" onclick="goPage('progressi')" aria-label="Progressi"><span class="bni-ico" aria-hidden="true">📈</span><span class="bni-lbl">Progressi</span></button>
+    <button class="bni" id="bni-profile" onclick="goPage('profile')" aria-label="Profilo"><span class="bni-ico" aria-hidden="true">👤</span><span class="bni-lbl">Profilo</span></button>
   </nav>
 </div>
 
@@ -10659,6 +10768,15 @@ function obNext(step) {
         showToast('⚠️ Seleziona dove ti alleni'); return;
       }
     }
+    // Step 6 — ob_s6 = DURATA SESSIONE (obbligatorio)
+    if(obCurStep===6) {
+      const hasDur = document.querySelector('#ob_s6 .ob-card.sel') ||
+                     (typeof obSel!=='undefined' && obSel.sessionDur);
+      if(!hasDur) {
+        document.querySelectorAll('#ob_s6 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
+        showToast('⚠️ Seleziona quanto tempo hai per allenarti'); return;
+      }
+    }
   }
   // On reaching final step, build plan preview
   if(step===15) {
@@ -11043,11 +11161,11 @@ function goPage(p){
   if (localStorage.getItem('ft_just_reset') === '1') return;
   if (window._ftOnboardingActive) return;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.bni').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.bni').forEach(el=>{ el.classList.remove('on'); el.removeAttribute('aria-current'); });
   const pageEl = document.getElementById('page-'+p);
   if(!pageEl){ console.warn('Page not found:', p); return; }
   pageEl.classList.add('active');
-  const ni=document.getElementById('bni-'+p);if(ni)ni.classList.add('on');
+  const ni=document.getElementById('bni-'+p);if(ni){ ni.classList.add('on'); ni.setAttribute('aria-current','page'); }
   if(p==='home'){ renderHome(); renderWeeklyGoalCard(); }
   if(p==='allenamento'){renderAllenamento();renderWeeklyProgram();renderPresetsInTraining();}
   if(p==='esplora') renderPresetExplorer();
@@ -15486,6 +15604,8 @@ function _startOnboarding() {
   // Pulisci selezioni precedenti
   document.querySelectorAll('.ob-card.sel').forEach(function(c){ c.classList.remove('sel'); });
   document.querySelectorAll('.ob-card.on').forEach(function(c){ c.classList.remove('on'); });
+  // Accessibilità: marca emoji come decorative
+  if (typeof markDecoEmoji === 'function') setTimeout(markDecoEmoji, 100);
   // Nascondi splash, login; mostra onboarding
   document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
   var obScreen = document.getElementById('scr-onboard');
@@ -16945,7 +17065,19 @@ function obFinalizeSmartDays() {
 var _origObMulti = window.obMulti; // kept for reference only
 
 function showDaysPreview(n) { /* no-op — kept for compatibility */ }
-// obPickDays rimossa (mai chiamata, sostituita da obPickNDays)
+/* ─── Accessibility: ob-card-ico sono decorativi per screen reader ─── */
+(function markDecoEmoji() {
+  document.querySelectorAll('.ob-card-ico, .bni-ico').forEach(function(el) {
+    if (!el.hasAttribute('aria-hidden')) el.setAttribute('aria-hidden', 'true');
+  });
+  // Marca anche le emoji nelle card nome/label
+  document.querySelectorAll('.ob-card-nm').forEach(function(el) {
+    var card = el.closest('.ob-card');
+    if (card && !card.hasAttribute('aria-label')) {
+      card.setAttribute('aria-label', el.textContent.trim());
+    }
+  });
+});
 
 function onSexChange() {
   const sex = document.getElementById('ob-sex')?.value;
@@ -25188,16 +25320,17 @@ const _origGoPage28 = window.goPage;
 if(typeof window.goPage === 'function' && !window._v28GoPagePatched){
   window._v28GoPagePatched = true;
   window.goPage = function(page){
-    if(_origGoPage28) _origGoPage28.apply(this, arguments);
+    try { if(_origGoPage28) _origGoPage28.apply(this, arguments); } catch(e) { console.error('[FitTrack] goPage error on page "'+page+'":', e.message); }
     if(page === 'training' || page === 'allenamento'){
       setTimeout(()=>{
-        // Rimuovi badge vecchio e reinserisce (aggiorna l'equipaggiamento)
-        qs28('v28-training-eq-badge')?.remove();
-        injectEquipmentBadgeInTraining();
+        try {
+          qs28('v28-training-eq-badge')?.remove();
+          injectEquipmentBadgeInTraining();
+        } catch(e) {}
       }, 350);
     }
     if(page === 'nutrizione'){
-      setTimeout(injectEquipmentBannerInNutrition, 200);
+      setTimeout(function(){ try { injectEquipmentBannerInNutrition(); } catch(e) {} }, 200);
     }
   };
 }
@@ -33410,6 +33543,52 @@ window.obPickVal = function(el, field, val) {
     };
 
 // showMobilityAdvice patch rimosso (funzione non definita)
+
+/* ─── IndexedDB resilience: retry + toast su fallimento ─── */
+(function patchDbWithRetry() {
+  var _origDbSet = window.dbSet;
+  if (typeof _origDbSet !== 'function') return;
+  window.dbSet = async function(key, value) {
+    var attempts = 0;
+    while (attempts < 3) {
+      try {
+        return await _origDbSet(key, value);
+      } catch(e) {
+        attempts++;
+        if (attempts >= 3) {
+          console.error('[FitTrack] dbSet failed after 3 attempts:', key, e.message);
+          // Fallback localStorage silenzioso
+          try { localStorage.setItem('ft_fallback_' + key, JSON.stringify(value)); } catch(le) {}
+          if (attempts === 3 && typeof showToast === 'function') {
+            showToast('⚠️ Salvataggio locale non riuscito — verifica spazio disponibile');
+          }
+          return null;
+        }
+        await new Promise(function(r){ setTimeout(r, 300 * attempts); });
+      }
+    }
+  };
+})();
+
+/* ─── Set done: animazione feedback tattile ─── */
+(function patchToggleWoSetAnim() {
+  var _origTWS = window.toggleWoSet;
+  if (typeof _origTWS !== 'function') return;
+  window.toggleWoSet = function(ei, si, rs) {
+    _origTWS.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.querySelector('[data-set-key="' + ei + '_' + si + '"] .wo-set-chk, .wo-set-row:nth-child(' + (si+1) + ') .wo-set-chk');
+      if (el && el.textContent.includes('✅')) {
+        el.classList.remove('done-anim');
+        void el.offsetWidth;
+        el.classList.add('done-anim');
+        setTimeout(function(){ el.classList.remove('done-anim'); }, 400);
+        if (navigator.vibrate) navigator.vibrate([12, 0, 8]);
+      }
+    }, 30);
+  };
+  window._woSetAnimPatched = true;
+})();
 
 /* ══════════════════════════════════════════
    ALLENAMENTI EXTRA
