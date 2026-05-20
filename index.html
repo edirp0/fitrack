@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#C8F53C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- ── PWA ── --><link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;FitTrack AI&quot;,&quot;short_name&quot;:&quot;FitTrack&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%2306060E&quot;,&quot;theme_color&quot;:&quot;%23C8F53C&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%2306060E'/%3E%3Crect x='8' y='8' width='176' height='176' rx='36' fill='%230B0B18'/%3E%3Crect x='24' y='24' width='144' height='144' rx='28' fill='%23111120'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial Black,sans-serif' font-size='76' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3Ctext x='50%25' y='78%25' font-family='Arial,sans-serif' font-size='18' font-weight='700' fill='%23C8F53C' opacity='.5' text-anchor='middle'%3EAI%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;},{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%2306060E'/%3E%3Crect x='8' y='8' width='176' height='176' rx='36' fill='%230B0B18'/%3E%3Ctext x='50%25' y='52%25' font-family='Arial Black,sans-serif' font-size='76' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">,
+<!-- ── PWA ── -->
+<link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;FitTrack AI&quot;,&quot;short_name&quot;:&quot;FitTrack&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%2306060E&quot;,&quot;theme_color&quot;:&quot;%23C8F53C&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;https://placehold.co/192x192/c8f53c/080810?text=FT&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/png&quot;}]}">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%2306060E'/%3E%3Crect x='8' y='8' width='176' height='176' rx='32' fill='%230B0B18'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='72' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/SVG%3E">
 <title>FitTrack — Il tuo programma personale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -281,9 +282,10 @@ input,select,button{font-family:'Syne',sans-serif;}
 .ob-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:24px;}
 .ob-card{
   background:var(--bg3);border:1.5px solid var(--border);
-  border-radius:var(--r-lg);padding:18px 14px;cursor:pointer;
+  border-radius:var(--r-lg);padding:14px 12px;cursor:pointer;
   transition:border-color .15s,background .15s,transform .12s,box-shadow .15s;
-  user-select:none;position:relative;overflow:hidden;
+  user-select:none;position:relative;overflow:visible;
+  min-height:auto;box-sizing:border-box;
 }
 .ob-card::before{
   content:'';position:absolute;inset:0;
@@ -299,8 +301,8 @@ input,select,button{font-family:'Syne',sans-serif;}
 .ob-card.sel::before{opacity:1;}
 .ob-card-ico{font-size:28px;margin-bottom:10px;display:block;animation:none;}
 .ob-card.sel .ob-card-ico{animation:popIn .3s cubic-bezier(.22,1,.36,1);}
-.ob-card-nm{font-size:13px;font-weight:700;color:var(--text);}
-.ob-card-sub{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4;}
+.ob-card-nm{font-size:13px;font-weight:700;color:var(--text);word-break:break-word;line-height:1.35;}
+.ob-card-sub{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4;word-break:break-word;}
 
 /* INPUTS */
 .ob-inp{
@@ -2687,8 +2689,8 @@ h1, h2, h3, .font-display {
   background: var(--acc4);
   box-shadow: 0 0 0 1px var(--acc), var(--shadow-acc);
 }
-.ob-card-nm  { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; }
-.ob-card-sub { font-size: 11px; color: var(--text2); margin-top: 3px; line-height: 1.45; }
+.ob-card-nm  { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: -0.01em; word-break:break-word; line-height:1.35; }
+.ob-card-sub { font-size: 11px; color: var(--text2); margin-top: 3px; line-height: 1.45; word-break:break-word; }
 .ob-inp {
   border-radius: var(--r-md);
   padding: 15px 18px;
@@ -2823,7 +2825,7 @@ h1, h2, h3, .font-display {
 .bni { min-width: 48px; }
 .meal-head { min-height: 52px; }
 .food-item { min-height: 48px; }
-.ob-card { min-height: 72px; }
+.ob-card { min-height: auto; }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    SMOOTH SCROLLING
@@ -2960,142 +2962,6 @@ input:focus, textarea:focus, select:focus {
   border-radius: var(--r-lg);
   overflow: hidden;
 }
-
-/* ─────────────────────────────────────────────────────────────
-   FITTRACK — CSS UTILITY CLASSES (sostituisce 85+ stili inline duplicati)
-   ─────────────────────────────────────────────────────────────── */
-.ft-label   { font-size:11px; color:var(--text2); }
-.ft-label-sm{ font-size:10px; color:var(--text3); }
-.ft-caption { font-size:11px; color:var(--text2); margin-top:2px; }
-.ft-eyebrow { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; color:var(--text3); margin-bottom:5px; }
-.ft-badge   { font-size:10px; font-weight:700; padding:2px 9px; border-radius:99px; background:var(--bg4); color:var(--text2); }
-.ft-chip    { padding:5px 12px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer; font-family:'Syne',sans-serif; border:1.5px solid var(--border); background:var(--bg4); color:var(--text2); }
-.ft-h2      { font-size:18px; font-weight:800; }
-.ft-bold13  { font-size:13px; font-weight:700; }
-
-/* ─── STREAK RING — home widget ─── */
-.ft-streak-ring-wrap {
-  display:flex; align-items:center; gap:14px;
-  background:var(--bg2); border:1px solid var(--border);
-  border-radius:var(--r-lg); padding:14px 16px;
-  margin:0 16px 12px; animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both;
-}
-.ft-streak-ring-wrap.fire { border-color:rgba(255,154,60,.35); background:rgba(255,154,60,.05); }
-.ft-streak-svg { flex-shrink:0; }
-.ft-streak-info { flex:1; min-width:0; }
-.ft-streak-n    { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--acc); line-height:1; }
-.ft-streak-n.fire { color:var(--orange); }
-.ft-streak-lbl  { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.07em; }
-.ft-streak-sub  { font-size:11px; color:var(--text3); margin-top:3px; line-height:1.4; }
-.ft-streak-dots { display:flex; gap:5px; margin-top:8px; }
-.ft-streak-dot  { width:8px; height:8px; border-radius:50%; background:var(--bg4); border:1.5px solid var(--border2); transition:background .2s; }
-.ft-streak-dot.done { background:var(--acc); border-color:var(--acc); box-shadow:0 0 6px rgba(200,245,60,.4); }
-.ft-streak-dot.fire.done { background:var(--orange); border-color:var(--orange); box-shadow:0 0 6px rgba(255,154,60,.4); }
-
-/* 1. REDUCED MOTION — rispetta preferenze sistema */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* 2. FOCUS VISIBILE — accessibilità tastiera e screen reader */
-:focus-visible {
-  outline: 2px solid var(--acc);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-button:focus-visible, [onclick]:focus-visible,
-.ob-card:focus-visible, .bni:focus-visible {
-  outline: 2px solid var(--acc);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(200,245,60,0.18);
-}
-
-/* 3. TOUCH TARGET MINIMI 44×44px — iOS/Android HIG */
-.bni                { min-height: 52px; min-width: 52px; }
-.tb-avatar          { min-height: 44px; min-width: 44px; }
-.ob-day-pill        { min-height: 52px; }
-.al-tab             { min-height: 44px; padding-top: 10px; padding-bottom: 10px; }
-.wo-set-chk         { min-height: 44px; min-width: 44px; display:flex; align-items:center; justify-content:center; }
-.btn-sm             { min-height: 40px; }
-
-/* 4. MICROINTERAZIONI — feedback tattile migliorato */
-.ob-card {
-  will-change: transform;
-  -webkit-tap-highlight-color: transparent;
-}
-.ob-card:active  { transform: scale(.95); transition-duration: 0.08s; }
-.bni             { will-change: transform; }
-.bni:active      { transform: scale(.80); }
-
-/* Ripple su bottoni principali */
-.btn-acc { overflow: hidden; position: relative; }
-.btn-acc::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.25) 0%, transparent 70%);
-  opacity: 0; transform: scale(0);
-  transition: opacity 0.4s, transform 0.4s;
-  pointer-events: none;
-}
-.btn-acc:active::before { opacity: 1; transform: scale(2.5); transition-duration: 0s; }
-
-/* Animazione check serie completata */
-@keyframes setDone {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.35) rotate(-8deg); }
-  70%  { transform: scale(0.92) rotate(4deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-.wo-set-chk.done-anim { animation: setDone 0.35s cubic-bezier(.22,1,.36,1); }
-
-/* Shimmer su skeleton loader */
-.skeleton {
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-/* 5. PERFORMANCE — hint GPU compositing solo dove serve */
-.ob-step.active     { will-change: opacity, transform; }
-.sheet-modal        { will-change: transform; }
-
-/* 6. ONBOARDING — highlight step corrente nella progress bar */
-.ob-eyebrow {
-  font-size: 10px; font-weight: 800; letter-spacing: .12em;
-  color: var(--acc); text-transform: uppercase; margin-bottom: 10px;
-  opacity: 0.8;
-}
-
-/* 7. LIGHT MODE — fix componenti aggiunti di recente */
-body.light-theme .wo-ex-card,
-body.light-theme .wo-set-row { background: #fff; border-color: rgba(0,0,0,0.08); }
-body.light-theme .wo-set-chk { color: #111; }
-body.light-theme .ob-day-pill { background: #f5f5f0; border-color: rgba(0,0,0,0.1); }
-body.light-theme .ob-day-pill span { color: #555; }
-body.light-theme .rest-modal,
-body.light-theme [id*="rpe"] { background: rgba(244,244,240,0.97); color: #111; }
-
-/* 8. SCROLL PERFORMANCE */
-.page-content, .ob-wrap, .sheet-body, .ex-list {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  scroll-behavior: smooth;
-}
-
-/* 9. TESTO SELEZIONABILE SOLO DOVE UTILE */
-.ob-ttl, .ob-sub, .card-title, .ex-desc, .preset-desc { user-select: text; }
-button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
-
-/* 10. ACCESSIBILITÀ — nascondi visivamente ma mantieni per screen reader */
-.sr-only {
-  position: absolute; width: 1px; height: 1px;
-  padding: 0; margin: -1px; overflow: hidden;
-  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-}
 </style>
 
 <script>
@@ -3163,8 +3029,7 @@ button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
 ═══════════════════════════════════════════════════════════════ */
 (function PremiumUX() {
   'use strict';
-  if (window._premiumUxInstalled) return;
-  window._premiumUxInstalled = true;
+
   /* ── 1. HAPTIC on every primary button ── */
   document.addEventListener('click', function(e) {
     var el = e.target.closest('.btn-acc, .pres-btn, .cta-btn-main.accent, .rec-btn, .bni, .ob-card, .wo-set-chk');
@@ -3514,7 +3379,7 @@ button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
         var appAlreadyActive = document.getElementById('scr-app')?.classList.contains('active');
         if (window.firestoreLoad) window.firestoreLoad().then(function(loaded) {
           if (loaded && !window._ftOnboardingActive && !appAlreadyActive) {
-            if (typeof initApp === 'function') try { initApp(); } catch(e) { console.error('[FitTrack] initApp error:', e.message); }
+            if (typeof initApp === 'function') try { initApp(); } catch(e) {}
           }
         });
       }, 800);
@@ -3786,7 +3651,7 @@ button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
         var appAlreadyActive = document.getElementById('scr-app')?.classList.contains('active');
         if (window.firestoreLoad) window.firestoreLoad().then(function(loaded) {
           if (loaded && !window._ftOnboardingActive && !appAlreadyActive && typeof initApp === 'function') {
-            try { initApp(); } catch(e) { console.error('[FitTrack] initApp:', e.message); }
+            try { initApp(); } catch(e) {}
           }
         });
       }, 800);
@@ -3833,15 +3698,17 @@ button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
   <meta name="apple-mobile-web-app-title" content="FitTrack">
   <meta name="application-name" content="FitTrack">
   <meta name="msapplication-TileColor" content="#c8f53c">
-  <meta name="msapplication-TileImage" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 144 144'%3E%3Crect width='144' height='144' fill='%2306060E'/%3E%3Crect x='6' y='6' width='132' height='132' rx='26' fill='%230B0B18'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='58' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E">
-  <!-- Apple touch icons — inline SVG, no external dependency -->
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2306060E'/%3E%3Crect x='7' y='7' width='166' height='166' rx='34' fill='%230B0B18'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='72' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" sizes="152x152" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 152 152'%3E%3Crect width='152' height='152' fill='%2306060E'/%3E%3Crect x='6' y='6' width='140' height='140' rx='28' fill='%230B0B18'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='60' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E">
-  <link rel="apple-touch-icon" sizes="120x120" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%2306060E'/%3E%3Crect x='5' y='5' width='110' height='110' rx='22' fill='%230B0B18'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='48' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E">
-  <!-- Apple splash screens rimossi (placehold.co) — non essenziali senza SW -->
+  <meta name="msapplication-TileImage" content="https://placehold.co/144x144/c8f53c/080810?text=FT">
+  <!-- Apple touch icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="https://placehold.co/180x180/c8f53c/080810?text=FT">
+  <link rel="apple-touch-icon" sizes="152x152" href="https://placehold.co/152x152/c8f53c/080810?text=FT">
+  <link rel="apple-touch-icon" sizes="120x120" href="https://placehold.co/120x120/c8f53c/080810?text=FT">
+  <!-- Apple splash screens (principali) -->
+  <link rel="apple-touch-startup-image" href="https://placehold.co/1290x2796/080810/c8f53c?text=FitTrack" media="(device-width:430px)">
+  <link rel="apple-touch-startup-image" href="https://placehold.co/1170x2532/080810/c8f53c?text=FitTrack" media="(device-width:390px)">
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2306060E' rx='6'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black,sans-serif' font-size='14' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFT%3C/text%3E%3C/svg%3E">
-  <link rel="icon" type="image/svg+xml" sizes="16x16" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2306060E' rx='3'/%3E%3Ctext x='50%25' y='54%25' font-family='Arial Black' font-size='7' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EF%3C/text%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://placehold.co/32x32/c8f53c/080810?text=F">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://placehold.co/16x16/c8f53c/080810?text=F">
   <!-- SEO -->
   <meta name="description" content="FitTrack AI — Coach fitness personale con AI. 131 programmi di allenamento, nutrizione, progressi e match intelligente. Gratis sul Play Store.">
   <meta name="keywords" content="fitness, allenamento, palestra, nutrizione, coach, AI, programma, dimagrimento, massa muscolare">
@@ -3849,12 +3716,12 @@ button, .ob-card, .bni, .wo-set-chk                   { user-select: none; }
   <meta property="og:type" content="website">
   <meta property="og:title" content="FitTrack AI — Il tuo coach personale">
   <meta property="og:description" content="131 programmi di allenamento, AI Coach, nutrizione e progressi personalizzati.">
-  <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%2306060E'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial Black,sans-serif' font-size='120' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFitTrack AI%3C/text%3E%3C/svg%3E">
+  <meta property="og:image" content="https://placehold.co/1200x630/080810/c8f53c?text=FitTrack+AI">
   <meta property="og:url" content="https://edirp0.github.io/fittrack/">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="FitTrack AI — Coach fitness personale">
   <meta name="twitter:description" content="Il tuo coach AI: allenamento, nutrizione, progressi. Gratis.">
-  <meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%2306060E'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial Black,sans-serif' font-size='120' font-weight='900' fill='%23C8F53C' text-anchor='middle' dominant-baseline='middle'%3EFitTrack AI%3C/text%3E%3C/svg%3E">
+  <meta name="twitter:image" content="https://placehold.co/1200x630/080810/c8f53c?text=FitTrack+AI">
 
 <style>
 /* Habit tracker rimosso */
@@ -4957,7 +4824,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
         <button onclick="obSelectAllGym()" style="flex:1;min-width:140px;padding:11px 14px;background:var(--acc);color:#080810;border:none;border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🏋️ Seleziona palestra completa</button>
         <button onclick="obSelectMachinesOnly()" style="flex:1;min-width:140px;padding:11px 14px;background:var(--bg4);color:var(--acc);border:1px solid var(--acc);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">🤖 Solo macchinari</button>
-        <button onclick="obFullResetAndRestart()" style="padding:11px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;">✕ Azzera</button>
+        <button onclick="obClearEquip()" style="padding:11px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;">✕ Azzera</button>
       </div>
       <div style="font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--text3);text-transform:uppercase;margin-bottom:8px;">Corpo libero</div>
       <div class="ob-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px;">
@@ -4975,80 +4842,14 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
         <div class="ob-card ob-multi" data-eq-group="gym" onclick="obMulti(this,'eq_bilanciere_smith')"><span class="ob-card-ico">🔧</span><div class="ob-card-nm">Smith Machine</div></div>
         <div class="ob-card ob-multi" data-eq-group="gym" onclick="obMulti(this,'eq_cavi')"><span class="ob-card-ico">🔗</span><div class="ob-card-nm">Cavi / Functional</div></div>
       </div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(6)">← Indietro</button><button class="btn btn-acc" onclick="obNext(8)">Continua →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(6)">← Indietro</button><button class="btn btn-acc" onclick="obAutoCalcDaysAndNext()">Continua →</button></div>
     </div>
 
     <!-- ── STEP 8: Giorni allenamento ── -->
-    <div class="ob-step" id="ob_s8">
-      <div class="ob-eyebrow">Passo 9 di 16</div>
-      <div class="ob-ttl">Quanti giorni ti alleni?</div>
-      <div class="ob-sub">Scegli quante sessioni vuoi fare a settimana. Puoi selezionare anche un <strong>range</strong> (es. 3 e 4) e il sistema sceglierà il numero ottimale per te.</div>
+    <!-- ob_s8: giorni allenamento rimosso — calcolato automaticamente dal sistema -->
+    <div class="ob-step" id="ob_s8" style="display:none;"></div>
 
-      <!-- Selezione numero giorni -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Sessioni a settimana</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;" id="ob-ndays-grid">
-        <div class="ob-card" onclick="obPickNDays(this,2)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">2</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Principiante</div>
-        </div>
-        <div class="ob-card" onclick="obPickNDays(this,3)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">3</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Classico</div>
-        </div>
-        <div class="ob-card" onclick="obPickNDays(this,4)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">4</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Intermedio</div>
-        </div>
-        <div class="ob-card" onclick="obPickNDays(this,5)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">5</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Avanzato</div>
-        </div>
-        <div class="ob-card" onclick="obPickNDays(this,6)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">6</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Intensivo</div>
-        </div>
-        <div class="ob-card" onclick="obPickNDays(this,7)" style="text-align:center;padding:16px 8px;">
-          <div style="font-size:32px;font-weight:900;color:var(--acc);line-height:1;">7</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:4px;">giorni</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;">Full week</div>
-        </div>
-      </div>
-
-      <!-- Selezione giorni specifici -->
-      <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px;">Quali giorni? <span style="font-weight:500;text-transform:none;color:var(--text3);font-size:9px;">(opzionale)</span></div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px;" id="ob-days-grid">
-        <div class="ob-day-pill" data-dow="0" onclick="obToggleDay(this,0)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">LUN</span>
-        </div>
-        <div class="ob-day-pill" data-dow="1" onclick="obToggleDay(this,1)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">MAR</span>
-        </div>
-        <div class="ob-day-pill" data-dow="2" onclick="obToggleDay(this,2)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">MER</span>
-        </div>
-        <div class="ob-day-pill" data-dow="3" onclick="obToggleDay(this,3)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">GIO</span>
-        </div>
-        <div class="ob-day-pill" data-dow="4" onclick="obToggleDay(this,4)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">VEN</span>
-        </div>
-        <div class="ob-day-pill" data-dow="5" onclick="obToggleDay(this,5)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">SAB</span>
-        </div>
-        <div class="ob-day-pill" data-dow="6" onclick="obToggleDay(this,6)" style="display:flex;flex-direction:column;align-items:center;padding:14px 4px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);cursor:pointer;transition:all .2s;">
-          <span style="font-size:11px;font-weight:800;color:var(--text2)">DOM</span>
-        </div>
-      </div>
-      <div id="ob-days-hint" style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:16px;">Seleziona quante sessioni vuoi fare (anche un range)</div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(7)">← Indietro</button><button class="btn btn-acc" onclick="obConfirmDays()">Continua →</button></div>
-    </div>
-
-    <!-- ── STEP 9: Sport aggiuntivi ── -->
+        <!-- ── STEP 9: Sport aggiuntivi ── -->
     <div class="ob-step" id="ob_s9">
       <div class="ob-eyebrow">Passo 10 di 16</div>
       <div class="ob-ttl">Pratichi altri sport?</div>
@@ -5067,7 +4868,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
         <div class="ob-card ob-multi" onclick="obSportToggle(this,'arrampicata')"><span class="ob-card-ico">🧗</span><div class="ob-card-nm">Arrampicata</div></div>
         <div class="ob-card ob-multi" onclick="obSportToggle(this,'sport_nessuno')"><span class="ob-card-ico">🚫</span><div class="ob-card-nm">Solo palestra</div></div>
       </div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(8)">← Indietro</button><button class="btn btn-acc" onclick="obNext(10)">Continua →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(7)">← Indietro</button><button class="btn btn-acc" onclick="obNext(10)">Continua →</button></div>
     </div>
 
     <!-- ── STEP 10: Obiettivi fisici specifici ── -->
@@ -5409,6 +5210,14 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
           </div>
         </div>
         <div class="cal-days" id="cal-days-strip"></div>
+        <!-- Legenda fasi ciclo — visibile solo se donna con ciclo attivo -->
+        <div id="cal-cycle-legend" style="display:none;padding:6px 10px 2px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <span style="font-size:9px;color:var(--text3);font-weight:700;letter-spacing:.06em;width:100%;text-align:center;margin-bottom:2px;">FASI CICLO</span>
+          <span style="font-size:9px;color:#FF5CA0;background:rgba(255,92,160,.12);border-radius:4px;padding:2px 6px;">🔴 Mestruale</span>
+          <span style="font-size:9px;color:var(--acc);background:rgba(200,245,60,.10);border-radius:4px;padding:2px 6px;">🌱 Follicolare</span>
+          <span style="font-size:9px;color:var(--green);background:rgba(62,223,138,.12);border-radius:4px;padding:2px 6px;">⚡ Ovulazione</span>
+          <span style="font-size:9px;color:#FFB43C;background:rgba(255,180,60,.12);border-radius:4px;padding:2px 6px;">🌙 Luteale</span>
+        </div>
         <div class="cal-detail" id="cal-detail-panel" style="display:none;"></div>
       </div>
 
@@ -5643,6 +5452,7 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
       <div class="nutr-head">
         <div><div class="nutr-title">Nutrizione</div><div style="font-size:11px;color:var(--text2);margin-top:2px" id="nutr-dt"></div></div>
         <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="goPage('ricette')" style="background:var(--acc3);border:1px solid rgba(200,245,60,0.25);color:var(--acc);border-radius:99px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap;">🍽️ Ricette</button>
           <button id="nutr-settings-btn" onclick="ftNutrSettings()" style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;">⚙️</button>
         </div>
       </div>
@@ -6093,12 +5903,12 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
   </div><!-- /app-content -->
 
   <nav class="bnav">
-    <button class="bni on" id="bni-home" onclick="goPage('home')" aria-label="Home" aria-current="page"><span class="bni-ico" aria-hidden="true">🏠</span><span class="bni-lbl">Home</span></button>
-    <button class="bni" id="bni-allenamento" onclick="goPage('allenamento')" aria-label="Allenamento"><span class="bni-ico" aria-hidden="true">🏋️</span><span class="bni-lbl">Allenamento</span></button>
-    <button class="bni" id="bni-nutrizione" onclick="goPage('nutrizione')" aria-label="Nutrizione"><span class="bni-ico" aria-hidden="true">🥗</span><span class="bni-lbl">Nutrizione</span></button>
-    <button class="bni" id="bni-ricette" onclick="goPage('ricette')" aria-label="Ricette"><span class="bni-ico" aria-hidden="true">🍽️</span><span class="bni-lbl">Ricette</span></button>
-    <button class="bni" id="bni-progressi" onclick="goPage('progressi')" aria-label="Progressi"><span class="bni-ico" aria-hidden="true">📈</span><span class="bni-lbl">Progressi</span></button>
-    <button class="bni" id="bni-profile" onclick="goPage('profile')" aria-label="Profilo"><span class="bni-ico" aria-hidden="true">👤</span><span class="bni-lbl">Profilo</span></button>
+    <button class="bni on" id="bni-home" onclick="goPage('home')"><span class="bni-ico">🏠</span><span class="bni-lbl">Home</span></button>
+    <button class="bni" id="bni-allenamento" onclick="goPage('allenamento')"><span class="bni-ico">🏋️</span><span class="bni-lbl">Allenamento</span></button>
+    <button class="bni" id="bni-nutrizione" onclick="goPage('nutrizione')"><span class="bni-ico">🥗</span><span class="bni-lbl">Nutrizione</span></button>
+    <button class="bni" id="bni-ricette" onclick="goPage('ricette')"><span class="bni-ico">🍽️</span><span class="bni-lbl">Ricette</span></button>
+    <button class="bni" id="bni-progressi" onclick="goPage('progressi')"><span class="bni-ico">📈</span><span class="bni-lbl">Progressi</span></button>
+    <button class="bni" id="bni-profile" onclick="goPage('profile')"><span class="bni-ico">👤</span><span class="bni-lbl">Profilo</span></button>
   </nav>
 </div>
 
@@ -6415,7 +6225,7 @@ if (typeof EX_DB === 'undefined') window.EX_DB = [];
 if (typeof FOOD_DB === 'undefined') window.FOOD_DB = [];
 if (typeof PRESETS_DATA === 'undefined') window.PRESETS_DATA = [];
 if (typeof renderWoExs === 'undefined') window.renderWoExs = function() {};
-// guard getRecommendedPreset già presente nello script precedente
+if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = function() { return null; };
 if (typeof calShiftWeek === 'undefined') window.calShiftWeek = function(d) {};
 
 // #region agent log
@@ -6496,211 +6306,13 @@ var EX_DB=[
   {id:'ct-hiit2',name:'Shadow boxing',m:'cardio',tags:['casa'],icon:'🏠'},
 ];
 var EX_GUIDES={
-  'push-up':{difficulty:'Beginner',objective:'Forza petto, tricipiti e stabilità scapolare',
-    desc:'Il push-up è il fondamento di qualsiasi programma calisthenico. Nonostante la semplicità apparente, attiva pettorali, deltoidi anteriori, tricipiti e tutto il core in modo sinergico. È il modo più efficace per costruire controllo scapolare e spinta orizzontale senza attrezzatura.',
-    steps:[
-      'Posizionati prono con le mani posate a terra, leggermente più larghe delle spalle (circa larghezza del petto). Le dita sono aperte e rivolte leggermente verso l\'esterno per scaricare i polsi.',
-      'Estendi completamente le braccia portandoti nella posizione alta. Contrai gli addominali come se stessi per ricevere un pugno allo stomaco, controlla i glutei e crea una linea retta dalla testa ai talloni — nessun cedimento del bacino.',
-      'Inizia la discesa piegando i gomiti con un angolo di circa 45° rispetto al busto (non a 90°). Scendi lentamente in 2-3 secondi fino a quando il petto sfiora il suolo senza toccarlo.',
-      'Nella posizione bassa, fai una breve pausa isometrica di un secondo per eliminare lo slancio.',
-      'Spingi il suolo verso il basso con le mani (immagina di voler allargare il pavimento), espira potentemente e risali in 1 secondo mantenendo la rigidità corporea.',
-      'In cima al movimento, spingi attivamente le scapole in fuori (protrazione) per coinvolgere il serratus anterior e chiudere il movimento completamente.'
-    ],
-    tip:'Se i fianchi cedono verso il basso, rafforza prima il core con plank statici da 45-60s. Se invece i glutei vanno troppo in alto, abbassa il bacino contrando attivamente gli addominali. Progressione: push-up sulle ginocchia → standard → inclinati (piedi in alto) → archer push-up.'},
-
-  'dips-w':{difficulty:'Advanced',objective:'Ipertrofia petto inferiore e tricipiti',
-    desc:'I dips zavorrati sono uno degli esercizi più potenti per sviluppare massa nel petto inferiore-esterno e nei tricipiti. Il carico aggiuntivo aumenta drasticamente la tensione meccanica sul muscolo, stimolando crescita e forza massimale in modo molto superiore ai dips a corpo libero.',
-    steps:[
-      'Indossa la cintura da zavorra oppure tieni un manubrio tra le caviglie/cosce. Sali sulle parallele e stabilizzati con le braccia estese. Testa neutra, non proiettata in avanti.',
-      'Prima di iniziare la discesa, deprimi e retradi le scapole (abbassale e stringile): questo protegge le spalle e crea la base stabile per il movimento.',
-      'Piega il busto leggermente in avanti (circa 10-15°) per enfatizzare il lavoro sul petto. Se rimani perfettamente verticale, i tricipiti lavoreranno di più e il petto meno.',
-      'Scendi controllando ogni centimetro: gomiti che vanno indietro e leggermente verso l\'esterno. Continua fino a quando i gomiti superano i 90° (sternal dip). Fermati 1 secondo in fondo.',
-      'Risali in modo esplosivo spingendo le mani verso il basso sulle parallele, contraendo pettorali e tricipiti. Mantieni la posizione scapolare per tutta la fase concentrica.',
-      'Non bloccare i gomiti in cima per mantenere la tensione costante. Se sei avanzato, aggiungi una pausa isometrica a metà discesa (pause dips).'
-    ],
-    tip:'Se senti dolore alla spalla anteriore, riduci il ROM fermandoti a 90° e lavora sulla mobilità delle spalle. Aumenta il carico solo quando chiudi tutte le serie con tecnica impeccabile. Principianti: inizia dai dips assistiti al macchinario prima di passare alle parallele.'},
-
-  'pull-up-w':{difficulty:'Advanced',objective:'Forza e massa dorsali, bicipiti e core',
-    desc:'La trazione alla sbarra zavorrata è il re degli esercizi di trazione verticale. Coinvolge dorsali (latissimus dorsi), bicipiti, romboidi, trapezio medio-basso e tutta la catena posteriore. Il carico aggiuntivo forza un adattamento neuromuscolare rapidissimo, impossibile da raggiungere con il solo peso corporeo una volta che le trazioni diventano facili.',
-    steps:[
-      'Appendi la zavorra alla cintura o stringi un manubrio tra le caviglie incrociate. Impugna la sbarra con presa prona (palmi in avanti) a larghezza spalle o leggermente più larga.',
-      'Parti in dead hang attivo: non cedere completamente con le spalle, ma mantieni le scapole leggermente retratte e depresse (scapole abbassate e avvicinate). Questo protegge la cuffia dei rotatori.',
-      'Inizia il movimento pensando di portare i gomiti verso il basso e indietro — non di tirare con i bicipiti. Questo attiva i dorsali fin dall\'inizio del movimento.',
-      'Tira fino a quando il mento supera la sbarra oppure, se sei avanzato, fino al petto (chest-to-bar). Nella posizione alta, contrai i dorsali per 1 secondo.',
-      'Scendi in modo lento e controllato (fase eccentrica di 3 secondi): questo è dove avviene la maggior parte dei guadagni di forza e massa. Non cadere giù velocemente.',
-      'Torna al dead hang attivo prima di iniziare la prossima ripetizione. Non usare lo slancio delle gambe (kipping) se il tuo obiettivo è forza e ipertrofia.'
-    ],
-    tip:'Per migliorare velocemente: fai scendute eccentriche lente (3-5s) anche quando non riesci ancora le trazioni complete. Scegli una presa neutra (palmi che si guardano) per una versione più facile che carichi meno i tendini del gomito.'},
-
-  'squat-w':{difficulty:'Intermediate',objective:'Forza e massa su quadricipiti, glutei e femorali',
-    desc:'Lo squat con bilanciere è l\'esercizio multiarticolare per eccellenza del lower body. Coinvolge in modo sinergico quadricipiti, glutei, femorali, adduttori, erettori spinali e core. È il movimento che più di ogni altro determina la composizione corporea totale e la produzione di ormoni anabolici come testosterone e GH.',
-    steps:[
-      'Posiziona il bilanciere sulla parte alta dei trapezi (high bar squat) o sulla schiena bassa sopra i deltoidi posteriori (low bar squat). Prendi una presa leggermente più larga delle spalle con i gomiti spinti verso il basso e indietro.',
-      'Piedi alla larghezza delle spalle o leggermente più larghi, con le punte aperte di 15-30° in base alla tua mobilità dell\'anca. Respira a pieno e crea pressione intraaddominale (tecnica Valsalva) prima di togliere il bilanciere.',
-      'Prima di scendere, spingi leggermente le ginocchia verso l\'esterno (in linea con le punte) e mantieni il petto alto. Scendi come se volessi sederti su uno sgabello molto basso, controllando la discesa in 2-3 secondi.',
-      'Scendi almeno fino al parallelismo (cosce parallele al suolo) o sotto il parallelo per massimizzare l\'attivazione di glutei. Le ginocchia seguono la direzione delle punte senza crollare verso l\'interno.',
-      'Nella posizione bassa, mantieni la schiena neutra (non arrotondata), la lordosi preservata e il peso distribuito su tutta la pianta del piede (evita di andare sulle punte).',
-      'Risali spingendo il suolo verso il basso, come se volessi sfondarlo. Spingi le ginocchia verso l\'esterno e mantieni il busto alto. Espira durante la fase concentrica (risalita).'
-    ],
-    tip:'Il "wink" gluteo (inclinazione del bacino in fondo) è spesso dovuto a mobilità limitata delle caviglie: lavora su stretching del polpaccio e mobilità con elevazione del tallone. Inizia sempre con un buon riscaldamento (2 serie leggere prima del carico di lavoro).'},
-
-  'nordic':{difficulty:'Advanced',objective:'Forza eccentrica dei femorali, prevenzione infortuni',
-    desc:'Il Nordic Hamstring Curl (NHC) è l\'esercizio più efficace scientificamente provato per rafforzare i femorali in fase eccentrica e ridurre drasticamente il rischio di strappi muscolari. Atleti che lo praticano regolarmente riducono del 50-70% il rischio di infortuni ai femorali. L\'esercizio è brutalmente difficile — non sottovalutarlo.',
-    steps:[
-      'Inginocchiati su una superficie morbida (tappetino) con i piedi bloccati sotto una sbarra bassa, una panca o da un partner che tiene le caviglie. La posizione di partenza è eretta, con glutei contratti e busto perfettamente verticale.',
-      'Lentamente, resistendo con i femorali con tutta la forza possibile, lasciati cadere in avanti. L\'obiettivo è resistere quanto più a lungo possibile prima di cedere — questo è il lavoro eccentrico.',
-      'Quando non riesci più a rallentare la caduta, usa le mani per attutire l\'atterraggio (come un push-up) e controllare il contatto con il suolo. Mani a terra, petto non deve colpire il pavimento di colpo.',
-      'Dalla posizione a terra, usa le mani per aiutarti a risalire alla posizione eretta (fase concentrica assistita). Man mano che migliori, cerca di usare sempre meno le mani nella risalita.',
-      'In cima, contrai i glutei e i core per 1 secondo prima di iniziare la prossima ripetizione. La postura deve essere verticale — no inclinazione del busto in avanti.',
-      'Progressione: inizia con 3-4 rep esclusive di eccentrica lenta. Nei mesi successivi, prova la risalita attiva a metà ROM, poi a ROM completo.'
-    ],
-    tip:'Se è troppo difficile, usa una fascia elastica attaccata in alto che ti supporti durante la discesa. Fai questo esercizio alla fine dell\'allenamento quando sei già caldo ma non esausto. 2-3 sessioni a settimana sono sufficienti per forti miglioramenti in 6-8 settimane.'},
-
-  'plank':{difficulty:'Beginner',objective:'Stabilità del core, controllo lombare e anti-rotazione',
-    desc:'Il plank è un esercizio isometrico fondamentale per sviluppare la stabilità del core a 360°. Contrariamente a quanto si crede, il suo valore non è "bruciare i grassi addominali" ma costruire la capacità del core di resistere all\'estensione lombare — prerequisito essenziale per qualsiasi sollevamento pesante sicuro ed efficace.',
-    steps:[
-      'Posizionati prono con i gomiti direttamente sotto le spalle, avambracci paralleli al suolo. Le mani sono piatte o a pugno — scegli in base alla comodità dei polsi.',
-      'Alza il corpo portandoti sulla punta dei piedi. In questo momento fai queste contrazioni simultaneamente: addominali (come se aspettassi un pugno), glutei al massimo, quadricipiti contratti, scapole leggermente retratte (non lasciarle sporgere).',
-      'La linea del corpo deve essere perfettamente retta: non alzare il sedere (errore più comune — svuota il lavoro del core) e non cedere i fianchi verso il basso (aumenta lo stress lombare).',
-      'Respira normalmente con respiri corti e controllati — non trattenere il respiro. La respirazione corta mantiene la pressione intraaddominale senza aumentare la pressione arteriosa.',
-      'Mantieni lo sguardo rivolto a terra, circa 20-30 cm davanti alle mani. La testa è in posizione neutra — non sollevarla né abbassarla.',
-      'Se inizi a cedere sulla forma (fianchi che scendono, scapole che sporgono, tremore incontrollato), fermati: è meglio una durata più breve eseguita correttamente.'
-    ],
-    tip:'Progressioni: plank su ginocchia → plank standard → plank con alzata alternata delle gambe → plank con sollevamento alternato braccio-gamba → RKC plank (plank con massima contrazione isometrica). Per rendere il plank più difficile senza aumentare il tempo, usa la variante RKC: contrai tutto al 100% per 10-20 secondi. È molto più efficace di 2 minuti in forma sciatta.'},
-
-  'bench':{difficulty:'Intermediate',objective:'Ipertrofia e forza del petto, deltoidi anteriori e tricipiti',
-    desc:'La panca piana con bilanciere è uno dei tre movimenti fondamentali del powerlifting e il riferimento universale per la forza del petto. Coinvolge principalmente i pettorali (con enfasi sulla testa sternale), i deltoidi anteriori e i tricipiti come sinergisti. Eseguita correttamente costruisce una massa solida e una forza funzionale di spinta orizzontale.',
-    steps:[
-      'Sdraiati sulla panca con gli occhi direttamente sotto il bilanciere. I piedi sono piatti al suolo (o su un rialzo se le gambe sono corte). Crea un arco naturale nella zona lombare — non forzato ma presente.',
-      'Impugna il bilanciere con una presa pronata a larghezza tale che i polsi siano sopra i gomiti nella posizione bassa (circa larghezza delle spalle o leggermente più larga). Usa sempre il pollice che avvolge la barra (presa sicura).',
-      'Prima di togliere il bilanciere, ritrae le scapole e abbassale (come se cercassi di mettere le scapole nei taschini dei pantaloni). Questa posizione deve essere mantenuta per tutta la durata della serie.',
-      'Togli il bilanciere aiutandoti con il rack oppure fatti passare il bilanciere da un compagno. Tienilo direttamente sopra il petto a braccia estese.',
-      'Scendi lentamente (2-3 secondi) portando il bilanciere verso il petto inferiore/centro, con i gomiti a 45-75° rispetto al busto. Tocca leggermente il petto — non rimbalzare.',
-      'Spingi il bilanciere verso l\'alto e leggermente indietro (traiettoria ad arco, non dritta) espirando potentemente. Mantieni le scapole retratte per tutto il movimento.'
-    ],
-    tip:'L\'errore più comune è perdere la retrazione scapolare durante la spinta, che rende il movimento inefficace e pericoloso per le spalle. Se usi pesi pesanti, usa sempre un compagno di spottaggio o il rack di sicurezza. Per variare l\'enfasi muscolare: presa stretta (tricipiti), panca inclinata (petto superiore), panca declinata (petto inferiore).'},
-
-  'deadlift':{difficulty:'Intermediate',objective:'Forza totale della catena posteriore, gambe e schiena',
-    desc:'Lo stacco da terra è probabilmente l\'esercizio di forza più completo che esista: attiva quasi ogni muscolo del corpo, dalla pianta del piede alla sommità del cranio. Femorali, glutei, erettori spinali, trapezi, dorsali, avambracci e core lavorano in sinergia. Produce il maggiore stimolo anabolico tra tutti gli esercizi ed è insostituibile per costruire vera forza.',
-    steps:[
-      'Avvicinati al bilanciere fino a toccare le tibie. I piedi sono alla larghezza delle anche, le punte leggermente aperte. Il bilanciere si trova sopra la metà del piede (non vicino alle dita).',
-      'Abbassati piegando le anche e ginocchia fino a impugnare il bilanciere: presa doppia prona, doppia supina o con il gancio (hook grip). Le mani sono fuori dalle gambe, appena sopra la larghezza delle spalle.',
-      'Posizione di partenza ("pronto via"): schiena neutra con lordosi preservata, petto alto, scapole retratte, braccio verticale rispetto al suolo. Crea tensione nel bilanciere PRIMA di tirare (slack out).',
-      'Inspira profondamente, crea la pressione intraaddominale (Valsalva), e inizia a spingere il suolo verso il basso con i piedi come se volessi fare uno squat. Contemporaneamente, tira il bilanciere verso le tibie.',
-      'Quando il bilanciere supera le ginocchia, spingi i fianchi in avanti in modo esplosivo. Porta il corpo in posizione verticale con glutei contratti e bacino in estensione completa. Non iperestendere la schiena in cima.',
-      'Abbassa il bilanciere mantenendo il controllo: prima ripiega le anche (stacco rumeno), poi piega le ginocchia quando il bilanciere scende sotto le stesse. Non lasciare cadere il bilanciere con un tonfo.'
-    ],
-    tip:'Se hai mobilità limitata alle caviglie o ai femorali, inizia con il sumo deadlift (piedi più larghi, presa interna) che richiede meno flessibilità dell\'anca. Non arrotondare mai la schiena bassa: è il modo più diretto per farsi male. Usa le cinghie da polso solo per carichi molto pesanti — prima sviluppa la presa naturale.'},
-
-  'squat':{difficulty:'Intermediate',objective:'Forza e massa su quadricipiti, glutei e femorali',
-    desc:'Lo squat con bilanciere è l\'esercizio multiarticolare per eccellenza del lower body. Coinvolge in modo sinergico quadricipiti, glutei, femorali, adduttori, erettori spinali e core. È il movimento che più di ogni altro determina la composizione corporea totale e la produzione di ormoni anabolici.',
-    steps:[
-      'Posiziona il bilanciere sulla parte alta dei trapezi (high bar). Piedi alla larghezza delle spalle con le punte aperte di 20-30°.',
-      'Respira a pieno, crea pressione intraaddominale (Valsalva), poi spingi le ginocchia fuori e scendi come se volessi sederti su uno sgabello basso.',
-      'Scendi almeno fino al parallelismo o sotto (ass to grass) per massimizzare glutei. Tieni il petto alto e la schiena neutra.',
-      'Mantieni il peso su tutta la pianta del piede — talloni che rimangono a contatto con il suolo per tutto il movimento.',
-      'Risali spingendo il suolo verso il basso, come se volessi sfondarlo. Ginocchia che seguono le punte. Espira nella risalita.',
-      'Blocca la posizione eretta contraendo glutei e quadricipiti. Non iperestendere la schiena in cima.'
-    ],
-    tip:'Se i talloni si sollevano durante la discesa, migliora la mobilità delle caviglie con stretching del polpaccio. Inizia sempre con 2 serie di riscaldamento prima del carico di lavoro principale.'},
-
-  'ohp':{difficulty:'Intermediate',objective:'Forza e massa delle spalle e del core',
-    desc:'L\'Overhead Press (OHP) con bilanciere è il test definitivo della forza delle spalle. Coinvolge deltoidi (tutte e tre le teste), trapezio superiore, tricipiti e in modo indiretto ma intenso tutto il core che deve stabilizzarsi per sostenere il carico sopra la testa. È l\'equivalente della panca piana per le spalle.',
-    steps:[
-      'Impugna il bilanciere con una presa leggermente più larga delle spalle. I polsi sono impilati direttamente sopra i gomiti — polsi neutri o leggermente estesi, non flessi.',
-      'Il bilanciere parte dalla posizione di rack (altezza spalle). Gomiti leggermente davanti al bilanciere, non direttamente sotto. I piedi sono alla larghezza delle spalle o leggermente più stretti.',
-      'Inspira profondamente, contrai fortemente il core e i glutei. Il bacino è in posizione neutra — non esteso in avanti (evita l\'iperestensione lombare).',
-      'Spingi il bilanciere verso l\'alto in traiettoria quasi verticale, spostando leggermente il viso all\'indietro per far passare il bilanciere senza toccare il naso.',
-      'Quando il bilanciere supera la fronte, riporta la testa in posizione neutra sotto il bilanciere. In cima, il bilanciere è direttamente sopra le spalle-orecchie con le braccia completamente estese.',
-      'Abbassa controllando il bilanciere lungo lo stesso percorso. Non lasciare cadere il peso — il negativo è prezioso. Torna alla posizione di partenza con il bilanciere alla clavicola/spalle.'
-    ],
-    tip:'L\'errore più comune è iperestendere la schiena bassa per compensare la mancanza di mobilità delle spalle. Se non riesci ad estendere le braccia verticalmente senza arcuare la schiena, lavora sulla mobilità toracica e delle spalle prima di aggiungere carico.'},
-
-  'row':{difficulty:'Intermediate',objective:'Forza e spessore della schiena, correzione posturale',
-    desc:'Il rematore con bilanciere (Barbell Row o Bent Over Row) è l\'esercizio di trazione orizzontale per eccellenza. Sviluppa lo spessore della schiena lavorando su dorsali, romboidi, trapezio medio-basso, bicipiti e posteriori di spalla. Essenziale per bilanciare il lavoro della panca piana e mantenere una postura sana.',
-    steps:[
-      'Prendi il bilanciere con presa prona (palmi verso il basso) alla larghezza delle spalle o leggermente più larga. Piedi alla larghezza delle anche.',
-      'Inclina il busto in avanti di circa 45-70° (più orizzontale = più dorsali; più verticale = più trapezio). Mantieni la schiena neutra con lordosi preservata — non arrotondare la zona lombare.',
-      'Tieni le ginocchia leggermente piegate per scaricare il carico dagli erettori spinali e tenere la posizione stabile. Il bilanciere parte appeso con le braccia quasi estese.',
-      'Tira il bilanciere verso l\'ombelico o la parte bassa del petto pensando di portare i gomiti verso il soffitto e dietro. Le scapole si avvicinano alla fine del movimento.',
-      'Tieni il bilanciere in contatto con il corpo durante tutta la traiettoria — non deve allontanarsi dal busto. Contrai i dorsali e le scapole per 1 secondo nella posizione alta.',
-      'Abbassa il bilanciere lentamente (eccentrica di 2-3 secondi) mantenendo la posizione del busto inclinata. Non raddrizzarti durante il movimento.'
-    ],
-    tip:'Usa la "morte del gorilla" per attivare i dorsali: pensa di piegare la barra verso il basso con le mani prima di tirarla. Questo pre-attiva i dorsali prima ancora di iniziare la trazione. Se la forma crolla al peso di lavoro, riduci il carico — il rematore richiede controllo impeccabile per essere efficace.'},
-
-  'lat-machine':{difficulty:'Beginner',objective:'Larghezza dorsali, postura e forza di trazione',
-    desc:'La lat machine (lat pulldown) è la versione assistita delle trazioni alla sbarra. È l\'esercizio di ingresso ideale per chi non riesce ancora a fare trazioni complete, ma anche per chi cerca volume aggiuntivo di trazione verticale. Sviluppa principalmente i latissimus dorsi, creando la caratteristica forma a V del dorso.',
-    steps:[
-      'Siediti al macchinario con le cosce bloccate sotto il cuscinetto. Impugna la barra con presa prona larga (palmi avanti, mani circa alla larghezza o leggermente oltre le spalle).',
-      'Inclinati leggermente all\'indietro di 10-15° — non rimanere perfettamente verticale. Questa inclinazione crea la traiettoria giusta per il movimento.',
-      'Prima di tirare, deprimi e retradi le scapole (abbassale e avvicinale). Questo è il gesto più importante: attiva i dorsali fin dall\'inizio.',
-      'Tira la barra verso il petto superiore pensando di portare i gomiti verso i fianchi e verso il basso. Non tirare verso il petto con le braccia — usa i gomiti come guida.',
-      'Porta la barra fino all\'altezza del mento o della clavicola. In questa posizione, contrai al massimo i dorsali per 1-2 secondi (il famoso "squeeze").',
-      'Risali in modo lento e controllato (3 secondi), distendendo completamente le braccia e permettendo uno stretching completo dei dorsali prima della prossima ripetizione.'
-    ],
-    tip:'Per isolare meglio i dorsali ed eliminare il contributo dei bicipiti, usa le cinghie da polso e pensa di non avere le mani — immagina che i tuoi gomiti siano i ganci che tirano la barra. Varia la larghezza della presa: larga per i dorsali, stretta/neutra per il volume del centro schiena.'},
-
-  'dip':{difficulty:'Intermediate',objective:'Forza e massa di petto inferiore e tricipiti',
-    desc:'I dips alle parallele sono un esercizio composto premium per il petto inferiore e i tricipiti. A differenza della panca declinata, i dips richiedono una grande stabilizzazione della spalla e del core, rendendoli più funzionali e completi. Sono considerati da molti la "versione verticale della panca piana".',
-    steps:[
-      'Sali sulle parallele e stabilizzati con le braccia completamente estese. Mantieni la testa neutra e il core contratto.',
-      'Retradi e deprimi le scapole prima di iniziare il movimento (come per tutti gli esercizi di spinta). Questo protegge le spalle.',
-      'Piega leggermente il busto in avanti (15-20°) per enfatizzare il petto. Se rimani verticale, il carico va quasi interamente sui tricipiti.',
-      'Scendi piegando i gomiti in modo controllato, portandoli leggermente all\'esterno. Continua fino a quando i bicipiti sfiorano gli avambracci (gomiti a 90° o oltre).',
-      'Tieni 1 secondo nella posizione bassa, poi risali in modo esplosivo. La spinta avviene sia con il petto che con i tricipiti — senti entrambi lavorare.',
-      'In cima, non bloccare completamente i gomiti: mantieni una leggera tensione per non scaricare il lavoro muscolare sulle articolazioni.'
-    ],
-    tip:'Per i principianti: usa il macchinario con assistenza. Per gli intermedi: corpo libero. Per gli avanzati: aggiungi carico con cintura. La versione su bench (bench dips) con i piedi a terra è meno efficace e più stressante per le spalle — preferisci sempre le parallele.'},
-
-  'pull-up':{difficulty:'Intermediate',objective:'Larghezza dorsali, forza di trazione verticale',
-    desc:'Le trazioni alla sbarra (pull-up) sono l\'esercizio di trazione verticale per eccellenza. Richiede di sollevare l\'intero peso corporeo usando principalmente i dorsali, i bicipiti e i muscoli del core. È il benchmark universale di forza relativa e uno degli esercizi più efficaci per costruire un dorso largo e definito.',
-    steps:[
-      'Impugna la sbarra con presa prona larga (palmi avanti, mani circa alla larghezza delle spalle o leggermente più larghe). Appendi in dead hang attivo: le spalle non cedono completamente ma le scapole rimangono leggere retratte.',
-      'Inizia il movimento deprimendo le scapole (abbassandole) e poi avvicinandole: questo attiva i dorsali prima ancora di piegare i gomiti.',
-      'Piega i gomiti e porta il petto verso la sbarra pensando di portare i gomiti verso i fianchi. Non usare lo slancio del corpo (no kipping se vuoi forza).',
-      'Continua fino a quando il mento supera la sbarra o il petto la tocca (chest-to-bar per avanzati). Tieni 1 secondo in cima contrando i dorsali al massimo.',
-      'Abbassa il corpo lentamente in 3-4 secondi: questa fase eccentrica è fondamentale per costruire forza. Arriva al dead hang attivo completo prima di ricominciare.',
-      'Respira: inspira nella fase di discesa, espira nella salita. Non trattenere il respiro durante l\'esercizio.'
-    ],
-    tip:'Se non riesci a fare trazioni complete: inizia con il australian pull-up (rematore inverso), poi la fase eccentrica (scendi lentamente da un salto), poi le trazioni con elastico. Aumenta di 1 ripetizione ogni 1-2 settimane. Una volta che fai 10+ trazioni pulite, inizia ad aggiungere carico con la cintura zavorrata.'},
-
-  'rdl':{difficulty:'Intermediate',objective:'Femorali, glutei e catena posteriore',
-    desc:'Lo stacco rumeno (Romanian Deadlift, RDL) è lo specialista della catena posteriore. A differenza dello stacco tradizionale, mantiene le ginocchia quasi ferme e punta tutto lo stretching e la contrazione sui femorali e i glutei. È fondamentale in qualsiasi programma di ipertrofia del lower body e per proteggere i femorali dagli infortuni.',
-    steps:[
-      'Parti in piedi con il bilanciere (o i manubri) in mano, gambe alla larghezza delle anche, piedi paralleli. Scapole retratte, petto alto, schiena neutra.',
-      'Inizia il movimento spingendo i fianchi indietro (non piegando le ginocchia). Immagina un elastico che ti tira il bacino verso una parete dietro di te.',
-      'Scendi mantenendo le ginocchia quasi ferme (una leggera flessione è normale) con il bilanciere che scorre lungo le tibie e le cosce. La schiena rimane parallela al suolo o leggermente inclinata.',
-      'Scendi fino a quando senti un forte stretching nei femorali — per la maggior parte delle persone questo avviene quando il bilanciere raggiunge il centro delle tibie o le caviglie, in base alla mobilità. Non arrotondare mai la schiena bassa.',
-      'Dalla posizione bassa, contrai i glutei e risali spingendo i fianchi in avanti. Non usare la schiena per risalire — l\'impulso viene dai glutei.',
-      'In cima, spingi i fianchi in avanti completamente e contrai i glutei per 1 secondo. Il bilanciere dovrebbe essere di fronte alle cosce nella posizione alta.'
-    ],
-    tip:'Il limite del ROM è la tua mobilità dei femorali — rispettalo sempre. Forzare il ROM con la schiena arrotondata è la causa più comune di infortuni lombari. Inizia con un carico più leggero del normale per imparare la posizione prima di aumentare il peso.'},
-
-  'leg-press':{difficulty:'Beginner',objective:'Quadricipiti, glutei e femorali (lower body volume)',
-    desc:'La leg press è la macchina ideale per sviluppare volume nel lower body senza sovraccaricare la schiena. Permette di usare carichi molto più elevati dello squat grazie al supporto strutturale della macchina. È perfetta come esercizio di completamento dopo lo squat o per chi ha problemi alla schiena.',
-    steps:[
-      'Siediti nella macchina con la schiena completamente appoggiata allo schienale. Posiziona i piedi sulla piattaforma a larghezza delle anche: se vuoi enfatizzare i glutei, piedi più in alto e più larghi; per i quadricipiti, piedi più bassi.',
-      'Prima di sbloccare il peso, assicurati che la schiena sia completamente incollata allo schienale e che i glutei non si sollevino durante il movimento.',
-      'Sblocca il peso e abbassa la piattaforma piegando le ginocchia lentamente (2-3 secondi) fino a formare un angolo di 90° o poco meno. Le ginocchia seguono la linea delle punte.',
-      'Nella posizione bassa, le ginocchia non devono chiudersi verso l\'interno (valgismo). Se succede, riduci il carico o lavora sulla mobilità.',
-      'Spingi la piattaforma verso l\'alto in modo esplosivo senza bloccare completamente le ginocchia in cima (mantieni una leggera flessione per non scaricare sulle articolazioni).',
-      'Controlla la discesa in modo eccentric per massimizzare la tensione muscolare. Non lasciare rimbalzare il peso in fondo.'
-    ],
-    tip:'Varia la posizione dei piedi per colpire angoli diversi: piedi larghi (più interno coscia e glutei), piedi stretti (più quadricipite esterno), piedi in alto (più glutei), piedi in basso (più quadricipite in assoluto). Non bloccare mai le ginocchia in estensione completa sotto carico.'},
-
-  'lunge':{difficulty:'Beginner',objective:'Quadricipiti, glutei e propriocezione',
-    desc:'L\'affondo (lunge) è un esercizio unilaterale essenziale che costruisce forza, equilibrio e coordinazione simultaneamente. A differenza dello squat bilaterale, gli affondi identificano e correggono gli squilibri tra le due gambe. Sono particolarmente efficaci per i glutei e la stabilità dell\'anca.',
-    steps:[
-      'Parti in piedi, gambe unite, con un manubrio in ciascuna mano (o bilanciere sulle spalle). Petto alto, sguardo avanti, core contratto.',
-      'Fai un passo avanti con una gamba (circa 60-80 cm in base all\'altezza). Il piede atterra con il tallone per primo.',
-      'Abbassa il ginocchio posteriore verso il suolo, fermandoti a circa 2-3 cm dal suolo. Il ginocchio anteriore deve stare sopra (ma non oltre) il piede — non deve proiettarsi troppo in avanti.',
-      'Il busto rimane verticale durante tutta la discesa. Non inclinare il petto in avanti: usa la flessione dell\'anca e del ginocchio, non la schiena.',
-      'Spingi con il tallone anteriore per risalire in modo esplosivo, tornando alla posizione di partenza oppure portando il piede posteriore avanti (affondi in cammino).',
-      'Alterna le gambe o completa tutte le ripetizioni su una gamba prima di cambiare. Mantieni un ritmo costante e controllato.'
-    ],
-    tip:'La variante più efficace per i glutei è il "Bulgarian split squat" (affondo bulgaro): piede posteriore su una panca elevata, discesa più profonda. Inizia con affondi statici prima di passare a quelli in cammino per imparare la postura corretta.'}
+  'push-up':{difficulty:'Beginner',objective:'Forza petto e tricipiti',desc:'Esercizio base a corpo libero per costruire controllo scapolare e spinta orizzontale.',steps:['Mani poco oltre la larghezza spalle e addome attivo.','Scendi con gomiti a 45 gradi mantenendo corpo in linea.','Spingi forte senza perdere assetto lombare.'],tip:'Espira in salita e non cedere con il bacino.'},
+  'dips-w':{difficulty:'Advanced',objective:'Ipertrofia petto/tricipiti',desc:'Versione zavorrata dei dips per aumentare tensione meccanica e forza massimale.',steps:['Blocca scapole depresse prima di partire.','Scendi fino a gomito oltre 90 gradi controllando il core.','Risalita esplosiva mantenendo petto aperto.'],tip:'Aumenta il carico solo se chiudi tutte le serie pulite.'},
+  'pull-up-w':{difficulty:'Advanced',objective:'Forza dorsali e bicipiti',desc:'Trazione verticale con carico aggiuntivo utile per progressi di forza.',steps:['Parti in dead hang attivo con spalle stabili.','Tira i gomiti verso il fianco fino al mento sopra la sbarra.','Scendi in 2-3 secondi mantenendo controllo.'],tip:'Evita slancio e usa ROM completo.'},
+  'squat-w':{difficulty:'Intermediate',objective:'Forza gambe e glutei',desc:'Squat con sovraccarico per costruire massa su lower body.',steps:['Piedi a larghezza spalle, punte leggermente aperte.','Scendi con ginocchia in linea ai piedi e schiena neutra.','Risalita spingendo il pavimento con tutta la pianta.'],tip:'Mantieni il carico vicino al baricentro.'},
+  'nordic':{difficulty:'Advanced',objective:'Forza femorali e prevenzione infortuni',desc:'Eccellente per catena posteriore e stabilita del ginocchio.',steps:['Blocca i piedi e attiva glutei.','Scendi lentamente in eccentrica mantenendo allineamento.','Aiutati con mani solo alla fine e risali controllato.'],tip:'Punta prima al controllo eccentrico.'},
+  'plank':{difficulty:'Beginner',objective:'Stabilita core',desc:'Isometria per addome e controllo lombare.',steps:['Gomiti sotto le spalle e glutei contratti.','Crea una linea testa-anche-talloni.','Respira corto senza perdere l assetto.'],tip:'Meglio 30 secondi perfetti che 90 secondi in compenso.'}
 };
-
 
 const TC={
   push:{bg:'var(--red-d)',c:'var(--red)'},
@@ -10990,15 +10602,6 @@ function obNext(step) {
         showToast('⚠️ Seleziona dove ti alleni'); return;
       }
     }
-    // Step 6 — ob_s6 = DURATA SESSIONE (obbligatorio)
-    if(obCurStep===6) {
-      const hasDur = document.querySelector('#ob_s6 .ob-card.sel') ||
-                     (typeof obSel!=='undefined' && obSel.sessionDur);
-      if(!hasDur) {
-        document.querySelectorAll('#ob_s6 .ob-card').forEach(c=>{ c.style.borderColor='var(--red)'; setTimeout(()=>c.style.borderColor='',1800); });
-        showToast('⚠️ Seleziona quanto tempo hai per allenarti'); return;
-      }
-    }
   }
   // On reaching final step, build plan preview
   if(step===15) {
@@ -11383,11 +10986,11 @@ function goPage(p){
   if (localStorage.getItem('ft_just_reset') === '1') return;
   if (window._ftOnboardingActive) return;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.bni').forEach(el=>{ el.classList.remove('on'); el.removeAttribute('aria-current'); });
+  document.querySelectorAll('.bni').forEach(el=>el.classList.remove('on'));
   const pageEl = document.getElementById('page-'+p);
   if(!pageEl){ console.warn('Page not found:', p); return; }
   pageEl.classList.add('active');
-  const ni=document.getElementById('bni-'+p);if(ni){ ni.classList.add('on'); ni.setAttribute('aria-current','page'); }
+  const ni=document.getElementById('bni-'+p);if(ni)ni.classList.add('on');
   if(p==='home'){ renderHome(); renderWeeklyGoalCard(); }
   if(p==='allenamento'){renderAllenamento();renderWeeklyProgram();renderPresetsInTraining();}
   if(p==='esplora') renderPresetExplorer();
@@ -15826,8 +15429,6 @@ function _startOnboarding() {
   // Pulisci selezioni precedenti
   document.querySelectorAll('.ob-card.sel').forEach(function(c){ c.classList.remove('sel'); });
   document.querySelectorAll('.ob-card.on').forEach(function(c){ c.classList.remove('on'); });
-  // Accessibilità: marca emoji come decorative
-  if (typeof markDecoEmoji === 'function') setTimeout(markDecoEmoji, 100);
   // Nascondi splash, login; mostra onboarding
   document.querySelectorAll('.screen.active').forEach(function(s){ s.classList.remove('active'); });
   var obScreen = document.getElementById('scr-onboard');
@@ -16257,6 +15858,26 @@ const CYCLE_PHASES = {
 
 function getCycleData() { return profile.cycle || null; }
 
+/* Calcola la fase del ciclo per una data specifica (non solo "oggi") */
+function getCyclePhaseForDate(dateStr) {
+  const c = getCycleData();
+  if (!c || !c.lastPeriod || !c.trackCycle) return null;
+  if (typeof profile === 'undefined' || profile.physique?.sex !== 'f') return null;
+  const last     = new Date(c.lastPeriod);
+  const target   = new Date(dateStr);
+  const elapsed  = Math.floor((target - last) / 86400000);
+  if (elapsed < 0) return null; // data prima dell'ultima mestruazione
+  const cycleLen  = c.cycleLen  || 28;
+  const periodLen = c.periodLen || 5;
+  const dayInCycle = (elapsed % cycleLen) + 1;
+  let phase;
+  if (dayInCycle <= periodLen)  phase = CYCLE_PHASES.menstrual;
+  else if (dayInCycle <= 13)   phase = CYCLE_PHASES.follicular;
+  else if (dayInCycle <= 16)   phase = CYCLE_PHASES.ovulation;
+  else                          phase = CYCLE_PHASES.luteal;
+  return { phase, dayInCycle, cycleLen };
+}
+
 function getCurrentCyclePhase() {
   const c = getCycleData();
   if (!c || !c.lastPeriod) return null;
@@ -16326,20 +15947,22 @@ function openCycleSettings() {
   document.getElementById('cs-last-period').value= c.lastPeriod || '';
   document.getElementById('cycle-modal').classList.add('open');
 }
+window.openCycleSettings = openCycleSettings;
 
 async function saveCycleSettings() {
-  profile.cycle = {
-    trackCycle: true,
-    cycleLen:   parseInt(document.getElementById('cs-cycle-len').value)  || 28,
-    periodLen:  parseInt(document.getElementById('cs-period-len').value) || 5,
-    lastPeriod: document.getElementById('cs-last-period').value,
-  };
+  const cycleLen  = parseInt(document.getElementById('cs-cycle-len').value)  || 28;
+  const periodLen = parseInt(document.getElementById('cs-period-len').value) || 5;
+  const lastPeriod = document.getElementById('cs-last-period').value;
+  if (!profile) profile = {};
+  profile.cycle = { trackCycle: true, cycleLen, periodLen, lastPeriod };
   await saveAll();
   document.getElementById('cycle-modal').classList.remove('open');
-  renderCycleBanner();
-  renderCycleProfile();
+  if (typeof renderCycleBanner  === 'function') try { renderCycleBanner();  } catch(e) {}
+  if (typeof renderCycleProfile === 'function') try { renderCycleProfile(); } catch(e) {}
+  if (typeof renderHomeCalendar === 'function') try { renderHomeCalendar(); } catch(e) {}
   showToast('✅ Ciclo aggiornato');
 }
+window.saveCycleSettings = saveCycleSettings;
 
 /* Build a cycle-adapted day given a standard day */
 function adaptDayForCycle(day) {
@@ -16599,25 +16222,84 @@ function obToggleDay(el, dow) {
 }
 
 function obConfirmDays() {
-  // Permetti di procedere se almeno il numero di giorni è stato scelto
-  if (obSelectedDayIndices.length === 0 && (!window._obDaysRange || window._obDaysRange.size === 0)) {
-    if (typeof showToast === 'function') showToast('⚠️ Seleziona almeno un numero di giorni');
+  if (obSelectedDayIndices.length === 0) {
+    if (typeof showToast === 'function') showToast('⚠️ Seleziona almeno un giorno');
     return;
   }
-  if (obSelectedDayIndices.length > 0) {
-    obTrainingDays = obSelectedDayIndices.length;
-    obSel.days = String(obTrainingDays);
-    obSel.specificDays = [...obSelectedDayIndices];
-  } else {
-    // Solo numero/range selezionato — usa il valore già calcolato automaticamente
-    obSel.days = String(obTrainingDays || 3);
-    // Genera specifici giorni dal preset automatico
-    var presets = {2:[0,2],3:[0,2,4],4:[0,1,3,4],5:[0,1,2,3,4],6:[0,1,2,3,4,5],7:[0,1,2,3,4,5,6]};
-    obSel.specificDays = presets[obTrainingDays || 3] || [0,2,4];
-    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [...obSel.specificDays];
-  }
+  obTrainingDays = obSelectedDayIndices.length;
+  obSel.days = String(obTrainingDays);
+  obSel.specificDays = [...obSelectedDayIndices];
   obNext(9);
 }
+
+/* ── Calcolo automatico giorni di allenamento ─────────────────────
+   Basato su: livello, obiettivi, sport praticati, disponibilità
+   Regole:
+   - Principiante → 3 giorni (L-M-V)
+   - Intermedio   → 4 giorni (L-M-G-V)
+   - Avanzato     → 5 giorni (L-M-M-G-V)
+   - Obiettivo dimagrimento → +1 giorno cardio se < 4
+   - Sport faticosi (calcio, judo, crossfit) → -1 giorno se > 3
+   - Obiettivo forza pura → 3-4 (no 5-7, troppo volume)
+───────────────────────────────────────────────────────────────── */
+function obAutoCalcDaysAndNext() {
+  const _obSel = (typeof obSel !== 'undefined' && obSel) ? obSel : {};
+  const level  = _obSel.level  || 'intermediate';
+  const goals  = (typeof obGoals !== 'undefined' && obGoals) ? obGoals : [];
+  const sports = _obSel.sports || _obSel.multi?.sports || [];
+  const env    = _obSel.env    || 'gym';
+
+  // Base giorni per livello
+  let n = 3;
+  if (level === 'beginner')     n = 3;
+  else if (level === 'intermediate') n = 4;
+  else if (level === 'advanced') n = 5;
+
+  // Aggiustamenti per obiettivo
+  const wantsLoss    = goals.some(g => ['dimagrire','definizione','cut'].includes(g));
+  const wantsStrOnly = goals.length === 1 && goals[0] === 'forza';
+  const wantsMass    = goals.some(g => ['massa','ipertrofia','bulk'].includes(g));
+
+  if (wantsLoss && n < 4) n = 4;          // dimagrimento vuole più frequenza
+  if (wantsStrOnly && n > 4) n = 4;       // forza pura: no volumi enormi
+  if (wantsMass && level === 'advanced') n = Math.min(n + 1, 5);
+
+  // Sport faticosi riducono i giorni palestra
+  const heavySports = ['calcio','judo','crossfit','basket','boxe'];
+  const hasHeavySport = sports.some(s => heavySports.includes(s));
+  if (hasHeavySport && n > 3) n = n - 1;
+
+  // Corpo libero a casa: max 5 (recupero più lento senza macchine)
+  if (env === 'home' && n > 5) n = 5;
+
+  // Clamp 2-6
+  n = Math.max(2, Math.min(6, n));
+
+  // Preset giorni della settimana ottimali
+  const presets = {
+    2: [0,3],         // Lun, Gio
+    3: [0,2,4],       // Lun, Mer, Ven
+    4: [0,1,3,4],     // Lun, Mar, Gio, Ven
+    5: [0,1,2,3,4],   // Lun→Ven
+    6: [0,1,2,3,4,5], // Lun→Sab
+  };
+
+  obTrainingDays = n;
+  obSel.days = String(n);
+  obSel.specificDays = presets[n] || presets[3];
+  obSelectedDayIndices = [...obSel.specificDays];
+
+  // Labels per toast
+  const dayLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const dayNames  = obSel.specificDays.map(d => dayLabels[d]).join(', ');
+  const levelLabels = { beginner:'Principiante', intermediate:'Intermedio', advanced:'Avanzato' };
+
+  showToast(`🤖 ${n} giorni consigliati (${levelLabels[level] || level}): ${dayNames}`);
+
+  // Salta direttamente allo step 9
+  obNext(9);
+}
+window.obAutoCalcDaysAndNext = obAutoCalcDaysAndNext;
 
 /* ═══════════════════════════════════════════════════════════════════
    SPORT + RUOLI — sistema con selezione ruolo dinamica
@@ -16893,7 +16575,7 @@ function obSelectMachinesOnly() {
   if (!obSel.multi) obSel.multi = {};
   obSel.multi.eqs = [];
   // deseleziona tutto
-  document.querySelectorAll('#ob25 .ob-multi.sel').forEach(el=>el.classList.remove('sel'));
+  document.querySelectorAll('#ob_s7 .ob-multi').forEach(el=>el.classList.remove('sel'));
   (typeof GYM_MACHINES_ONLY_EQ!=='undefined'?GYM_MACHINES_ONLY_EQ:[]).forEach(eq => {
     obSel.multi.eqs.push(eq);
     const el = document.querySelector(`[onclick*="${eq}"]`);
@@ -16908,65 +16590,10 @@ window.obSelectMachinesOnly = obSelectMachinesOnly;
 function obClearEquip() {
   if (!obSel.multi) obSel.multi = {};
   obSel.multi.eqs = [];
-  document.querySelectorAll('#ob25 .ob-multi.sel').forEach(el => el.classList.remove('sel'));
+  // Deseleziona tutte le card attrezzatura nello step ob_s7 (ID corretto)
+  document.querySelectorAll('#ob_s7 .ob-multi').forEach(el => el.classList.remove('sel'));
   showToast('✕ Attrezzatura azzerata');
 }
-
-/* ─── obFullResetAndRestart: Azzera TUTTO e ritorna all'onboarding ─── */
-function obFullResetAndRestart() {
-  if (!confirm('Vuoi azzerare tutto e ricominciare dall\'inizio? Tutti i dati verranno eliminati.')) return;
-  // 1. Svuota localStorage
-  try {
-    const toRemove = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && (k.startsWith('ft_') || k.startsWith('ft3_') || k.startsWith('v45_'))) toRemove.push(k);
-    }
-    toRemove.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
-    ['ft_google_token','ft_google_user','ft_skip_google','ft_firebase_user',
-     'ft_last_local_save','ft_last_sync','ft_badges','ft_pro_status',
-     'ft_v45_settings','v45_settings','ft3_profile','ft3_sessions',
-     'ft3_nutrition','ft3_metrics','ft3_pbs'].forEach(function(k) {
-      try { localStorage.removeItem(k); } catch(e) {}
-    });
-    localStorage.setItem('ft_just_reset','1');
-  } catch(e) {}
-  // 2. Resetta variabili RAM
-  try {
-    if (typeof profile !== 'undefined') {
-      profile = {name:'',level:'',goals:{calories:2500,weight:70,goalType:'maintain'},days:'5',kcalTarget:2500,macros:{p:180,c:280,g:70},tdee:2500,physique:{age:17,weight:70,height:175,sex:'m',activity:1.55},weeklyWorkoutsTarget:3,weightHistory:[]};
-    }
-    if (typeof sessions !== 'undefined') sessions = [];
-    if (typeof nutrition !== 'undefined') nutrition = {};
-    if (typeof metrics !== 'undefined') metrics = {};
-    if (typeof pbs !== 'undefined') pbs = {};
-  } catch(e) {}
-  // 3. Svuota IndexedDB
-  try {
-    if (typeof dbSet === 'function') {
-      dbSet('profile', {name:''});
-      dbSet('sessions', []);
-      dbSet('nutrition', {});
-      dbSet('metrics', {});
-      dbSet('pbs', {});
-    }
-  } catch(e) {}
-  // 4. Torna all'onboarding senza reload (evita "Error creating iframe id" su mobile)
-  try {
-    window._ftOnboardingActive = false;
-    if (typeof obSel !== 'undefined') obSel = {};
-    if (typeof obGoals !== 'undefined') obGoals = [];
-    if (typeof obTrainingDays !== 'undefined') obTrainingDays = 3;
-    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
-    if (typeof obTrainingIntensity !== 'undefined') obTrainingIntensity = 'moderate';
-    if (typeof _startOnboarding === 'function') _startOnboarding();
-    localStorage.removeItem('ft_just_reset');
-    if (typeof showToast === 'function') showToast('✅ App azzerata — ricomincia!');
-  } catch(e) {
-    location.reload();
-  }
-}
-window.obFullResetAndRestart = obFullResetAndRestart;
 
 // Patch obMulti to also track eqs
 // obMulti override v44 (eq_) — neutralizzato, gestito da obMulti consolidata
@@ -17287,19 +16914,7 @@ function obFinalizeSmartDays() {
 var _origObMulti = window.obMulti; // kept for reference only
 
 function showDaysPreview(n) { /* no-op — kept for compatibility */ }
-/* ─── Accessibility: ob-card-ico sono decorativi per screen reader ─── */
-(function markDecoEmoji() {
-  document.querySelectorAll('.ob-card-ico, .bni-ico').forEach(function(el) {
-    if (!el.hasAttribute('aria-hidden')) el.setAttribute('aria-hidden', 'true');
-  });
-  // Marca anche le emoji nelle card nome/label
-  document.querySelectorAll('.ob-card-nm').forEach(function(el) {
-    var card = el.closest('.ob-card');
-    if (card && !card.hasAttribute('aria-label')) {
-      card.setAttribute('aria-label', el.textContent.trim());
-    }
-  });
-});
+function obPickDays(el, n) { obTrainingDays = n; obSel.days = String(n); }
 
 function onSexChange() {
   const sex = document.getElementById('ob-sex')?.value;
@@ -17915,8 +17530,23 @@ function renderPresetsInTraining(){
 
 // ── Profile page fixes ───────────────────────────────────────────
 
-/** Export full data as JSON — usa window.exportData (versione consolidata più avanti) */
-// exportData deduplicata — la definizione attiva è window.exportData (v31, con try/catch e body.appendChild)
+/** Enhanced renderProfilePage that ensures all fields render correctly */
+/** Export full data as JSON */
+function exportData(){
+  const data = {
+    profile, sessions, nutrition, metrics, pbs,
+    exportedAt: new Date().toISOString(),
+    version: 'FitTrack-V7'
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `fittrack_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Backup esportato!');
+}
 
 /** Import data from JSON file */
 function importData(){
@@ -19102,6 +18732,15 @@ function renderHomeCalendar() {
   const weekEl = document.getElementById('cal-week-label');
   if (weekEl) weekEl.textContent = _formatDate(mondayShifted) + '–' + _formatDate(sun);
 
+  // Cycle tracking active?
+  const c = getCycleData();
+  const showCycle = c && c.trackCycle && c.lastPeriod &&
+                    typeof profile !== 'undefined' && profile.physique?.sex === 'f';
+
+  // Mostra/nascondi legenda ciclo
+  const legend = document.getElementById('cal-cycle-legend');
+  if (legend) legend.style.display = showCycle ? 'flex' : 'none';
+
   // Build 7 days
   const strip = document.getElementById('cal-days-strip');
   if (!strip) return;
@@ -19120,6 +18759,23 @@ function renderHomeCalendar() {
     const dayLbl = _dayOfWeekIt(dateStr);
 
     const tc = wo ? _calTypeColor(wo.day.type) : _calTypeColor('rest');
+
+    // Fase ciclo per questo giorno
+    let cycleChip = '';
+    if (showCycle) {
+      const cp = getCyclePhaseForDate(dateStr);
+      if (cp) {
+        const phaseStyle = {
+          menstrual:  { bg:'rgba(255,92,160,.18)', c:'#FF5CA0', ico:'🔴' },
+          follicular: { bg:'rgba(200,245,60,.12)',  c:'var(--acc)', ico:'🌱' },
+          ovulation:  { bg:'rgba(62,223,138,.18)',  c:'var(--green)', ico:'⚡' },
+          luteal:     { bg:'rgba(255,180,60,.14)',   c:'#FFB43C', ico:'🌙' },
+        };
+        const phKey = Object.keys(CYCLE_PHASES).find(k => CYCLE_PHASES[k] === cp.phase) || 'follicular';
+        const ps = phaseStyle[phKey] || phaseStyle.follicular;
+        cycleChip = `<div style="font-size:7px;margin-top:2px;background:${ps.bg};color:${ps.c};border-radius:4px;padding:1px 3px;line-height:1.3;text-align:center;">${ps.ico}</div>`;
+      }
+    }
 
     let dotHtml = '';
     if (done) {
@@ -19143,6 +18799,7 @@ function renderHomeCalendar() {
       <div class="cal-day-lbl">${dayLbl}</div>
       <div class="cal-day-num">${dayNum}</div>
       ${typeChip}
+      ${cycleChip}
       ${dotHtml}
     </div>`;
   }
@@ -19175,11 +18832,30 @@ function renderCalDetailPanel(dateStr) {
 
   panel.style.display = 'block';
 
+  // Cycle phase block per questo giorno (solo se donna con ciclo attivo)
+  let cycleBlock = '';
+  const cp = (typeof getCyclePhaseForDate === 'function') ? getCyclePhaseForDate(dateStr) : null;
+  if (cp) {
+    const phKey = Object.keys(CYCLE_PHASES).find(k => CYCLE_PHASES[k] === cp.phase) || 'follicular';
+    const phColors = {
+      menstrual:  { bg:'rgba(255,92,160,.12)',  c:'#FF5CA0' },
+      follicular: { bg:'rgba(200,245,60,.10)',   c:'var(--acc)' },
+      ovulation:  { bg:'rgba(62,223,138,.12)',   c:'var(--green)' },
+      luteal:     { bg:'rgba(255,180,60,.12)',    c:'#FFB43C' },
+    };
+    const pc = phColors[phKey] || phColors.follicular;
+    cycleBlock = `<div style="margin-bottom:10px;padding:9px 12px;background:${pc.bg};border-radius:10px;border-left:3px solid ${pc.c};">
+      <div style="font-size:11px;font-weight:800;color:${pc.c};margin-bottom:3px;">${cp.phase.ico} ${cp.phase.name} · Giorno ${cp.dayInCycle}/${cp.cycleLen}</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5;">${cp.phase.workoutNote || cp.phase.advice}</div>
+    </div>`;
+  }
+
   if (!wo || !wo.day) {
     panel.innerHTML = `<div class="cal-rest-block">
       <div class="cal-rest-ico">😴</div>
       <div style="font-size:14px;font-weight:700;margin-bottom:4px;">${_dayOfWeekItFull(dateStr)} ${d.getDate()}/${d.getMonth()+1}</div>
       <div style="font-size:12px;color:var(--text2);line-height:1.6;">Giorno di riposo — recupero attivo consigliato.<br>Mobilità, stretching o una camminata leggera.</div>
+      ${cycleBlock ? '<div style="margin-top:10px;">'+cycleBlock+'</div>' : ''}
     </div>`;
     return;
   }
@@ -19230,6 +18906,7 @@ function renderCalDetailPanel(dateStr) {
       ${statusChip}
     </div>
     <div style="margin-bottom:8px">${goalChip}</div>
+    ${cycleBlock}
     <div class="cal-det-workout-name">
       <span style="background:${tc.bg};color:${tc.c};padding:2px 8px;border-radius:99px;font-size:10px;">${day.type}</span>
       ${day.name}
@@ -25527,17 +25204,16 @@ const _origGoPage28 = window.goPage;
 if(typeof window.goPage === 'function' && !window._v28GoPagePatched){
   window._v28GoPagePatched = true;
   window.goPage = function(page){
-    try { if(_origGoPage28) _origGoPage28.apply(this, arguments); } catch(e) { console.error('[FitTrack] goPage error on page "'+page+'":', e.message); }
+    if(_origGoPage28) _origGoPage28.apply(this, arguments);
     if(page === 'training' || page === 'allenamento'){
       setTimeout(()=>{
-        try {
-          qs28('v28-training-eq-badge')?.remove();
-          injectEquipmentBadgeInTraining();
-        } catch(e) {}
+        // Rimuovi badge vecchio e reinserisce (aggiorna l'equipaggiamento)
+        qs28('v28-training-eq-badge')?.remove();
+        injectEquipmentBadgeInTraining();
       }, 350);
     }
     if(page === 'nutrizione'){
-      setTimeout(function(){ try { injectEquipmentBannerInNutrition(); } catch(e) {} }, 200);
+      setTimeout(injectEquipmentBannerInNutrition, 200);
     }
   };
 }
@@ -26367,10 +26043,15 @@ window.showMissingEquipmentAlert = function(presetName, missingLabels){
     clearTimeout(window._v30BadgeTimer);
     window._v30BadgeTimer = setTimeout(applyCompatibilityBadges, 400);
   });
-  const _presetTarget = document.getElementById('preset-list') || document.getElementById('preset-explorer') || document.getElementById('scr-app') || document.body;
-  if (_presetTarget && _presetTarget.nodeType === Node.ELEMENT_NODE) {
-    observer.observe(_presetTarget, { childList:true, subtree:true });
+  // Sempre defer — garantisce che il DOM sia completamente pronto
+  function _startBadgeObserver() {
+    var _presetTarget = document.getElementById('page-esplora') || document.getElementById('preset-list') || document.getElementById('preset-explorer') || document.body;
+    if (_presetTarget && typeof _presetTarget.nodeType !== 'undefined') {
+      try { observer.observe(_presetTarget, { childList:true, subtree:true }); } catch(e) {}
+    }
   }
+  // Sempre via setTimeout — evita TypeError se DOM non ancora pronto durante parsing
+  setTimeout(_startBadgeObserver, 0);
 })();
 
 /* ══ NUOVE RICETTE V30 (+25) ════════════════════════════════════ */
@@ -29178,7 +28859,7 @@ window.getRecommendedPresetV34 = function(profile){
   });
 
   scored.sort((a,b)=>b.score-a.score);
-  // Top presets selezionati silenziosamente
+  console.log('[V34] Top 5:', scored.slice(0,5).map(s=>`${s.id}(${s.score})`).join(', '));
   return scored[0]?.id || (env==='gym'?'gym-ppl':'ppl');
 };
 
@@ -31011,7 +30692,7 @@ const _v41_baseRenderWoExs = (function() {
       return `<div class="wo-ex-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <div class="wo-ex-nm" style="margin-bottom:0">${exD.name}${progBadge}</div>
-
+          <button onclick="if(typeof openExDetailInWorkout==='function')openExDetailInWorkout('${ex.id}')" style="background:var(--bg4);border:1px solid var(--border);border-radius:99px;padding:5px 10px;font-size:10px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0;">📋 Guida</button>
         </div>
         ${weightBadge}
         ${setRows}
@@ -31123,16 +30804,12 @@ window.obGo = function obGo(step) {
    CONSOLIDATED saveCycleSettings
    Merges: base + v40 dashboard refresh
 ───────────────────────────────────────── */
+// v41 saveCycle wrapper: aggiunge solo v40InjectDashboard (il resto già in saveCycleSettings)
 const _v41_baseSaveCycle = window.saveCycleSettings;
 if (typeof _v41_baseSaveCycle === 'function') {
   window.saveCycleSettings = async function saveCycleSettings() {
     await _v41_baseSaveCycle.apply(this, arguments);
-    // Refresh cycle-dependent UI in one rAF
-    requestAnimationFrame(() => {
-      if (typeof renderCycleBanner  === 'function') try { renderCycleBanner();  } catch(e) {}
-      if (typeof renderCycleProfile === 'function') try { renderCycleProfile(); } catch(e) {}
-      if (typeof v40InjectDashboard === 'function') try { v40InjectDashboard(); } catch(e) {}
-    });
+    if (typeof v40InjectDashboard === 'function') try { v40InjectDashboard(); } catch(e) {}
   };
 }
 
@@ -31211,7 +30888,7 @@ function v41Boot() {
 
   waitDB(() => {
     // Re-run initApp only if not in onboarding AND app not already active
-    if (!window._ftOnboardingActive && !document.getElementById('scr-app')?.classList.contains('active') && typeof initApp === 'function') try { initApp(); } catch(e) { console.error('[FitTrack] initApp:', e.message); }
+    if (!window._ftOnboardingActive && !document.getElementById('scr-app')?.classList.contains('active') && typeof initApp === 'function') try { initApp(); } catch(e) {}
 
     // Deferred extras (after first paint)
     requestAnimationFrame(() => {
@@ -31895,8 +31572,7 @@ function v43PatchOpenExDetail() {
         btn.style.borderColor = hasSessions?'rgba(200,245,60,.3)':'var(--border2)';
         btn.style.color = hasSessions?'var(--acc)':'var(--text)';
       };
-      /* v9: Progressione storica rimossa — non aggiungere il pulsante */
-      // content.appendChild(btn);
+      content.appendChild(btn);
       clearInterval(timer);
     }, 60);
   };
@@ -33750,137 +33426,17 @@ window.obPickVal = function(el, field, val) {
   window.sendCoachMessage = function() {
     };
 
-// showMobilityAdvice patch rimosso (funzione non definita)
-
-/* ─── Streak Ring: widget visivo in home ─── */
-(function installStreakRing() {
-  'use strict';
-  if (window._streakRingInstalled) return;
-  window._streakRingInstalled = true;
-
-  window.renderStreakRing = function() {
-    const existing = document.getElementById('ft-streak-ring');
-    if (existing) existing.remove();
-
-    const streak = typeof calcStreak === 'function' ? calcStreak() : 0;
-    const todayDone = typeof sessions !== 'undefined' && sessions.some(function(s){ return s.date === (typeof today === 'function' ? today() : new Date().toISOString().slice(0,10)); });
-    const isFire = streak >= 7;
-    const color = isFire ? 'var(--orange)' : 'var(--acc)';
-    const colorHex = isFire ? '#FF9A3C' : '#C8F53C';
-
-    // SVG ring — 7 days
-    const r = 22, cx = 28, cy = 28, circ = 2 * Math.PI * r;
-    const pct = streak > 0 ? Math.min(1, streak / 7) : 0;
-    const offset = circ * (1 - pct);
-
-    // Last 7 days dots
-    const last7 = [];
-    for (var i = 6; i >= 0; i--) {
-      var d = new Date(); d.setDate(d.getDate() - i);
-      var ds = d.toISOString().slice(0,10);
-      last7.push(typeof sessions !== 'undefined' && sessions.some(function(s){ return s.date === ds; }));
-    }
-    var dotsHtml = last7.map(function(done, i) {
-      var cls = 'ft-streak-dot' + (done ? ' done' : '') + (isFire && done ? ' fire' : '');
-      return '<div class="' + cls + '" title="' + (done ? 'Allenato' : 'Non allenato') + '"></div>';
-    }).join('');
-
-    var msg = streak === 0
-      ? 'Inizia oggi la tua streak!'
-      : streak === 1
-      ? 'Ottimo inizio! Continua domani'
-      : isFire
-      ? streak + ' giorni 🔥 Sei inarrestabile!'
-      : 'Stai andando forte!';
-
-    var icon = streak === 0 ? '⚡' : isFire ? '🔥' : '🏆';
-
-    var wrap = document.createElement('div');
-    wrap.id = 'ft-streak-ring';
-    wrap.className = 'ft-streak-ring-wrap' + (isFire ? ' fire' : '');
-    wrap.setAttribute('role', 'status');
-    wrap.setAttribute('aria-label', 'Streak: ' + streak + ' giorni consecutivi');
-    wrap.innerHTML =
-      '<svg class="ft-streak-svg" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">' +
-        '<circle cx="28" cy="28" r="22" fill="none" stroke="var(--bg4)" stroke-width="4"/>' +
-        '<circle cx="28" cy="28" r="22" fill="none" stroke="' + colorHex + '" stroke-width="4"' +
-          ' stroke-dasharray="' + circ.toFixed(2) + '"' +
-          ' stroke-dashoffset="' + offset.toFixed(2) + '"' +
-          ' stroke-linecap="round"' +
-          ' transform="rotate(-90 28 28)"' +
-          ' style="transition:stroke-dashoffset .6s cubic-bezier(.22,1,.36,1)"/>' +
-        '<text x="28" y="33" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="20" fill="' + colorHex + '">' + streak + '</text>' +
-      '</svg>' +
-      '<div class="ft-streak-info">' +
-        '<div class="ft-streak-lbl">' + icon + ' STREAK GIORNI</div>' +
-        '<div class="ft-streak-sub">' + msg + '</div>' +
-        '<div class="ft-streak-dots">' + dotsHtml + '</div>' +
-      '</div>' +
-      (todayDone ? '' : '<button onclick="goPage(\'allenamento\')" style="background:' + colorHex + ';color:#080810;border:none;border-radius:var(--r-sm);padding:8px 11px;font-size:10px;font-weight:800;cursor:pointer;font-family:\'Syne\',sans-serif;flex-shrink:0;min-height:44px;" aria-label="Vai ad allenamento">Allenati →</button>');
-
-    var homeBody = document.getElementById('home-body');
-    if (!homeBody) return;
-    // Inserisci dopo streak-warning-banner se presente, altrimenti come primo figlio
-    var after = document.getElementById('streak-warning-banner');
-    try {
-      if (after && after.nextSibling) homeBody.insertBefore(wrap, after.nextSibling);
-      else homeBody.insertBefore(wrap, homeBody.firstChild);
-    } catch(e) { homeBody.appendChild(wrap); }
-  };
-
-  // Aggancia a renderHome
-  var _origRH = window.renderHome;
-  if (typeof _origRH === 'function') {
-    window.renderHome = function() {
-      try { _origRH.apply(this, arguments); } catch(e) {}
-      setTimeout(window.renderStreakRing, 60);
-    };
-  }
-})();
-(function patchDbWithRetry() {
-  var _origDbSet = window.dbSet;
-  if (typeof _origDbSet !== 'function') return;
-  window.dbSet = async function(key, value) {
-    var attempts = 0;
-    while (attempts < 3) {
-      try {
-        return await _origDbSet(key, value);
-      } catch(e) {
-        attempts++;
-        if (attempts >= 3) {
-          console.error('[FitTrack] dbSet failed after 3 attempts:', key, e.message);
-          // Fallback localStorage silenzioso
-          try { localStorage.setItem('ft_fallback_' + key, JSON.stringify(value)); } catch(le) {}
-          if (attempts === 3 && typeof showToast === 'function') {
-            showToast('⚠️ Salvataggio locale non riuscito — verifica spazio disponibile');
-          }
-          return null;
-        }
-        await new Promise(function(r){ setTimeout(r, 300 * attempts); });
-      }
-    }
-  };
-})();
-
-/* ─── Set done: animazione feedback tattile ─── */
-(function patchToggleWoSetAnim() {
-  var _origTWS = window.toggleWoSet;
-  if (typeof _origTWS !== 'function') return;
-  window.toggleWoSet = function(ei, si, rs) {
-    _origTWS.apply(this, arguments);
+// Patch finishWorkout to show mobility advice after completion
+var _origFinish = window.finishWorkout;
+if (typeof _origFinish === 'function') {
+  window.finishWorkout = async function() {
+    var dayDataSnapshot = (typeof woDayData !== 'undefined') ? JSON.parse(JSON.stringify(woDayData || {})) : {};
+    await _origFinish.apply(this, arguments);
     setTimeout(function() {
-      var el = document.querySelector('[data-set-key="' + ei + '_' + si + '"] .wo-set-chk, .wo-set-row:nth-child(' + (si+1) + ') .wo-set-chk');
-      if (el && el.textContent.includes('✅')) {
-        el.classList.remove('done-anim');
-        void el.offsetWidth;
-        el.classList.add('done-anim');
-        setTimeout(function(){ el.classList.remove('done-anim'); }, 400);
-        if (navigator.vibrate) navigator.vibrate([12, 0, 8]);
-      }
-    }, 30);
+      window.showMobilityAdvice(dayDataSnapshot);
+    }, 1500);
   };
-  window._woSetAnimPatched = true;
-})();
+}
 
 /* ══════════════════════════════════════════
    ALLENAMENTI EXTRA
@@ -34614,7 +34170,7 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
       // Non chiamare initApp se l'app è già attiva (utente sta usando l'app)
       if (document.getElementById('scr-app')?.classList.contains('active')) return;
       if (typeof initApp === 'function') {
-        try { initApp(); } catch(e) { console.error('[FitTrack] initApp:', e.message); }
+        try { initApp(); } catch(e) {}
       }
     }, 5000);
 
@@ -35483,36 +35039,14 @@ setTimeout(function(){ try { var d=checkProgressionReady(); if(d)showProgression
 ══════════════════════════════════════════════════════════ */
 
 /* ── TIMER RIPOSO (terzo duplicato — rimosso) ────────────── */
-/* ── NOTE SESSIONE ──────────────────────────────────────── */
-window.openSessionNotes = function(){
-  const existing=document.getElementById('ft-notes-modal');
-  if(existing){ existing.style.display='flex'; return; }
-  const modal=document.createElement('div');
-  modal.id='ft-notes-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10000;display:flex;align-items:flex-end;justify-content:center;';
-  const today=new Date().toLocaleDateString('it-IT');
-  const saved=JSON.parse(localStorage.getItem('ft_sess_notes')||'{}');
-  modal.innerHTML=`<div style="width:100%;max-width:480px;background:var(--bg2);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:20px 20px 32px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div style="font-size:16px;font-weight:800;">📝 Note — ${today}</div>
-      <button onclick="document.getElementById('ft-notes-modal').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;">✕</button>
-    </div>
-    <textarea id="ft-note-input" placeholder="Come ti sei sentito? Pesi usati, impressioni..." style="width:100%;height:120px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);padding:12px 14px;font-size:14px;color:var(--text);font-family:'Syne',sans-serif;resize:none;outline:none;line-height:1.6;">${saved[today]||''}</textarea>
-    <button onclick="window.saveSessionNote()" style="width:100%;padding:13px;margin-top:10px;background:var(--acc);color:#080810;border:none;border-radius:var(--r-lg);font-size:14px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;">💾 Salva nota</button>
-  </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click',e=>{ if(e.target===modal) modal.style.display='none'; });
-};
-window.saveSessionNote = function(){
-  const input=document.getElementById('ft-note-input');
-  if(!input) return;
-  const today=new Date().toLocaleDateString('it-IT');
-  const saved=JSON.parse(localStorage.getItem('ft_sess_notes')||'{}');
-  saved[today]=input.value.trim();
-  localStorage.setItem('ft_sess_notes',JSON.stringify(saved));
-  document.getElementById('ft-notes-modal').style.display='none';
-  if(typeof showToast==='function') showToast('📝 Nota salvata!');
-};
+(function installRestTimer() {
+  'use strict';
+  // Disabilitato: usa il sistema nativo (restInterval + rest-modal)
+  window.startRestTimer = window.startRestTimer || function() {};
+  window.stopRestTimer  = window.stopRestTimer  || function() {};
+})();
+
+/* ── NOTE SESSIONE: gestite da installSessionNotes() sopra ── */
 
 /* ── RECAP SETTIMANALE ──────────────────────────────────── */
 window.getWeeklyRecap = function(){
@@ -35750,65 +35284,33 @@ function _doLogout() {
 
 <script>
 /* ── FitTrack: patch rotella nutrizione ── */
-/* ── obPickNDays v2: range multi-selezione + logica automatica ── */
-
-// Mantiene i giorni selezionati nel range
-if (typeof window._obDaysRange === 'undefined') window._obDaysRange = new Set();
-
+/* ── obPickNDays: selezione numero giorni onboarding ── */
 window.obPickNDays = function(el, n) {
+  // deseleziona altre card nel grid
   var grid = document.getElementById('ob-ndays-grid');
-  var range = window._obDaysRange;
-
-  // Toggle: se già selezionato, deseleziona; altrimenti aggiunge al range
-  if (range.has(n)) {
-    range.delete(n);
-    el.classList.remove('on');
-  } else {
-    range.add(n);
-    el.classList.add('on');
-  }
-
-  // Aggiorna hint
+  if (grid) grid.querySelectorAll('.ob-card').forEach(function(c){ c.classList.remove('on'); });
+  el.classList.add('on');
+  // aggiorna variabile globale
+  obTrainingDays = n;
+  if (typeof obSel !== 'undefined') obSel.days = String(n);
+  // hint
   var hint = document.getElementById('ob-days-hint');
-  if (range.size === 0) {
-    if (hint) hint.textContent = 'Seleziona quante sessioni vuoi fare (anche un range)';
-    obTrainingDays = 3;
-    if (typeof obSel !== 'undefined') obSel.days = '3';
-    return;
-  }
-
-  // Calcola min e max del range
-  var sorted = Array.from(range).sort(function(a,b){return a-b;});
-  var minD = sorted[0], maxD = sorted[sorted.length-1];
-
-  // Usa la logica automatica per scegliere il numero ottimale nel range
-  var smartN = obAutoPickDaysInRange(minD, maxD);
-  obTrainingDays = smartN;
-  if (typeof obSel !== 'undefined') obSel.days = String(smartN);
-  if (typeof obSel !== 'undefined') { obSel.daysMin = minD; obSel.daysMax = maxD; }
-
-  if (hint) {
-    if (minD === maxD) {
-      hint.textContent = smartN + ' giorn' + (smartN===1?'o':'i') + ' selezionat' + (smartN===1?'o':'i');
-    } else {
-      hint.textContent = 'Range: ' + minD + '–' + maxD + ' giorni → il sistema sceglierà ' + smartN + ' 🤖';
-    }
-    hint.style.color = 'var(--acc)';
-  }
-
-  // Auto-seleziona giorni nella griglia con il numero scelto automaticamente
+  if (hint) hint.textContent = n + ' giorn' + (n===1?'o':'i') + ' selezionat' + (n===1?'o':'i');
+  // auto-seleziona giorni nella griglia: LUN-MER-VEN per 3gg, ecc.
   var presets = {
     2:[0,2], 3:[0,2,4], 4:[0,1,3,4], 5:[0,1,2,3,4], 6:[0,1,2,3,4,5], 7:[0,1,2,3,4,5,6]
   };
   var pills = document.querySelectorAll('#ob-days-grid .ob-day-pill');
-  if (pills.length && presets[smartN]) {
-    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
+  if (pills.length && presets[n]) {
+    // reset
     pills.forEach(function(p){
       p.style.border = '1.5px solid var(--border2)';
       p.style.background = 'var(--bg3)';
       p.querySelector('span').style.color = 'var(--text2)';
+      if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
     });
-    presets[smartN].forEach(function(dow){
+    if (typeof obSelectedDayIndices !== 'undefined') obSelectedDayIndices = [];
+    presets[n].forEach(function(dow){
       var pill = document.querySelector('#ob-days-grid [data-dow="'+dow+'"]');
       if (pill) {
         pill.style.border = '2px solid var(--acc)';
@@ -35818,1467 +35320,79 @@ window.obPickNDays = function(el, n) {
       }
     });
   }
-
   el.style.transform = 'scale(0.96)';
   setTimeout(function(){ el.style.transform = ''; }, 130);
 };
 
-/* Funzione di logica automatica: dato un range [min, max], sceglie
-   il numero ottimale di giorni in base a obiettivi, livello e intensità */
-window.obAutoPickDaysInRange = function(minD, maxD) {
-  if (minD === maxD) return minD;
-
-  var level     = (typeof obSel !== 'undefined' && obSel.level) || 'intermediate';
-  var goals     = (typeof obGoals !== 'undefined' && obGoals.length) ? obGoals : ['hypertrophy'];
-  var intensity = (typeof obTrainingIntensity !== 'undefined' && obTrainingIntensity) || 'moderate';
-  var sports    = (typeof obSel !== 'undefined' && obSel.multi && obSel.multi.sports) ? obSel.multi.sports : [];
-
-  // Score base per intensità
-  var intensityScore = { minimal:0, moderate:1, serious:2, hardcore:3 };
-  var score = intensityScore[intensity] || 1;
-
-  // Aggiustamento per livello
-  if (level === 'beginner') score -= 1;
-  if (level === 'advanced' || level === 'athlete') score += 1;
-
-  // Aggiustamento per obiettivo
-  if (goals.includes('weight_loss') || goals.includes('endurance')) score += 0.5;
-  if (goals.includes('strength') || goals.includes('hypertrophy')) score += 0.3;
-  if (goals.includes('maintain') || goals.includes('mobility')) score -= 0.3;
-
-  // Se ha sport ad alto volume → riduce
-  var highVolSports = ['sport_calcio','sport_basket','sport_nuoto','sport_corsa','sport_ciclismo'];
-  if (sports.some(function(s){ return highVolSports.indexOf(s) >= 0; })) score -= 1;
-
-  // Mappa lo score sul range disponibile
-  var rangeSize = maxD - minD;
-  // Normalizza score in [0..1]
-  var norm = Math.max(0, Math.min(1, (score + 1) / 4));
-  var chosen = Math.round(minD + norm * rangeSize);
-  return Math.max(minD, Math.min(maxD, chosen));
-};
-
-/* Reset del range quando si entra nello step 8 */
-var _origObNext = window.obNext;
-window.obNext = function(step) {
-  if (step === 8) {
-    window._obDaysRange = new Set();
-    var grid = document.getElementById('ob-ndays-grid');
-    if (grid) grid.querySelectorAll('.ob-card').forEach(function(c){ c.classList.remove('on'); });
-    var hint = document.getElementById('ob-days-hint');
-    if (hint) { hint.textContent = 'Seleziona quante sessioni vuoi fare (anche un range)'; hint.style.color = 'var(--text2)'; }
-  }
-  if (typeof _origObNext === 'function') return _origObNext(step);
-};
-
 window.ftNutrSettings = function() {
-  /* Rimuove eventuali modal residui */
-  ['ngs-modal','ngs-modal-v9'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.remove();
-  });
-
-  /* Prova prima openNutrGoals originale (funzione principale dell'app) */
-  var mainFn = window.openNutrGoals;
-  if (typeof mainFn === 'function') {
-    try {
-      mainFn();
-      /* Verifica che il modal sia effettivamente apparso */
-      setTimeout(function() {
-        var m = document.getElementById('ngs-modal');
-        if (!m || !m.offsetParent) {
-          /* Il modal non è visibile — usa il fallback robusto */
-          ftNutrSettingsFallback();
-        }
-      }, 120);
-      return;
-    } catch(e) {
-      console.warn('[FitTrack] openNutrGoals exception, fallback:', e);
-    }
-  }
-  ftNutrSettingsFallback();
-};
-
-/* Fallback completo e funzionante — apre il pannello Macro & Energia */
-window.ftNutrSettingsFallback = function() {
-  /* Rimuovi eventuale modal precedente */
+  // rimuove modal residuo
   var old = document.getElementById('ngs-modal');
   if (old) old.remove();
+  // prova tutte le varianti possibili
+  var fn = window.openNutrGoals;
+  if (typeof fn !== 'function') {
+    // riprova dalla definizione locale
+    try { fn = openNutrGoals; } catch(e) { fn = null; }
+  }
+  if (typeof fn === 'function') {
+    try {
+      fn();
+    } catch(e) {
+      console.error('[FitTrack] openNutrGoals error:', e);
+      ftNutrSettingsFallback();
+    }
+  } else {
+    console.warn('[FitTrack] openNutrGoals non trovata, uso fallback');
+    ftNutrSettingsFallback();
+  }
+};
 
+/* fallback ultra-semplice se openNutrGoals non funziona */
+window.ftNutrSettingsFallback = function() {
   var kcal = (typeof profile !== 'undefined' && profile.kcalTarget) || 2500;
-  var mp   = (typeof profile !== 'undefined' && profile.macros)     || {p:180,c:280,g:70};
-  var tdee = (typeof profile !== 'undefined' && profile.tdee)       || 0;
-
-  /* Percentuali dai grammi attuali */
-  var totalCal = (mp.p * 4) + (mp.c * 4) + (mp.g * 9);
-  var pPct = totalCal > 0 ? Math.round((mp.p * 4 / kcal) * 100) : 25;
-  var cPct = totalCal > 0 ? Math.round((mp.c * 4 / kcal) * 100) : 45;
-  var gPct = 100 - pPct - cPct;
-
-  var ovl = document.createElement('div');
-  ovl.id  = 'ngs-modal';
-  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s;';
-
-  ovl.innerHTML = [
-    '<div style="background:var(--bg2,#0B0B18);border-radius:24px 24px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:20px 20px 48px;animation:slideUp .3s cubic-bezier(.22,1,.36,1);">',
-      '<div style="width:40px;height:4px;border-radius:4px;background:var(--border2,#333);margin:0 auto 20px;"></div>',
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">',
-        '<div style="font-size:19px;font-weight:800;letter-spacing:-.3px;">⚙️ Macro &amp; Energia</div>',
-        '<button onclick="document.getElementById(\'ngs-modal\').remove()" style="background:var(--bg3,#11111F);border:1px solid var(--border,rgba(255,255,255,.05));color:var(--text2,#797688);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>',
-      '</div>',
-
-      /* ─ Target calorico ─ */
-      '<div style="background:var(--bg3,#11111F);border:1.5px solid rgba(200,245,60,.2);border-radius:14px;padding:16px 18px;margin-bottom:16px;">',
-        '<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--acc,#C8F53C);margin-bottom:10px;">TARGET CALORICO GIORNALIERO</div>',
-        '<div style="display:flex;gap:10px;align-items:center;">',
-          '<input id="fb-kcal" type="number" step="50" min="800" max="8000" value="' + kcal + '" ',
-            'style="flex:1;background:var(--bg4,#181828);border:2px solid var(--acc,#C8F53C);border-radius:12px;padding:12px 16px;font-size:24px;font-weight:800;color:var(--acc,#C8F53C);outline:none;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;" ',
-            'oninput="ftNutrRecalc()">',
-          '<span style="color:var(--text2,#797688);font-weight:700;font-size:13px;">kcal</span>',
-        '</div>',
-        (tdee > 0 ? '<div style="font-size:11px;color:var(--text2,#797688);margin-top:6px;">TDEE calcolato: <strong style="color:var(--text,#EEEBe6);">' + tdee + ' kcal</strong></div>' : ''),
-        '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;" id="fb-presets">',
-          '<button onclick="ftNutrPreset(0)"   style="padding:8px 4px;background:var(--bg4,#181828);border:1px solid var(--border,rgba(255,255,255,.05));color:var(--text2,#797688);border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;">= TDEE</button>',
-          '<button onclick="ftNutrPreset(-20)" style="padding:8px 4px;background:rgba(255,92,106,.08);border:1px solid rgba(255,92,106,.2);color:#FF5C6A;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;">-20% Cut</button>',
-          '<button onclick="ftNutrPreset(10)"  style="padding:8px 4px;background:rgba(62,223,138,.08);border:1px solid rgba(62,223,138,.2);color:#3EDF8A;border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;">+10% Bulk</button>',
-          '<button onclick="ftNutrPreset(15)"  style="padding:8px 4px;background:rgba(200,245,60,.08);border:1px solid rgba(200,245,60,.2);color:var(--acc,#C8F53C);border-radius:9px;font-size:10px;font-weight:700;cursor:pointer;">+15%</button>',
-        '</div>',
-      '</div>',
-
-      /* ─ Macro target ─ */
-      '<div style="background:var(--bg3,#11111F);border:1px solid var(--border2,rgba(255,255,255,.09));border-radius:14px;padding:16px 18px;margin-bottom:16px;">',
-        '<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text2,#797688);margin-bottom:14px;">DISTRIBUZIONE MACRO</div>',
-        /* Proteine */
-        '<div style="margin-bottom:12px;">',
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">',
-            '<div style="font-size:11px;font-weight:700;color:#3EDF8A;">💚 PROTEINE</div>',
-            '<div style="display:flex;align-items:center;gap:6px;">',
-              '<input id="fb-ppct" type="number" min="10" max="60" value="' + pPct + '" oninput="ftNutrPctChange()" style="width:52px;background:var(--bg4,#181828);border:1.5px solid #3EDF8A;border-radius:8px;padding:5px 8px;font-size:14px;font-weight:700;color:#3EDF8A;outline:none;text-align:center;">',
-              '<span style="font-size:11px;color:var(--text2,#797688);">% → </span>',
-              '<strong id="fb-p-g" style="font-size:14px;color:#3EDF8A;">' + mp.p + 'g</strong>',
-            '</div>',
-          '</div>',
-          '<div style="height:6px;background:var(--bg4,#181828);border-radius:4px;"><div id="fb-p-bar" style="height:100%;background:#3EDF8A;border-radius:4px;width:' + pPct + '%;transition:width .2s;"></div></div>',
-        '</div>',
-        /* Carboidrati */
-        '<div style="margin-bottom:12px;">',
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">',
-            '<div style="font-size:11px;font-weight:700;color:#5B9CEF;">💙 CARBOIDRATI</div>',
-            '<div style="display:flex;align-items:center;gap:6px;">',
-              '<input id="fb-cpct" type="number" min="10" max="70" value="' + cPct + '" oninput="ftNutrPctChange()" style="width:52px;background:var(--bg4,#181828);border:1.5px solid #5B9CEF;border-radius:8px;padding:5px 8px;font-size:14px;font-weight:700;color:#5B9CEF;outline:none;text-align:center;">',
-              '<span style="font-size:11px;color:var(--text2,#797688);">% → </span>',
-              '<strong id="fb-c-g" style="font-size:14px;color:#5B9CEF;">' + mp.c + 'g</strong>',
-            '</div>',
-          '</div>',
-          '<div style="height:6px;background:var(--bg4,#181828);border-radius:4px;"><div id="fb-c-bar" style="height:100%;background:#5B9CEF;border-radius:4px;width:' + cPct + '%;transition:width .2s;"></div></div>',
-        '</div>',
-        /* Grassi */
-        '<div>',
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">',
-            '<div style="font-size:11px;font-weight:700;color:#FF9A3C;">🧡 GRASSI</div>',
-            '<div style="display:flex;align-items:center;gap:6px;">',
-              '<input id="fb-gpct" type="number" min="10" max="60" value="' + gPct + '" oninput="ftNutrPctChange()" style="width:52px;background:var(--bg4,#181828);border:1.5px solid #FF9A3C;border-radius:8px;padding:5px 8px;font-size:14px;font-weight:700;color:#FF9A3C;outline:none;text-align:center;">',
-              '<span style="font-size:11px;color:var(--text2,#797688);">% → </span>',
-              '<strong id="fb-g-g" style="font-size:14px;color:#FF9A3C;">' + mp.g + 'g</strong>',
-            '</div>',
-          '</div>',
-          '<div style="height:6px;background:var(--bg4,#181828);border-radius:4px;"><div id="fb-g-bar" style="height:100%;background:#FF9A3C;border-radius:4px;width:' + gPct + '%;transition:width .2s;"></div></div>',
-        '</div>',
-        /* Totale % */
-        '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg4,#181828);border-radius:9px;">',
-          '<div style="font-size:11px;color:var(--text2,#797688);">Totale percentuali</div>',
-          '<div id="fb-tot-pct" style="font-size:13px;font-weight:800;color:var(--acc,#C8F53C);">' + (pPct+cPct+gPct) + '%</div>',
-        '</div>',
-      '</div>',
-
-      /* ─ Riepilogo grammi ─ */
-      '<div id="fb-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">',
-        '<div style="background:rgba(62,223,138,.08);border:1px solid rgba(62,223,138,.2);border-radius:12px;padding:12px;text-align:center;">',
-          '<div id="fb-p-sum" style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#3EDF8A;">' + mp.p + 'g</div>',
-          '<div style="font-size:9px;color:var(--text2,#797688);text-transform:uppercase;letter-spacing:.08em;">Proteine</div>',
-        '</div>',
-        '<div style="background:rgba(91,156,239,.08);border:1px solid rgba(91,156,239,.2);border-radius:12px;padding:12px;text-align:center;">',
-          '<div id="fb-c-sum" style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#5B9CEF;">' + mp.c + 'g</div>',
-          '<div style="font-size:9px;color:var(--text2,#797688);text-transform:uppercase;letter-spacing:.08em;">Carboidrati</div>',
-        '</div>',
-        '<div style="background:rgba(255,154,60,.08);border:1px solid rgba(255,154,60,.2);border-radius:12px;padding:12px;text-align:center;">',
-          '<div id="fb-g-sum" style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#FF9A3C;">' + mp.g + 'g</div>',
-          '<div style="font-size:9px;color:var(--text2,#797688);text-transform:uppercase;letter-spacing:.08em;">Grassi</div>',
-        '</div>',
-      '</div>',
-
-      /* ─ Azioni ─ */
-      '<button onclick="ftNutrSettingsSave()" style="width:100%;padding:16px;background:var(--acc,#C8F53C);color:#06060E;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:.04em;margin-bottom:8px;">💾 Salva impostazioni</button>',
-      '<button onclick="document.getElementById(\'ngs-modal\').remove()" style="width:100%;padding:12px;background:transparent;border:none;color:var(--text2,#797688);font-size:13px;cursor:pointer;">Annulla</button>',
-    '</div>'
-  ].join('');
-
+  var mp   = (typeof profile !== 'undefined' && profile.macros) || {p:180,c:280,g:70};
+  var ovl  = document.createElement('div');
+  ovl.id   = 'ngs-modal';
+  ovl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:flex-end;justify-content:center;';
+  ovl.innerHTML =
+    '<div style="background:#11111F;border-radius:24px 24px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding:24px 20px 48px;">' +
+      '<div style="width:40px;height:4px;border-radius:4px;background:#333;margin:0 auto 16px;"></div>' +
+      '<div style="font-size:18px;font-weight:800;margin-bottom:20px;">⚙️ Macro & Energia</div>' +
+      '<label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.08em;">Calorie giornaliere</label>' +
+      '<div style="display:flex;gap:10px;align-items:center;margin:8px 0 20px;">' +
+        '<input id="fb-kcal" type="number" step="50" min="1000" max="8000" value="' + kcal + '" style="flex:1;background:#1a1a2e;border:2px solid #C8F53C;border-radius:12px;padding:12px 16px;font-size:22px;font-weight:700;color:#C8F53C;outline:none;">' +
+        '<span style="color:#666;font-weight:700;">kcal</span>' +
+      '</div>' +
+      '<label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.08em;">Proteine (g)</label>' +
+      '<input id="fb-p" type="number" min="0" max="500" value="' + mp.p + '" style="width:100%;background:#1a1a2e;border:1.5px solid #3EDF8A;border-radius:10px;padding:10px 14px;font-size:18px;color:#3EDF8A;outline:none;margin:8px 0 14px;">' +
+      '<label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.08em;">Carboidrati (g)</label>' +
+      '<input id="fb-c" type="number" min="0" max="800" value="' + mp.c + '" style="width:100%;background:#1a1a2e;border:1.5px solid #5B9CEF;border-radius:10px;padding:10px 14px;font-size:18px;color:#5B9CEF;outline:none;margin:8px 0 14px;">' +
+      '<label style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.08em;">Grassi (g)</label>' +
+      '<input id="fb-g" type="number" min="0" max="300" value="' + mp.g + '" style="width:100%;background:#1a1a2e;border:1.5px solid #FF9A3C;border-radius:10px;padding:10px 14px;font-size:18px;color:#FF9A3C;outline:none;margin:8px 0 24px;">' +
+      '<button onclick="ftNutrSettingsSave()" style="width:100%;padding:16px;background:#C8F53C;color:#080810;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;">💾 Salva</button>' +
+      '<button onclick="ftNutrSettingsClose()" style="width:100%;padding:12px;background:transparent;border:none;color:#666;font-size:13px;cursor:pointer;margin-top:8px;">Annulla</button>' +
+    '</div>';
   document.body.appendChild(ovl);
   ovl.addEventListener('click', function(e){ if(e.target===ovl) ovl.remove(); });
-
-  /* Calcolo interattivo iniziale */
-  setTimeout(ftNutrRecalc, 50);
-};
-
-/* Ricalcola grammi e barre quando cambia kcal */
-window.ftNutrRecalc = function() {
-  var kcalEl = document.getElementById('fb-kcal');
-  if (!kcalEl) return;
-  var kcal = parseFloat(kcalEl.value) || 2500;
-  var pPct = parseFloat((document.getElementById('fb-ppct')||{}).value) || 25;
-  var cPct = parseFloat((document.getElementById('fb-cpct')||{}).value) || 45;
-  var gPct = parseFloat((document.getElementById('fb-gpct')||{}).value) || 30;
-  var pG = Math.round((kcal * pPct / 100) / 4);
-  var cG = Math.round((kcal * cPct / 100) / 4);
-  var gG = Math.round((kcal * gPct / 100) / 9);
-  var update = function(id, val) { var e=document.getElementById(id); if(e) e.textContent=val; };
-  update('fb-p-g',  pG+'g'); update('fb-c-g',  cG+'g'); update('fb-g-g',  gG+'g');
-  update('fb-p-sum',pG+'g'); update('fb-c-sum',cG+'g'); update('fb-g-sum',gG+'g');
-  update('fb-tot-pct',(pPct+cPct+gPct)+'%');
-  var setBar = function(id,pct,color){ var e=document.getElementById(id); if(e){e.style.width=Math.min(100,pct)+'%';e.style.background=color;} };
-  setBar('fb-p-bar',pPct,'#3EDF8A'); setBar('fb-c-bar',cPct,'#5B9CEF'); setBar('fb-g-bar',gPct,'#FF9A3C');
-};
-
-/* Ricalcola quando cambiano le %  */
-window.ftNutrPctChange = function() {
-  var pPct = parseFloat((document.getElementById('fb-ppct')||{}).value)||0;
-  var cPct = parseFloat((document.getElementById('fb-cpct')||{}).value)||0;
-  var gPct = 100 - pPct - cPct;
-  var gpctEl = document.getElementById('fb-gpct');
-  if (gpctEl) gpctEl.value = Math.max(0, gPct);
-  ftNutrRecalc();
-};
-
-/* Applica preset calorico TDEE ± % */
-window.ftNutrPreset = function(delta) {
-  var tdee = (typeof profile !== 'undefined' && profile.tdee) || 0;
-  if (!tdee) { if(typeof showToast==='function') showToast('⚠️ Completa prima il calcolo TDEE nel profilo'); return; }
-  var newKcal = Math.round(tdee * (1 + delta/100) / 50) * 50;
-  var kcalEl = document.getElementById('fb-kcal');
-  if (kcalEl) { kcalEl.value = newKcal; ftNutrRecalc(); }
 };
 
 window.ftNutrSettingsClose = function() {
   var m = document.getElementById('ngs-modal');
   if (m) m.remove();
 };
-
 window.ftNutrSettingsSave = function() {
-  if (typeof profile === 'undefined') { if(typeof showToast==='function') showToast('⚠️ Profilo non trovato'); return; }
-  var kcal  = parseFloat((document.getElementById('fb-kcal')||{}).value)  || 2500;
-  var pPct  = parseFloat((document.getElementById('fb-ppct')||{}).value)  || 25;
-  var cPct  = parseFloat((document.getElementById('fb-cpct')||{}).value)  || 45;
-  var gPct  = parseFloat((document.getElementById('fb-gpct')||{}).value)  || 30;
-  var p = Math.round((kcal * pPct / 100) / 4);
-  var c = Math.round((kcal * cPct / 100) / 4);
-  var g = Math.round((kcal * gPct / 100) / 9);
-  profile.kcalTarget = kcal;
+  if (typeof profile === 'undefined') return;
+  var k = parseFloat(document.getElementById('fb-kcal').value) || 2500;
+  var p = parseFloat(document.getElementById('fb-p').value)    || 180;
+  var c = parseFloat(document.getElementById('fb-c').value)    || 280;
+  var g = parseFloat(document.getElementById('fb-g').value)    || 70;
+  profile.kcalTarget = k;
   profile.macros = {p:p, c:c, g:g};
   if (typeof saveAll === 'function') saveAll();
-  var m = document.getElementById('ngs-modal');
-  if (m) m.remove();
+  document.getElementById('ngs-modal').remove();
   if (typeof renderNutrizione === 'function') renderNutrizione();
-  if (typeof showToast === 'function') showToast('✅ Macro salvate: ' + p + 'g P · ' + c + 'g C · ' + g + 'g G');
+  if (typeof showToast === 'function') showToast('✅ Impostazioni salvate');
 };
-
-</script>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     FITTRACK v8 — MASSIMALE SYSTEM + ENHANCED PRESETS
-     Autore: FitTrack AI  |  Versione: 8.0
-═══════════════════════════════════════════════════════════════ -->
-<style>
-/* ── MASSIMALE PANEL ── */
-.mxm-panel {
-  background: linear-gradient(135deg, rgba(200,245,60,.07), rgba(200,245,60,.02));
-  border: 1.5px solid rgba(200,245,60,.28);
-  border-radius: 18px;
-  padding: 18px 16px 16px;
-  margin: 16px 0 8px;
-  position: relative;
-  overflow: hidden;
-}
-.mxm-panel::before {
-  content:'';position:absolute;top:0;left:0;right:0;height:2.5px;
-  background: linear-gradient(90deg, var(--acc), var(--green), var(--acc));
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite linear;
-}
-.mxm-hdr {
-  display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
-}
-.mxm-title {
-  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
-  color:var(--acc);display:flex;align-items:center;gap:6px;
-}
-.mxm-title::before { content:'💪'; font-size:14px; }
-.mxm-badge {
-  font-size:9px;font-weight:700;padding:3px 9px;border-radius:99px;
-  background:rgba(200,245,60,.12);color:var(--acc);border:1px solid rgba(200,245,60,.2);
-  letter-spacing:.06em;text-transform:uppercase;
-}
-.mxm-row {
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;
-}
-.mxm-field { display:flex;flex-direction:column;gap:5px; }
-.mxm-lbl {
-  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);
-}
-.mxm-inp-wrap {
-  display:flex;align-items:center;gap:0;
-  background:var(--bg4);border:1.5px solid var(--border2);border-radius:10px;overflow:hidden;
-  transition:border-color .15s,box-shadow .15s;
-}
-.mxm-inp-wrap:focus-within {
-  border-color:var(--acc);box-shadow:0 0 0 3px rgba(200,245,60,.1);
-}
-.mxm-inp {
-  flex:1;background:transparent;border:none;outline:none;
-  padding:10px 12px;font-size:18px;font-weight:800;color:var(--acc);
-  font-family:'Bebas Neue',sans-serif;letter-spacing:1px;min-width:0;
-}
-.mxm-inp::placeholder{color:var(--text3);font-size:16px;}
-.mxm-unit {
-  padding:0 10px 0 4px;font-size:10px;font-weight:700;color:var(--text2);
-  text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;
-}
-.mxm-actions {
-  display:flex;gap:8px;
-}
-.mxm-btn-save {
-  flex:1;padding:11px;background:var(--acc);color:#06060E;border:none;
-  border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;
-  transition:all .15s;letter-spacing:.04em;
-}
-.mxm-btn-save:active{transform:scale(.97);}
-.mxm-btn-history {
-  padding:11px 14px;background:var(--bg4);color:var(--text2);border:1.5px solid var(--border2);
-  border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;
-  transition:all .15s;
-}
-.mxm-btn-history:hover{border-color:var(--acc);color:var(--acc);}
-.mxm-current-display {
-  display:flex;align-items:center;gap:12px;padding:10px 14px;
-  background:var(--bg4);border-radius:10px;margin-bottom:12px;
-}
-.mxm-val-big {
-  font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--acc);line-height:1;
-}
-.mxm-val-sep {font-size:18px;color:var(--text3);line-height:1;}
-.mxm-val-sub {font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4;}
-.mxm-date {font-size:10px;color:var(--text3);margin-left:auto;}
-.mxm-prog-section {
-  margin-top:14px;padding-top:12px;border-top:1px solid var(--border);
-}
-.mxm-prog-lbl {
-  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;
-  color:var(--text3);margin-bottom:10px;
-}
-.mxm-prog-grid {
-  display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
-}
-.mxm-prog-card {
-  background:var(--bg4);border-radius:10px;padding:10px 8px;text-align:center;
-  border:1.5px solid var(--border);transition:border-color .2s;
-}
-.mxm-prog-card:hover{border-color:var(--border2);}
-.mxm-prog-pct {
-  font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text);margin-bottom:2px;
-}
-.mxm-prog-kg {
-  font-size:13px;font-weight:800;color:var(--acc);
-}
-.mxm-prog-rep {
-  font-size:10px;color:var(--text2);margin-top:2px;
-}
-.mxm-prog-zone {
-  font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
-  padding:2px 6px;border-radius:99px;margin-top:4px;display:inline-block;
-}
-
-/* ── HISTORY MODAL ── */
-.mxm-hist-ovl {
-  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;
-  display:flex;align-items:flex-end;justify-content:center;
-  animation:fadeIn .2s;
-}
-.mxm-hist-sheet {
-  background:var(--bg2);border-radius:24px 24px 0 0;
-  width:100%;max-height:75vh;overflow-y:auto;padding:20px 20px 40px;
-  animation:slideUp .3s cubic-bezier(.22,1,.36,1);
-}
-.mxm-hist-handle {
-  width:40px;height:4px;border-radius:4px;background:var(--border2);
-  margin:0 auto 16px;
-}
-.mxm-hist-title {
-  font-size:16px;font-weight:800;margin-bottom:16px;
-}
-.mxm-hist-row {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 14px;background:var(--bg3);border-radius:10px;margin-bottom:8px;
-  border:1px solid var(--border);
-}
-.mxm-hist-vals {
-  font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--acc);
-}
-.mxm-hist-date {
-  font-size:11px;color:var(--text2);
-}
-.mxm-hist-tag {
-  font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;
-  background:rgba(200,245,60,.1);color:var(--acc);
-  border:1px solid rgba(200,245,60,.15);
-}
-
-/* ── SMART PRESET WIZARD ── */
-.spw-ovl {
-  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;
-  display:flex;flex-direction:column;overflow:hidden;
-  animation:fadeIn .2s;
-}
-.spw-inner {
-  flex:1;overflow-y:auto;padding:20px 20px calc(80px + env(safe-area-inset-bottom));
-}
-.spw-topbar {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:calc(16px + env(safe-area-inset-top)) 20px 16px;
-  background:rgba(6,6,14,.95);border-bottom:1px solid var(--border);
-  backdrop-filter:blur(20px);flex-shrink:0;
-}
-.spw-step-indicator {
-  display:flex;gap:4px;
-}
-.spw-dot {
-  width:6px;height:6px;border-radius:50%;background:var(--border2);transition:all .3s;
-}
-.spw-dot.active{background:var(--acc);width:18px;border-radius:3px;}
-.spw-close {
-  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
-  border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-.spw-question {
-  font-size:24px;font-weight:800;letter-spacing:-.5px;line-height:1.25;
-  margin:24px 0 8px;
-}
-.spw-sub {
-  font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:24px;
-}
-.spw-options {
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;
-}
-.spw-opt {
-  background:var(--bg3);border:1.5px solid var(--border);border-radius:14px;
-  padding:16px 12px;cursor:pointer;text-align:center;
-  transition:all .15s cubic-bezier(.22,1,.36,1);user-select:none;
-}
-.spw-opt:active{transform:scale(.95);}
-.spw-opt.sel{border-color:var(--acc);background:rgba(200,245,60,.08);}
-.spw-opt-ico{font-size:26px;margin-bottom:8px;display:block;}
-.spw-opt-nm{font-size:13px;font-weight:700;color:var(--text);}
-.spw-opt-sub{font-size:10px;color:var(--text2);margin-top:2px;line-height:1.4;}
-.spw-footer {
-  position:fixed;bottom:0;left:0;right:0;padding:14px 20px calc(14px + env(safe-area-inset-bottom));
-  background:rgba(6,6,14,.95);border-top:1px solid var(--border);
-  backdrop-filter:blur(20px);display:flex;gap:10px;
-}
-.spw-btn-next {
-  flex:1;padding:15px;background:var(--acc);color:#06060E;border:none;
-  border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;
-  transition:all .15s;opacity:.4;pointer-events:none;letter-spacing:.04em;
-}
-.spw-btn-next.enabled{opacity:1;pointer-events:all;}
-.spw-btn-next.enabled:active{transform:scale(.97);}
-.spw-btn-back {
-  padding:15px 18px;background:var(--bg3);color:var(--text);border:1.5px solid var(--border2);
-  border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;
-}
-
-/* ── PRESET RESULT CARD ── */
-.spw-result {
-  background:linear-gradient(135deg,var(--bg3),var(--bg4));
-  border:1.5px solid var(--border2);border-radius:20px;padding:20px;
-  position:relative;overflow:hidden;
-}
-.spw-result::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--acc),var(--green));
-}
-.spw-result-badge {
-  display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
-  background:rgba(200,245,60,.1);border:1px solid rgba(200,245,60,.2);
-  border-radius:99px;font-size:10px;font-weight:700;color:var(--acc);
-  text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;
-}
-.spw-result-nm {font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;}
-.spw-result-desc {font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:16px;}
-.spw-result-tags {display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
-.spw-tag {
-  font-size:10px;font-weight:700;padding:4px 10px;border-radius:99px;
-  background:var(--bg4);color:var(--text2);border:1px solid var(--border);
-}
-.spw-week-grid {
-  display:grid;gap:8px;margin-bottom:16px;
-}
-.spw-week-row {
-  display:flex;align-items:center;gap:10px;padding:10px 12px;
-  background:var(--bg4);border-radius:10px;border:1px solid var(--border);
-}
-.spw-week-day {
-  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;
-  color:var(--acc);flex-shrink:0;width:32px;
-}
-.spw-week-nm {font-size:13px;font-weight:700;flex:1;}
-.spw-week-sub {font-size:10px;color:var(--text2);}
-.spw-apply-btn {
-  width:100%;padding:15px;background:var(--acc);color:#06060E;border:none;
-  border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;
-  transition:all .15s;letter-spacing:.04em;margin-top:4px;
-}
-.spw-apply-btn:active{transform:scale(.97);}
-.spw-more-btn {
-  width:100%;padding:13px;background:transparent;color:var(--text2);border:1.5px solid var(--border);
-  border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;
-  transition:all .15s;
-}
-.spw-more-btn:hover{border-color:var(--border2);color:var(--text);}
-</style>
-
-<script>
-/* ═══════════════════════════════════════════════════════════════
-   FITTRACK v8 — SISTEMA MASSIMALI
-   Ogni schermata esercizio mostra e permette di aggiornare
-   il massimale personale (Kg + Reps) con storico completo.
-═══════════════════════════════════════════════════════════════ */
-
-// ─── STORAGE MASSIMALI ─────────────────────────────────────
-var FT_MXM_KEY = 'ft_massimali_v2';
-
-function mxmLoad() {
-  try { return JSON.parse(localStorage.getItem(FT_MXM_KEY) || '{}'); }
-  catch(e) { return {}; }
-}
-function mxmSave(data) {
-  try { localStorage.setItem(FT_MXM_KEY, JSON.stringify(data)); } catch(e){}
-}
-function mxmGet(exId) {
-  var d = mxmLoad();
-  return d[exId] || null;
-}
-function mxmSet(exId, kg, reps, note) {
-  var d = mxmLoad();
-  if (!d[exId]) d[exId] = { current: null, history: [] };
-  // Salva il precedente nello storico se esiste
-  if (d[exId].current) {
-    d[exId].history.unshift(d[exId].current);
-    if (d[exId].history.length > 20) d[exId].history.pop(); // max 20 record
-  }
-  d[exId].current = {
-    kg: parseFloat(kg),
-    reps: parseInt(reps),
-    date: new Date().toLocaleDateString('it-IT'),
-    ts: Date.now(),
-    note: note || ''
-  };
-  mxmSave(d);
-  return d[exId].current;
-}
-
-// ─── CALCOLO PROGRESSIONE DA MASSIMALE ────────────────────
-function mxmProgressionZones(kg, reps) {
-  // Stima 1RM con formula Epley: 1RM = kg * (1 + reps/30)
-  var orm = reps === 1 ? kg : Math.round(kg * (1 + reps / 30));
-  return [
-    { pct: 95, zone: 'Forza Massimale', repsTarget: '1-2',   color: 'var(--red)',    bg: 'rgba(255,92,106,.12)' },
-    { pct: 85, zone: 'Forza',           repsTarget: '3-5',   color: 'var(--orange)', bg: 'rgba(255,154,60,.12)' },
-    { pct: 75, zone: 'Ipertrofia Alta', repsTarget: '6-8',   color: 'var(--acc)',    bg: 'rgba(200,245,60,.1)'  },
-    { pct: 67, zone: 'Ipertrofia',      repsTarget: '8-12',  color: 'var(--green)',  bg: 'rgba(62,223,138,.1)'  },
-    { pct: 60, zone: 'Resistenza',      repsTarget: '12-15', color: 'var(--blue)',   bg: 'rgba(91,156,239,.1)'  },
-    { pct: 50, zone: 'Endurance',       repsTarget: '15-20', color: 'var(--purple)', bg: 'rgba(168,126,248,.1)' }
-  ].map(function(z) {
-    return Object.assign({}, z, { kg: Math.round(orm * z.pct / 100 / 2.5) * 2.5, orm: orm });
-  });
-}
-
-// ─── RENDER PANNELLO MASSIMALE ─────────────────────────────
-function renderMxmPanel(exId, exName) {
-  var rec = mxmGet(exId);
-  var currentHtml = '';
-  if (rec && rec.current) {
-    var c = rec.current;
-    currentHtml = '<div class="mxm-current-display">' +
-      '<div>' +
-        '<div class="mxm-val-big">' + c.kg + '<span style="font-size:16px;color:var(--text2)"> kg</span></div>' +
-        '<div class="mxm-val-sub">Massimale attuale</div>' +
-      '</div>' +
-      '<div class="mxm-val-sep">×</div>' +
-      '<div>' +
-        '<div class="mxm-val-big">' + c.reps + '<span style="font-size:16px;color:var(--text2)"> rep</span></div>' +
-        '<div class="mxm-val-sub">Ripetizioni</div>' +
-      '</div>' +
-      '<div class="mxm-date">' + c.date + '</div>' +
-    '</div>';
-
-    // Progressione
-    var zones = mxmProgressionZones(c.kg, c.reps);
-    var ormVal = zones[0].orm;
-    currentHtml += '<div class="mxm-prog-section">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
-        '<div class="mxm-prog-lbl">Progressione carichi — 1RM stimato: <span style="color:var(--acc);font-family:\'Bebas Neue\',sans-serif;font-size:14px;">' + ormVal + ' kg</span></div>' +
-      '</div>' +
-      '<div class="mxm-prog-grid">' +
-        zones.map(function(z) {
-          return '<div class="mxm-prog-card" style="border-color:' + z.bg.replace('rgba','rgba').replace('.1)','0.25)') + ';background:' + z.bg + '">' +
-            '<div class="mxm-prog-pct" style="color:' + z.color + '">' + z.pct + '%</div>' +
-            '<div class="mxm-prog-kg" style="color:' + z.color + '">' + z.kg + ' kg</div>' +
-            '<div class="mxm-prog-rep">' + z.repsTarget + ' rep</div>' +
-            '<div class="mxm-prog-zone" style="color:' + z.color + ';background:' + z.bg + '">' + z.zone + '</div>' +
-          '</div>';
-        }).join('') +
-      '</div>' +
-    '</div>';
-  }
-
-  var histCount = (rec && rec.history) ? rec.history.length : 0;
-
-  return '<div class="mxm-panel" id="mxm-panel-' + exId + '">' +
-    '<div class="mxm-hdr">' +
-      '<div class="mxm-title">Il Tuo Massimale</div>' +
-      '<div class="mxm-badge">' + (rec && rec.current ? 'AGGIORNATO' : 'DA INSERIRE') + '</div>' +
-    '</div>' +
-    currentHtml +
-    '<div class="mxm-row">' +
-      '<div class="mxm-field">' +
-        '<div class="mxm-lbl">Peso massimale</div>' +
-        '<div class="mxm-inp-wrap">' +
-          '<input class="mxm-inp" id="mxm-kg-' + exId + '" type="number" step="2.5" min="0" max="999" placeholder="' + (rec && rec.current ? rec.current.kg : '—') + '">' +
-          '<span class="mxm-unit">kg</span>' +
-        '</div>' +
-      '</div>' +
-      '<div class="mxm-field">' +
-        '<div class="mxm-lbl">Con quante reps</div>' +
-        '<div class="mxm-inp-wrap">' +
-          '<input class="mxm-inp" id="mxm-reps-' + exId + '" type="number" step="1" min="1" max="50" placeholder="' + (rec && rec.current ? rec.current.reps : '—') + '">' +
-          '<span class="mxm-unit">rep</span>' +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    '<div class="mxm-actions">' +
-      '<button class="mxm-btn-save" onclick="mxmSaveFromPanel(\'' + exId + '\',\'' + exName.replace(/'/g,"\\'") + '\')">💾 Salva Massimale</button>' +
-      (histCount > 0 ? '<button class="mxm-btn-history" onclick="mxmShowHistory(\'' + exId + '\',\'' + exName.replace(/'/g,"\\'") + '\')">📈 Storico (' + histCount + ')</button>' : '') +
-    '</div>' +
-  '</div>';
-}
-
-function mxmSaveFromPanel(exId, exName) {
-  var kgEl   = document.getElementById('mxm-kg-' + exId);
-  var repsEl = document.getElementById('mxm-reps-' + exId);
-  if (!kgEl || !repsEl) return;
-  var kg   = parseFloat(kgEl.value);
-  var reps = parseInt(repsEl.value);
-  if (!kg || kg <= 0 || !reps || reps <= 0) {
-    if (typeof showToast === 'function') showToast('⚠️ Inserisci kg e reps validi');
-    return;
-  }
-  mxmSet(exId, kg, reps);
-  // Re-render il pannello aggiornato
-  var panelEl = document.getElementById('mxm-panel-' + exId);
-  if (panelEl) panelEl.outerHTML = renderMxmPanel(exId, exName);
-  if (typeof showToast === 'function') showToast('✅ Massimale salvato: ' + kg + 'kg × ' + reps + ' rep');
-}
-
-function mxmShowHistory(exId, exName) {
-  var rec = mxmGet(exId);
-  if (!rec || !rec.history || !rec.history.length) {
-    if (typeof showToast === 'function') showToast('Nessuno storico precedente');
-    return;
-  }
-  var old = document.getElementById('mxm-hist-modal');
-  if (old) old.remove();
-
-  var rows = rec.history.map(function(h, i) {
-    return '<div class="mxm-hist-row">' +
-      '<div>' +
-        '<div class="mxm-hist-vals">' + h.kg + ' kg × ' + h.reps + ' rep</div>' +
-        '<div class="mxm-hist-date">' + h.date + '</div>' +
-      '</div>' +
-      '<div class="mxm-hist-tag">1RM ~' + Math.round(h.kg * (1 + h.reps/30)) + ' kg</div>' +
-    '</div>';
-  }).join('');
-
-  var modal = document.createElement('div');
-  modal.id = 'mxm-hist-modal';
-  modal.className = 'mxm-hist-ovl';
-  modal.innerHTML = '<div class="mxm-hist-sheet">' +
-    '<div class="mxm-hist-handle"></div>' +
-    '<div class="mxm-hist-title">📈 Storico massimali — ' + exName + '</div>' +
-    rows +
-    '<button onclick="document.getElementById(\'mxm-hist-modal\').remove()" ' +
-      'style="width:100%;padding:14px;background:var(--bg3);color:var(--text2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;">Chiudi</button>' +
-  '</div>';
-  document.body.appendChild(modal);
-  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-}
-
-// ─── PATCH openExDetail per includere il pannello massimale ─
-var _origOpenExDetail = window.openExDetail;
-window.openExDetail = function(id) {
-  if (typeof _origOpenExDetail === 'function') _origOpenExDetail(id);
-  // Aggiunge il pannello massimale in cima al contenuto
-  setTimeout(function() {
-    var contentEl = document.getElementById('ex-detail-content');
-    if (!contentEl) return;
-    var ex = (typeof EX_DB !== 'undefined') ? EX_DB.find(function(e){ return e.id===id; }) : null;
-    var exName = ex ? ex.name : id;
-    var mxmHtml = renderMxmPanel(id, exName);
-    // Inserisci prima del primo div (ex-detail-hero)
-    contentEl.insertAdjacentHTML('afterbegin', mxmHtml);
-  }, 60);
-};
-
-// ─── PATCH per aggiungere massimale anche negli esercizi attivi ─
-// Aggiunge pulsante "💪 Massimale" nelle righe esercizio durante l'allenamento
-var _origRenderWoExs = window.renderWoExs;
-window.renderWoExs = function() {
-  if (typeof _origRenderWoExs === 'function') _origRenderWoExs.apply(this, arguments);
-  setTimeout(function() {
-    document.querySelectorAll('.wo-ex-hdr, .wo-ex-name').forEach(function(hdr) {
-      if (hdr.querySelector('.mxm-inline-btn')) return;
-      var exId = hdr.closest('[data-ex-id]') ? hdr.closest('[data-ex-id]').dataset.exId : null;
-      if (!exId) return;
-      var btn = document.createElement('button');
-      btn.className = 'mxm-inline-btn';
-      btn.textContent = '💪';
-      btn.style.cssText = 'background:rgba(200,245,60,.12);border:1px solid rgba(200,245,60,.2);color:var(--acc);border-radius:8px;padding:4px 8px;font-size:12px;cursor:pointer;margin-left:auto;flex-shrink:0;';
-      btn.title = 'Gestisci massimale';
-      btn.onclick = function(e) {
-        e.stopPropagation();
-        mxmQuickPanel(exId, hdr.textContent.trim());
-      };
-      hdr.appendChild(btn);
-    });
-  }, 200);
-};
-
-function mxmQuickPanel(exId, exName) {
-  var old = document.getElementById('mxm-quick-modal');
-  if (old) old.remove();
-  var modal = document.createElement('div');
-  modal.id = 'mxm-quick-modal';
-  modal.className = 'mxm-hist-ovl';
-  modal.innerHTML = '<div class="mxm-hist-sheet" style="max-height:90vh;">' +
-    '<div class="mxm-hist-handle"></div>' +
-    '<div style="font-size:16px;font-weight:800;margin-bottom:4px;">💪 ' + exName + '</div>' +
-    '<div style="font-size:11px;color:var(--text2);margin-bottom:16px;">Gestione massimale rapida</div>' +
-    renderMxmPanel(exId, exName) +
-    '<button onclick="document.getElementById(\'mxm-quick-modal\').remove()" ' +
-      'style="width:100%;padding:14px;background:var(--bg3);color:var(--text2);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;">Chiudi</button>' +
-  '</div>';
-  document.body.appendChild(modal);
-  modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   FITTRACK v8 — SISTEMA PRESET AVANZATO
-   Preset generati dinamicamente dalle combinazioni di:
-   Obiettivo × Livello × Giorni × Attrezzatura
-═══════════════════════════════════════════════════════════════ */
-
-var FT_PRESETS_V8 = [
-
-  // ─── IPERTROFIA · PRINCIPIANTE ─────────────────────────────
-  {
-    id:'hyp-beg-3-gym', goal:'hypertrophy', level:'beginner', days:3, gear:'gym',
-    name:'🏋️ Massa · Principiante · 3 Giorni · Palestra',
-    short:'Fullbody Ipertrofia 3×',
-    desc:'Tre sessioni full-body con i fondamentali del bilanciere. Perfetto per costruire una base solida di forza e massa muscolare da zero.',
-    tags:['Ipertrofia','Principiante','3 giorni','Palestra','Full Body'],
-    progression:'Aumenta il carico del 2.5 kg ogni volta che completi tutte le serie pulite.',
-    schedule:[
-      {day:'LUN', name:'Full Body A', focus:'Petto · Schiena · Gambe', exs:['Squat 3×8','Panca piana 3×8','Rematore bilanciere 3×8','Shoulder press 3×10','Plank 3×30s']},
-      {day:'MER', name:'Full Body B', focus:'Spalle · Gambe · Core', exs:['Stacco rumeno 3×10','Overhead press 3×8','Trazioni assistite 3×8','Curl bicipiti 3×12','Ab wheel 3×12']},
-      {day:'VEN', name:'Full Body C', focus:'Petto · Schiena · Braccia', exs:['Leg press 3×10','Panca inclinata 3×10','Lat machine 3×10','Dips assistiti 3×10','Crunch 3×15']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.65/2.5)*2.5, medium: Math.round(orm*0.55/2.5)*2.5, light: Math.round(orm*0.45/2.5)*2.5 }; }
-  },
-  {
-    id:'hyp-beg-3-home', goal:'hypertrophy', level:'beginner', days:3, gear:'home',
-    name:'🏠 Massa · Principiante · 3 Giorni · Casa',
-    short:'Full Body Casa 3×',
-    desc:'Tre sessioni settimanali con manubri e panca. Costruisci massa anche da casa con esercizi composti e progressivi.',
-    tags:['Ipertrofia','Principiante','3 giorni','Casa','Full Body'],
-    progression:'Aumenta il peso dei manubri ogni 2 settimane quando completi tutte le reps.',
-    schedule:[
-      {day:'LUN', name:'Full Body A', focus:'Petto · Schiena', exs:['Panca manubri 3×10','Rematore manubrio 3×10','Affondi 3×12','Curl manubri 3×12','Push-up 3×AMRAP']},
-      {day:'MER', name:'Full Body B', focus:'Gambe · Spalle', exs:['Goblet squat 3×12','Shoulder press manubri 3×10','Romanian deadlift manubri 3×10','Alzate laterali 3×12','Plank 3×45s']},
-      {day:'VEN', name:'Full Body C', focus:'Corpo intero', exs:['Squat manubri 3×12','Panca inclinata manubri 3×10','Fly manubri 3×12','Hammer curl 3×12','Crunch 3×20']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.65/2)*2, medium: Math.round(orm*0.55/2)*2, light: Math.round(orm*0.45/2)*2 }; }
-  },
-  {
-    id:'hyp-beg-3-bw', goal:'hypertrophy', level:'beginner', days:3, gear:'bodyweight',
-    name:'🤸 Massa · Principiante · 3 Giorni · Corpo Libero',
-    short:'Calisthenics Base 3×',
-    desc:'Costruisci un fisico atletico senza pesi. I classici movimenti del calisthenics con progressione strutturata.',
-    tags:['Ipertrofia','Principiante','3 giorni','Corpo libero','Calisthenics'],
-    progression:'Progressa verso varianti più difficili (es. push-up declinati, pike push-up).',
-    schedule:[
-      {day:'LUN', name:'Push Day', focus:'Petto · Tricipiti · Spalle', exs:['Push-up 4×12','Dips parallele 3×8','Pike push-up 3×8','Tricipiti a terra 3×12','Diamond push-up 3×8']},
-      {day:'MER', name:'Pull Day', focus:'Schiena · Bicipiti', exs:['Trazioni presa larga 3×5','Trazioni presa neutra 3×5','Australian pull-up 4×10','Curl isometrico 3×30s','Scapole attive 3×12']},
-      {day:'SAB', name:'Lower Day', focus:'Gambe · Core', exs:['Squat corpo libero 4×20','Affondi 3×12','Glute bridge 3×20','Pistol squat progressione 3×5','Plank 3×60s']}
-    ],
-    loadLogic: function(){ return null; }
-  },
-  {
-    id:'hyp-beg-2-gym', goal:'hypertrophy', level:'beginner', days:2, gear:'gym',
-    name:'🏋️ Massa · Principiante · 2 Giorni · Palestra',
-    short:'Full Body 2×/settimana',
-    desc:'Due sessioni settimanali intense per chi ha poco tempo. Ogni sessione allena tutto il corpo con movimenti fondamentali.',
-    tags:['Ipertrofia','Principiante','2 giorni','Palestra'],
-    schedule:[
-      {day:'MAR', name:'Full Body A', focus:'Tutto il corpo', exs:['Squat 4×8','Panca piana 4×8','Rematore bilanciere 4×8','Shoulder press 3×10','Curl 3×12']},
-      {day:'VEN', name:'Full Body B', focus:'Tutto il corpo', exs:['Stacco 4×6','Panca inclinata 3×10','Lat machine 3×10','Dips 3×10','Face pull 3×15']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.7/2.5)*2.5, medium: Math.round(orm*0.6/2.5)*2.5 }; }
-  },
-  {
-    id:'hyp-beg-4-gym', goal:'hypertrophy', level:'beginner', days:4, gear:'gym',
-    name:'🏋️ Massa · Principiante · 4 Giorni · Palestra',
-    short:'Upper/Lower 4×',
-    desc:'Split Upper/Lower per chi vuole allenarsi 4 volte a settimana. Frequenza 2x per ogni muscolo con volume progressivo.',
-    tags:['Ipertrofia','Principiante','4 giorni','Palestra','Upper Lower'],
-    schedule:[
-      {day:'LUN', name:'Upper A', focus:'Petto · Schiena · Spalle', exs:['Panca piana 4×8','Rematore bilanciere 4×8','Shoulder press 3×10','Lat machine 3×10','Curl 3×12']},
-      {day:'MAR', name:'Lower A', focus:'Gambe · Glutei', exs:['Squat 4×8','Leg press 3×12','Stacco rumeno 3×10','Leg curl 3×12','Calf raises 4×15']},
-      {day:'GIO', name:'Upper B', focus:'Petto · Schiena · Braccia', exs:['Panca inclinata 4×10','Trazioni 3×8','Dips 3×10','Alzate laterali 3×12','Tricipiti cavo 3×12']},
-      {day:'VEN', name:'Lower B', focus:'Gambe · Glutei', exs:['Squat frontale 3×10','Affondi bulgari 3×10','Leg extension 3×15','Leg curl 3×12','Glute bridge 4×15']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.7/2.5)*2.5, medium: Math.round(orm*0.6/2.5)*2.5, light: Math.round(orm*0.5/2.5)*2.5 }; }
-  },
-
-  // ─── IPERTROFIA · INTERMEDIO ───────────────────────────────
-  {
-    id:'hyp-int-4-gym', goal:'hypertrophy', level:'intermediate', days:4, gear:'gym',
-    name:'🏋️ Massa · Intermedio · 4 Giorni · Palestra',
-    short:'Push Pull Lower 4×',
-    desc:'Il classico split Push/Pull/Lower per ipertrofia massima. Frequenza 2× per ogni gruppo muscolare con variazione degli angoli.',
-    tags:['Ipertrofia','Intermedio','4 giorni','Palestra','Push Pull'],
-    progression:'Periodizzazione ondulata: settimana pesante (5-8 rep) alternata a settimana leggera (10-15 rep).',
-    schedule:[
-      {day:'LUN', name:'Push A', focus:'Petto · Spalle · Tricipiti', exs:['Panca piana 4×6-8','Shoulder press 4×8-10','Panca inclinata manubri 3×10-12','Alzate laterali 4×12-15','Skull crusher 3×10-12','Push-down cavo 3×12']},
-      {day:'MAR', name:'Pull A', focus:'Schiena · Bicipiti · Posteriore', exs:['Trazioni 4×6-8','Rematore bilanciere 4×6-8','Lat machine presa stretta 3×10-12','Face pull 3×15','Curl bilanciere 3×8-10','Curl concentrato 3×12']},
-      {day:'GIO', name:'Lower', focus:'Gambe · Glutei · Core', exs:['Squat 5×5-8','Stacco rumeno 4×8-10','Leg press 3×12-15','Affondi bulgari 3×10','Leg curl sdraiato 3×12','Calf press 4×15']},
-      {day:'SAB', name:'Push/Pull B', focus:'Spalle · Schiena · Braccia', exs:['Arnold press 4×10','Rematore manubrio 4×10','Alzate frontali 3×12','Pull-over 3×12','Curl martello 3×12','Estensioni tricipiti overhead 3×12']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.78/2.5)*2.5, medium: Math.round(orm*0.68/2.5)*2.5, light: Math.round(orm*0.58/2.5)*2.5 }; }
-  },
-  {
-    id:'hyp-int-5-gym', goal:'hypertrophy', level:'intermediate', days:5, gear:'gym',
-    name:'🏋️ Massa · Intermedio · 5 Giorni · Palestra',
-    short:'PPL + Arms + Legs 5×',
-    desc:'Cinque sessioni con split Push/Pull/Gambe + giorno dedicato alle braccia e alle gambe. Massimo volume settimanale.',
-    tags:['Ipertrofia','Intermedio','5 giorni','Palestra','PPL'],
-    schedule:[
-      {day:'LUN', name:'Push', focus:'Petto · Spalle · Tricipiti', exs:['Panca piana 4×8','Shoulder press 4×8','Panca inclinata 3×10','Alzate laterali 4×15','Skull crusher 3×12']},
-      {day:'MAR', name:'Pull', focus:'Schiena · Bicipiti', exs:['Trazioni 4×8','Rematore bilanciere 4×8','Lat machine 3×10','Cable row 3×12','Curl bilanciere 4×10']},
-      {day:'MER', name:'Legs', focus:'Gambe · Glutei', exs:['Squat 5×8','Leg press 4×12','Stacco rumeno 3×10','Leg curl 3×12','Calf press 5×15']},
-      {day:'GIO', name:'Arms', focus:'Bicipiti · Tricipiti · Avambracci', exs:['Curl bilanciere 4×10','Skull crusher 4×10','Curl inclinato 3×12','Push-down 3×12','Curl martello 3×15','Estensioni overhead 3×12']},
-      {day:'SAB', name:'Chest/Shoulders', focus:'Petto · Spalle', exs:['Panca manubri 4×10','Arnold press 4×10','Fly manubri 3×12','Alzate laterali 4×15','Croci cavi 3×15']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.75/2.5)*2.5, medium: Math.round(orm*0.65/2.5)*2.5, light: Math.round(orm*0.55/2.5)*2.5 }; }
-  },
-  {
-    id:'hyp-int-3-home', goal:'hypertrophy', level:'intermediate', days:3, gear:'home',
-    name:'🏠 Massa · Intermedio · 3 Giorni · Casa',
-    short:'Push Pull Lower Casa',
-    desc:'Split Push/Pull/Lower con manubri pesanti e tecniche avanzate. Alte intensità anche senza la palestra.',
-    tags:['Ipertrofia','Intermedio','3 giorni','Casa'],
-    schedule:[
-      {day:'LUN', name:'Push', focus:'Petto · Spalle · Tricipiti', exs:['Panca manubri 4×8-10','Shoulder press manubri 4×8-10','Fly manubri 3×12','Pike push-up 3×10','Tricipiti corpo libero 4×12']},
-      {day:'MER', name:'Pull', focus:'Schiena · Bicipiti', exs:['Rematore manubrio 4×10','Trazioni sbarra 4×8','Pull-over manubrio 3×12','Curl bilanciere/manubri 4×10','Curl isometrico 3×45s']},
-      {day:'SAB', name:'Lower', focus:'Gambe · Glutei', exs:['Squat manubri 4×12','Stacco rumeno manubri 4×10','Affondi bulgari 3×10','Glute bridge lastrato 4×15','Calf raises 4×20']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.75/2)*2, medium: Math.round(orm*0.65/2)*2, light: Math.round(orm*0.55/2)*2 }; }
-  },
-  {
-    id:'hyp-int-4-bw', goal:'hypertrophy', level:'intermediate', days:4, gear:'bodyweight',
-    name:'🤸 Massa · Intermedio · 4 Giorni · Corpo Libero',
-    short:'Calisthenics Intermedio 4×',
-    desc:'Quattro sessioni di calisthenics con skill avanzate. Approccia handstand, muscle-up e progressioni difficili.',
-    tags:['Ipertrofia','Intermedio','4 giorni','Calisthenics'],
-    schedule:[
-      {day:'LUN', name:'Push Upper', focus:'Petto · Tricipiti · Spalle', exs:['Dips lastrati 4×8','Push-up declinati 4×12','Archer push-up 3×8','Wall handstand push-up 3×5','Tricipiti corpo libero 3×12']},
-      {day:'MAR', name:'Pull Upper', focus:'Schiena · Bicipiti', exs:['Trazioni presa stretta 4×6','Trazioni presa larga 4×6','Australian pull-up 3×12','Front lever progressione 3×5','Curl isometrico alla sbarra 3×30s']},
-      {day:'GIO', name:'Lower + Core', focus:'Gambe · Core', exs:['Pistol squat 4×5','Nordic curl 3×5','Shrimp squat 3×6','L-sit progressione 3×20s','Dragon flag progressione 3×5']},
-      {day:'SAB', name:'Skills + Full Body', focus:'Skill · Corpo intero', exs:['Handstand 3×30s','Muscle-up progressione 4×3','Front lever hold 3×10s','Planche progressione 3×5','Ring rows 3×12']}
-    ],
-    loadLogic: function(){ return null; }
-  },
-
-  // ─── IPERTROFIA · AVANZATO ─────────────────────────────────
-  {
-    id:'hyp-adv-5-gym', goal:'hypertrophy', level:'advanced', days:5, gear:'gym',
-    name:'🏋️ Massa · Avanzato · 5 Giorni · Palestra',
-    short:'Bro Split Scientifico 5×',
-    desc:'Cinque sessioni con split per gruppo muscolare e tecniche avanzate (drop set, rest-pause, supersets). Volume estremo.',
-    tags:['Ipertrofia','Avanzato','5 giorni','Palestra','Bro Split'],
-    progression:'Tecniche di intensità: drop set all\'ultima serie, rest-pause sui multiarticolari, tempo eccentrico.',
-    schedule:[
-      {day:'LUN', name:'Chest', focus:'Petto', exs:['Panca piana 5×6-8','Panca inclinata bilanciere 4×8-10','Panca declinata 4×10','Fly manubri 3×12-15','Croci ai cavi 3×15-20','Push-up ring AMRAP']},
-      {day:'MAR', name:'Back', focus:'Schiena', exs:['Stacco 5×5','Trazioni lastrate 4×6-8','Rematore bilanciere 4×6-8','Lat machine presa supina 3×10-12','Cable row con sosta 3×12','Face pull 4×15']},
-      {day:'MER', name:'Shoulders', focus:'Spalle', exs:['Shoulder press bilanciere 5×6-8','Alzate laterali 5×15','Arnold press 4×10','Alzate frontali manubri 3×12','Alzate rear delt 4×15','Shrug 3×15']},
-      {day:'GIO', name:'Arms', focus:'Bicipiti · Tricipiti', exs:['Curl bilanciere 4×8-10','Skull crusher 4×8-10','Curl inclinato 3×10-12','Estensioni overhead manubrio 3×10','Curl Preacher 3×12','Bench dips lastrati 3×12']},
-      {day:'VEN', name:'Legs', focus:'Gambe · Glutei · Polpacci', exs:['Squat 5×6-8','Leg press 4×12-15','Stacco rumeno 4×8-10','Affondi bulgari 3×10','Leg curl sdraiato 4×12','Calf press 6×15']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.82/2.5)*2.5, medium: Math.round(orm*0.72/2.5)*2.5, light: Math.round(orm*0.62/2.5)*2.5 }; }
-  },
-  {
-    id:'hyp-adv-6-gym', goal:'hypertrophy', level:'advanced', days:6, gear:'gym',
-    name:'🏋️ Massa · Avanzato · 6 Giorni · Palestra',
-    short:'PHAT / PPL × 2 6×',
-    desc:'Il programma PHAT (Power Hypertrophy Adaptive Training) di Layne Norton. Due cicli PPL per massimizzare forza e volume.',
-    tags:['Ipertrofia','Avanzato','6 giorni','Palestra','PHAT','PPL'],
-    schedule:[
-      {day:'LUN', name:'Power Upper', focus:'Petto · Schiena · Spalle (Forza)', exs:['Panca piana 5×3-5','Trazioni lastrate 5×3-5','Shoulder press bilanciere 4×6','Rematore bilanciere 3×8','Curl bilanciere 3×8']},
-      {day:'MAR', name:'Power Lower', focus:'Gambe (Forza)', exs:['Squat 5×3-5','Stacco 4×3-5','Leg press 3×10','Stacco rumeno 3×8','Leg curl 3×8']},
-      {day:'MER', name:'Riposo', focus:'Recupero attivo', exs:['Stretching 20min','Foam rolling','Cardio leggero 20min']},
-      {day:'GIO', name:'Hyp Chest/Back', focus:'Petto · Schiena (Volume)', exs:['Panca manubri 4×12-15','Lat machine 4×12-15','Panca inclinata 3×12','Rematore cavo 3×15','Fly manubri 3×15','Pull-over 3×12']},
-      {day:'VEN', name:'Hyp Shoulders/Arms', focus:'Spalle · Braccia (Volume)', exs:['Alzate laterali 5×20','Arnold press 4×12','Skull crusher 4×12','Curl inclinato 4×12','Estensioni overhead 3×15','Curl martello 3×15']},
-      {day:'SAB', name:'Hyp Legs', focus:'Gambe (Volume)', exs:['Squat front 4×12','Leg press 4×15-20','Leg extension 4×15','Leg curl 4×15','Affondi bulgari 3×12','Calf machine 5×20']}
-    ],
-    loadLogic: function(orm){ return { power: Math.round(orm*0.85/2.5)*2.5, hyp: Math.round(orm*0.65/2.5)*2.5, light: Math.round(orm*0.55/2.5)*2.5 }; }
-  },
-
-  // ─── FORZA PURA · TUTTI I LIVELLI ─────────────────────────
-  {
-    id:'str-beg-3-gym', goal:'strength', level:'beginner', days:3, gear:'gym',
-    name:'🏋️ Forza · Principiante · 3 Giorni · Palestra',
-    short:'Starting Strength 3×',
-    desc:'Il leggendario programma Starting Strength di Mark Rippetoe. Tre sessioni con progressione lineare: aggiungi 2.5kg ogni allenamento.',
-    tags:['Forza','Principiante','3 giorni','Palestra','Lineare'],
-    progression:'Progressione lineare: +2.5 kg ogni sessione sui multiarticolari. La più rapida possibile.',
-    schedule:[
-      {day:'LUN', name:'Sessione A', focus:'Squat · Panca · Rematore', exs:['Squat 3×5 (+ 2.5 kg)','Panca piana 3×5 (+ 2.5 kg)','Rematore bilanciere 3×5 (+ 2.5 kg)']},
-      {day:'MER', name:'Sessione B', focus:'Squat · Press · Stacco', exs:['Squat 3×5 (+ 2.5 kg)','Overhead press 3×5 (+ 2.5 kg)','Stacco 1×5 (+ 5 kg)']},
-      {day:'VEN', name:'Sessione A', focus:'Squat · Panca · Rematore', exs:['Squat 3×5 (+ 2.5 kg)','Panca piana 3×5 (+ 2.5 kg)','Rematore bilanciere 3×5 (+ 2.5 kg)']}
-    ],
-    loadLogic: function(orm){ return { work: Math.round(orm*0.8/2.5)*2.5, warmup: Math.round(orm*0.5/2.5)*2.5 }; }
-  },
-  {
-    id:'str-int-3-gym', goal:'strength', level:'intermediate', days:3, gear:'gym',
-    name:'🏋️ Forza · Intermedio · 3 Giorni · Palestra',
-    short:'StrongLifts 5×5',
-    desc:'StrongLifts 5×5: volume sufficiente per innescare l\'adattamento, frequenza alta per massimizzare la progressione sui fondamentali.',
-    tags:['Forza','Intermedio','3 giorni','Palestra','5x5'],
-    schedule:[
-      {day:'LUN', name:'Allenamento A', focus:'Squat · Panca · Rematore', exs:['Squat 5×5','Panca piana 5×5','Rematore bilanciere 5×5']},
-      {day:'MER', name:'Allenamento B', focus:'Squat · OHP · Stacco', exs:['Squat 5×5','Overhead press 5×5','Stacco 1×5']},
-      {day:'VEN', name:'Allenamento A', focus:'Squat · Panca · Rematore', exs:['Squat 5×5','Panca piana 5×5','Rematore bilanciere 5×5']}
-    ],
-    loadLogic: function(orm){ return { top: Math.round(orm*0.8/2.5)*2.5, warm1: Math.round(orm*0.4/2.5)*2.5, warm2: Math.round(orm*0.6/2.5)*2.5 }; }
-  },
-  {
-    id:'str-int-4-gym', goal:'strength', level:'intermediate', days:4, gear:'gym',
-    name:'🏋️ Forza · Intermedio · 4 Giorni · Palestra',
-    short:'Texas Method 4×',
-    desc:'Il Texas Method in variante 4 giorni: volume lunedì, intensità venerdì, con sessioni accessorie martedì e giovedì.',
-    tags:['Forza','Intermedio','4 giorni','Palestra','Texas Method'],
-    schedule:[
-      {day:'LUN', name:'Volume Day', focus:'Squat · Press · Pull (alto volume)', exs:['Squat 5×5 a 80% 1RM','Panca piana 5×5 a 80% 1RM','Rematore bilanciere 5×5']},
-      {day:'MAR', name:'Recovery Upper', focus:'Recupero attivo upper', exs:['Overhead press 3×5 a 70%','Trazioni 3×8','Curl 3×12','Face pull 3×15']},
-      {day:'GIO', name:'Recovery Lower', focus:'Recupero attivo lower', exs:['Squat 2×5 a 65%','Stacco rumeno 3×8','Leg curl 3×10']},
-      {day:'VEN', name:'Intensity Day', focus:'Nuovo massimale settimanale', exs:['Squat 1×5 nuovo PR','Panca piana 1×5 nuovo PR','Stacco 1×5 nuovo PR']}
-    ],
-    loadLogic: function(orm){ return { volume: Math.round(orm*0.8/2.5)*2.5, recovery: Math.round(orm*0.65/2.5)*2.5, intensity: Math.round(orm*0.9/2.5)*2.5 }; }
-  },
-  {
-    id:'str-adv-4-gym', goal:'strength', level:'advanced', days:4, gear:'gym',
-    name:'🏋️ Forza · Avanzato · 4 Giorni · Palestra',
-    short:'Powerlifting Conjugate 4×',
-    desc:'Metodo Westside/Conjugate: massimo sforzo e dinamico in alternanza. Per atleti esperti che vogliono rompere plateau.',
-    tags:['Forza','Avanzato','4 giorni','Palestra','Powerlifting','Conjugate'],
-    progression:'ME (Max Effort): nuovo 1-3RM. DE (Dynamic Effort): 50-60% con massima velocità.',
-    schedule:[
-      {day:'LUN', name:'ME Upper', focus:'Max Effort petto/schiena', exs:['Esercizio ME: lavora a 1-3RM (rotazione ogni 2 sett)','Panca accessoria 4×8','Rematore pesante 4×6','Curl pesante 3×8','Tricipiti 3×8']},
-      {day:'MER', name:'ME Lower', focus:'Max Effort squat/stacco', exs:['Esercizio ME lower: 1-3RM','Good morning 4×6','Leg press 3×10','Leg curl 4×8','Ab work 4×12']},
-      {day:'VEN', name:'DE Upper', focus:'Dynamic Effort velocità', exs:['Panca DE 8×3 @ 55%+catene','Trazioni esplosive 6×3','Accessori overhead 3×10','Alzate laterali 4×15','Tricipiti cavo 4×12']},
-      {day:'SAB', name:'DE Lower', focus:'Dynamic Effort velocità', exs:['Squat DE 10×2 @ 50-60%','Stacco DE 6×2','GHR 4×8','RDL 3×8','Core pesante 3×12']}
-    ],
-    loadLogic: function(orm){ return { me: orm, de: Math.round(orm*0.55/2.5)*2.5, acc: Math.round(orm*0.7/2.5)*2.5 }; }
-  },
-  {
-    id:'str-adv-3-gym', goal:'strength', level:'advanced', days:3, gear:'gym',
-    name:'🏋️ Forza · Avanzato · 3 Giorni · Palestra',
-    short:'5/3/1 di Wendler',
-    desc:'Il programma 5/3/1 di Jim Wendler. Progressione ondulata mensile sui fondamentali con ampia libertà sugli accessori.',
-    tags:['Forza','Avanzato','3 giorni','Palestra','5/3/1','Wendler'],
-    progression:'Settimana 1: 3×5 | Settimana 2: 3×3 | Settimana 3: 5-3-1 | Settimana 4: Deload 3×5 al 40-60%',
-    schedule:[
-      {day:'LUN', name:'Stacco / Squat', focus:'Lower strength + accessori', exs:['Stacco 5/3/1','Squat pausa 3×8 (FSL)','Good morning 3×10','Leg curl 4×10','Core lavoro 4×12']},
-      {day:'MER', name:'Panca / OHP', focus:'Upper strength + accessori', exs:['Panca piana 5/3/1','OHP 3×10 (FSL)','Trazioni lastrate 5×10','Fly manubri 3×15','Tricipiti pesanti 3×12']},
-      {day:'SAB', name:'Squat / Stacco', focus:'Lower + Upper strength', exs:['Squat 5/3/1','Panca piana 3×10 (FSL)','Rematore bilanciere 5×10','Leg press 3×15','Curl bilanciere 3×12']}
-    ],
-    loadLogic: function(orm){ var base=Math.round(orm*0.9/2.5)*2.5; return { w1_5: Math.round(base*0.65/2.5)*2.5, w1_3: Math.round(base*0.75/2.5)*2.5, w2_5: Math.round(base*0.70/2.5)*2.5, w2_3: Math.round(base*0.80/2.5)*2.5, w3_5: Math.round(base*0.75/2.5)*2.5, w3_3: Math.round(base*0.85/2.5)*2.5, w3_1: Math.round(base*0.95/2.5)*2.5 }; }
-  },
-
-  // ─── DIMAGRIMENTO · DEFINIZIONE ───────────────────────────
-  {
-    id:'cut-beg-3-gym', goal:'fat_loss', level:'beginner', days:3, gear:'gym',
-    name:'🔥 Definizione · Principiante · 3 Giorni · Palestra',
-    short:'Circuit Training 3×',
-    desc:'Tre sessioni di circuit training per bruciare grassi e mantenere la massa. Recuperi brevi per massimizzare il dispendio calorico.',
-    tags:['Definizione','Principiante','3 giorni','Palestra','Circuit'],
-    schedule:[
-      {day:'LUN', name:'Circuito A', focus:'Full body circuit', exs:['Squat bilanciere 3×12 rec 45s','Panca piana 3×12 rec 45s','Rematore 3×12 rec 45s','Shoulder press 3×12 rec 45s','HIIT tapis 10min']},
-      {day:'MER', name:'Circuito B', focus:'Full body circuit', exs:['Stacco rumeno 3×12','Lat machine 3×12','Leg press 3×15','Alzate laterali 3×15','Corsa 15min']},
-      {day:'VEN', name:'Circuito C', focus:'Full body + cardio', exs:['Squat front 3×12','Dips 3×12','Trazioni 3×8','Affondi 3×12 per gamba','Rowing machine 15min']}
-    ],
-    loadLogic: function(orm){ return { work: Math.round(orm*0.6/2.5)*2.5 }; }
-  },
-  {
-    id:'cut-int-4-gym', goal:'fat_loss', level:'intermediate', days:4, gear:'gym',
-    name:'🔥 Definizione · Intermedio · 4 Giorni · Palestra',
-    short:'Upper/Lower Taglio 4×',
-    desc:'Split Upper/Lower con intensità elevata, superset strategici e cardio post-allenamento per massimizzare il deficit calorico.',
-    tags:['Definizione','Intermedio','4 giorni','Palestra'],
-    schedule:[
-      {day:'LUN', name:'Upper (forza)', focus:'Petto · Schiena · Forza', exs:['Panca piana 4×6','Trazioni 4×6','Shoulder press 3×8','Curl pesante 3×8','Cardio LISS 20min']},
-      {day:'MAR', name:'Lower (forza)', focus:'Gambe · Forza', exs:['Squat 4×6','Stacco 3×5','Leg press 3×10','Cardio HIIT 15min']},
-      {day:'GIO', name:'Upper (volume)', focus:'Petto · Schiena · Volume', exs:['Superserie: Panca inclinata + Fly 4×12','Superserie: Lat machine + Rematore cavo 4×12','Superset: Curl + Tricipiti 3×15','Cardio LISS 25min']},
-      {day:'VEN', name:'Lower (volume)', focus:'Gambe · Volume', exs:['Affondi bulgari 4×12','Leg curl 4×12','Leg extension 4×15','Glute bridge 4×15','Cardio HIIT 20min']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.78/2.5)*2.5, medium: Math.round(orm*0.65/2.5)*2.5 }; }
-  },
-  {
-    id:'cut-int-3-bw', goal:'fat_loss', level:'intermediate', days:3, gear:'bodyweight',
-    name:'🤸 Definizione · Intermedio · 3 Giorni · Corpo Libero',
-    short:'HIIT Calisthenics 3×',
-    desc:'Tre sessioni ad alta intensità con il corpo libero. Combina calisthenics e HIIT per bruciare grassi senza attrezzatura.',
-    tags:['Definizione','Intermedio','3 giorni','Corpo libero','HIIT'],
-    schedule:[
-      {day:'LUN', name:'Upper HIIT', focus:'Corpo libero + Cardio', exs:['Burpees 4×10','Push-up esplosivi 4×10','Mountain climber 4×30s','Dips parallele 3×12','Sprint sul posto 8×20s']},
-      {day:'MER', name:'Lower HIIT', focus:'Gambe + Cardio', exs:['Jump squat 4×10','Affondi saltati 4×10','Box jump 4×8','Pistol squat 3×5','Corsa intervalli 20min']},
-      {day:'SAB', name:'Full Body Circuit', focus:'Circuito completo', exs:['Circuit 5 giri: Push-up 10 · Pull-up 5 · Squat 15 · Dips 8 · Plank 30s','Recupero 60s tra girazioni']}
-    ],
-    loadLogic: function(){ return null; }
-  },
-  {
-    id:'cut-adv-5-gym', goal:'fat_loss', level:'advanced', days:5, gear:'gym',
-    name:'🔥 Definizione · Avanzato · 5 Giorni · Palestra',
-    short:'Cutting Aggressivo 5×',
-    desc:'Programma di cutting avanzato: allenamento pesante per preservare la massa, cardio strategico, tecniche di intensità.',
-    tags:['Definizione','Avanzato','5 giorni','Palestra','Cutting'],
-    schedule:[
-      {day:'LUN', name:'Chest/Triceps', focus:'Petto · Tricipiti', exs:['Panca piana 4×6-8','Panca inclinata 3×8-10','Fly cavi 3×15','Skull crusher 3×10','Push-down 3×15','Cardio 20min']},
-      {day:'MAR', name:'Back/Biceps', focus:'Schiena · Bicipiti', exs:['Stacco 4×5','Trazioni 4×6-8','Rematore bilanciere 3×8','Curl bilanciere 4×10','Cardio 20min']},
-      {day:'MER', name:'Shoulders', focus:'Spalle + Cardio', exs:['OHP 4×8','Alzate laterali 5×15','Rear delt 4×15','Shrug 3×12','HIIT 25min']},
-      {day:'GIO', name:'Legs', focus:'Gambe · Glutei', exs:['Squat 5×5','Leg press 4×12','Stacco rumeno 4×10','Leg curl 4×12','Cardio 15min']},
-      {day:'VEN', name:'Arms/Core', focus:'Braccia · Core', exs:['Curl martello 4×10','Tricipiti overhead 4×10','Drag curl 3×12','Ab circuit 4 giri','LISS cardio 30min']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.82/2.5)*2.5, medium: Math.round(orm*0.7/2.5)*2.5, light: Math.round(orm*0.6/2.5)*2.5 }; }
-  },
-
-  // ─── RICOMPOSIZIONE CORPOREA ───────────────────────────────
-  {
-    id:'recomp-int-4-gym', goal:'recomp', level:'intermediate', days:4, gear:'gym',
-    name:'⚖️ Ricomposizione · Intermedio · 4 Giorni · Palestra',
-    short:'Recomp Upper/Lower 4×',
-    desc:'Programma di ricomposizione: costruire muscolo e perdere grasso simultaneamente. Richiede precisione nutrizionale e progressione costante.',
-    tags:['Ricomposizione','Intermedio','4 giorni','Palestra'],
-    schedule:[
-      {day:'LUN', name:'Upper Heavy', focus:'Petto · Schiena (forza)', exs:['Panca piana 4×5-6','Trazioni lastrate 4×5-6','OHP 3×8','Rematore cavo 3×10','Curl 3×10']},
-      {day:'MAR', name:'Lower Heavy', focus:'Gambe (forza)', exs:['Squat 4×5-6','Stacco 3×5','Leg press 3×10','Stacco rumeno 3×8','Calf 3×15']},
-      {day:'GIO', name:'Upper Metabolic', focus:'Petto · Schiena (volume)', exs:['Panca manubri 4×10-12','Lat machine 4×10-12','Alzate laterali 4×15','Fly cavi 3×15','Superserie braccia 3×12']},
-      {day:'VEN', name:'Lower Metabolic', focus:'Gambe (volume + cardio)', exs:['Affondi bulgari 4×10','Leg curl 4×12','Leg extension 4×12','Glute bridge 4×15','Cardio HIIT 15min']}
-    ],
-    loadLogic: function(orm){ return { heavy: Math.round(orm*0.82/2.5)*2.5, volume: Math.round(orm*0.65/2.5)*2.5 }; }
-  },
-  {
-    id:'recomp-adv-5-gym', goal:'recomp', level:'advanced', days:5, gear:'gym',
-    name:'⚖️ Ricomposizione · Avanzato · 5 Giorni · Palestra',
-    short:'Recomp PHAT 5×',
-    desc:'PHAT modificato per ricomposizione: 2 giorni di forza, 3 di volume metabolico. Nutrizione periodizzata (surplus nei giorni di forza, deficit nei giorni di volume).',
-    tags:['Ricomposizione','Avanzato','5 giorni','Palestra','PHAT'],
-    schedule:[
-      {day:'LUN', name:'Power Upper', focus:'Forza upper (surplus calorico)', exs:['Panca 5×3-5','Trazioni lastrate 5×3-5','OHP 4×5','Rematore pesante 4×5']},
-      {day:'MAR', name:'Power Lower', focus:'Forza lower (surplus calorico)', exs:['Squat 5×3-5','Stacco 4×3-5','RDL 3×8','Leg curl 3×8']},
-      {day:'MER', name:'Riposo/Cardio', focus:'Recupero (deficit calorico)', exs:['LISS cardio 40min','Mobilità 15min']},
-      {day:'GIO', name:'Hyp Upper', focus:'Volume upper (deficit calorico)', exs:['Panca inclinata 4×12-15','Lat machine 4×12-15','Fly 3×15','Cable row 3×15','Braccia 3×15']},
-      {day:'VEN', name:'Hyp Lower', focus:'Volume lower + HIIT (deficit calorico)', exs:['Leg press 4×15-20','Leg extension 4×15','Leg curl 4×15','Glute bridge 4×15','HIIT 20min']}
-    ],
-    loadLogic: function(orm){ return { power: Math.round(orm*0.87/2.5)*2.5, hyp: Math.round(orm*0.62/2.5)*2.5 }; }
-  },
-
-  // ─── RESISTENZA MUSCOLARE ─────────────────────────────────
-  {
-    id:'end-int-3-gym', goal:'endurance', level:'intermediate', days:3, gear:'gym',
-    name:'🏃 Resistenza · Intermedio · 3 Giorni · Palestra',
-    short:'Resistenza Muscolare 3×',
-    desc:'Alti rep, recuperi brevi, circuit e supersets per sviluppare resistenza muscolare e capacità aerobica.',
-    tags:['Resistenza','Intermedio','3 giorni','Palestra'],
-    schedule:[
-      {day:'LUN', name:'Upper Endurance', focus:'Resistenza upper', exs:['Panca 3×15-20 rec 45s','Rematore 3×15-20 rec 45s','Shoulder press 3×15 rec 45s','Superserie: Curl + Tricipiti 3×20','Plank 3×60s']},
-      {day:'MER', name:'Lower Endurance', focus:'Resistenza lower', exs:['Squat 4×15 rec 45s','Leg press 4×20 rec 45s','Leg curl 3×20','Glute bridge 4×20','Cardio continuo 20min']},
-      {day:'VEN', name:'Full Circuit', focus:'Circuito completo', exs:['Circuit 4 giri rec 60s tra giri: Squat 15 · Panca 12 · Rematore 12 · OHP 12 · Affondi 10 · Curl 12 · Tricipiti 12 · Plank 30s']}
-    ],
-    loadLogic: function(orm){ return { work: Math.round(orm*0.5/2.5)*2.5 }; }
-  },
-  {
-    id:'end-int-3-bw', goal:'endurance', level:'intermediate', days:3, gear:'bodyweight',
-    name:'🤸 Resistenza · Intermedio · 3 Giorni · Corpo Libero',
-    short:'Endurance Calisthenics',
-    desc:'Resistenza pura con il corpo libero: alte reps, circuit, AMRAP. Costruisci cuore da atleta e muscoli di ferro.',
-    tags:['Resistenza','Intermedio','3 giorni','Corpo libero'],
-    schedule:[
-      {day:'LUN', name:'Push Endurance', focus:'Petto · Spalle resistenza', exs:['Push-up AMRAP in 5min','Dips AMRAP in 3min','Pike push-up 4×20','Diamond push-up 3×20','Plank 5×60s']},
-      {day:'GIO', name:'Pull Endurance', focus:'Schiena resistenza', exs:['Australian pull-up AMRAP in 5min','Trazioni sub-massimale 10 set','Scapole attive 3×30','Isometric hold alla sbarra 5×30s']},
-      {day:'SAB', name:'Lower + Cardio', focus:'Gambe resistenza', exs:['Squat 100 reps totali','Affondi 50 per gamba','Glute bridge 50 reps','Salto alla corda 10min','Corsa 20min']}
-    ],
-    loadLogic: function(){ return null; }
-  }
-];
-
-// ─── WIZARD STATE ─────────────────────────────────────────
-var spwState = { step: 0, goal: null, level: null, days: null, gear: null };
-var spwTotalSteps = 4;
-
-var SPW_CONFIG = {
-  steps: [
-    {
-      key: 'goal',
-      question: 'Qual è il tuo obiettivo principale? 🎯',
-      sub: 'Il programma viene costruito intorno a questo. Sii onesto — puoi sempre cambiarlo.',
-      options: [
-        { val:'hypertrophy', ico:'💪', nm:'Ipertrofia (Massa)', sub:'Più volume, più muscolo' },
-        { val:'strength',    ico:'🏋️', nm:'Forza Pura',        sub:'Alzare più peso possibile' },
-        { val:'fat_loss',    ico:'🔥', nm:'Dimagrimento',       sub:'Perdere grasso, definire' },
-        { val:'recomp',      ico:'⚖️', nm:'Ricomposizione',     sub:'Muscolo + grasso insieme' },
-        { val:'endurance',   ico:'🏃', nm:'Resistenza',         sub:'Resistenza e capacità' }
-      ]
-    },
-    {
-      key: 'level',
-      question: 'Qual è la tua esperienza? 📊',
-      sub: 'Determinare il livello corretto influenza volume, intensità e tecnica del programma.',
-      options: [
-        { val:'beginner',     ico:'🌱', nm:'Principiante',  sub:'< 1 anno di allenamento costante' },
-        { val:'intermediate', ico:'💪', nm:'Intermedio',    sub:'1-3 anni di esperienza' },
-        { val:'advanced',     ico:'🔥', nm:'Avanzato',      sub:'3+ anni, progressione lenta' }
-      ]
-    },
-    {
-      key: 'days',
-      question: 'Quanti giorni a settimana? 📅',
-      sub: 'Sii realistico — meglio un programma da 3 giorni rispettato che 6 giorni abbandonato.',
-      options: [
-        { val:2, ico:'2️⃣', nm:'2 giorni',  sub:'Full Body intenso' },
-        { val:3, ico:'3️⃣', nm:'3 giorni',  sub:'Split classica' },
-        { val:4, ico:'4️⃣', nm:'4 giorni',  sub:'Upper/Lower o Push/Pull' },
-        { val:5, ico:'5️⃣', nm:'5-6 giorni',sub:'Bro Split o PHAT' }
-      ]
-    },
-    {
-      key: 'gear',
-      question: 'Che attrezzatura hai? 🏠',
-      sub: 'Il programma sarà adattato agli strumenti che hai a disposizione.',
-      options: [
-        { val:'gym',        ico:'🏋️', nm:'Palestra completa', sub:'Bilancieri, macchine, tutto' },
-        { val:'home',       ico:'🏠', nm:'Home Gym',           sub:'Manubri, panca, sbarra' },
-        { val:'bodyweight', ico:'🤸', nm:'Corpo libero',       sub:'Sbarra, parallele o niente' }
-      ]
-    }
-  ]
-};
-
-function spwOpen() {
-  spwState = { step: 0, goal: null, level: null, days: null, gear: null };
-  var old = document.getElementById('spw-ovl');
-  if (old) old.remove();
-  var el = document.createElement('div');
-  el.id = 'spw-ovl';
-  el.className = 'spw-ovl';
-  el.innerHTML = spwBuildTopbar() + '<div class="spw-inner" id="spw-inner"></div>' + spwBuildFooter();
-  document.body.appendChild(el);
-  spwRenderStep();
-}
-function spwClose() {
-  var el = document.getElementById('spw-ovl');
-  if (el) { el.style.animation = 'fadeIn .2s reverse'; setTimeout(function(){ el.remove(); }, 200); }
-}
-function spwBuildTopbar() {
-  var dots = '';
-  for (var i = 0; i < spwTotalSteps; i++) dots += '<div class="spw-dot" id="spw-dot-' + i + '"></div>';
-  return '<div class="spw-topbar">' +
-    '<div>' +
-      '<div style="font-size:12px;font-weight:800;color:var(--acc);letter-spacing:.08em;text-transform:uppercase;">TROVA IL TUO PROGRAMMA</div>' +
-      '<div class="spw-step-indicator" style="margin-top:6px;" id="spw-dots">' + dots + '</div>' +
-    '</div>' +
-    '<button class="spw-close" onclick="spwClose()">✕</button>' +
-  '</div>';
-}
-function spwBuildFooter() {
-  return '<div class="spw-footer">' +
-    '<button class="spw-btn-back" id="spw-back" onclick="spwBack()" style="display:none;">← Indietro</button>' +
-    '<button class="spw-btn-next" id="spw-next" onclick="spwNext()">Continua →</button>' +
-  '</div>';
-}
-function spwRenderStep() {
-  var inner = document.getElementById('spw-inner');
-  if (!inner) return;
-  // Update dots
-  for (var i = 0; i < spwTotalSteps; i++) {
-    var d = document.getElementById('spw-dot-' + i);
-    if (d) d.className = 'spw-dot' + (i === spwState.step ? ' active' : '');
-  }
-  // Show/hide back button
-  var backBtn = document.getElementById('spw-back');
-  if (backBtn) backBtn.style.display = spwState.step > 0 ? 'block' : 'none';
-  // Reset next button
-  var nextBtn = document.getElementById('spw-next');
-  if (nextBtn) { nextBtn.className = 'spw-btn-next'; nextBtn.textContent = spwState.step < spwTotalSteps - 1 ? 'Continua →' : 'Trova Programma 🚀'; }
-  
-  if (spwState.step >= spwTotalSteps) { spwRenderResult(); return; }
-
-  var cfg = SPW_CONFIG.steps[spwState.step];
-  var currentVal = spwState[cfg.key];
-
-  var optHtml = cfg.options.map(function(o) {
-    var sel = currentVal === o.val ? ' sel' : '';
-    return '<div class="spw-opt' + sel + '" onclick="spwSelect(this,\'' + cfg.key + '\',' + JSON.stringify(o.val) + ')">' +
-      '<span class="spw-opt-ico">' + o.ico + '</span>' +
-      '<div class="spw-opt-nm">' + o.nm + '</div>' +
-      '<div class="spw-opt-sub">' + o.sub + '</div>' +
-    '</div>';
-  }).join('');
-
-  inner.innerHTML = '<div style="animation:fadeUp .3s cubic-bezier(.22,1,.36,1)">' +
-    '<div class="spw-question">' + cfg.question + '</div>' +
-    '<div class="spw-sub">' + cfg.sub + '</div>' +
-    '<div class="spw-options">' + optHtml + '</div>' +
-  '</div>';
-
-  if (currentVal !== null) {
-    var nextBtn2 = document.getElementById('spw-next');
-    if (nextBtn2) nextBtn2.className = 'spw-btn-next enabled';
-  }
-}
-
-function spwSelect(el, key, val) {
-  spwState[key] = val;
-  var parent = el.parentElement;
-  parent.querySelectorAll('.spw-opt').forEach(function(o){ o.classList.remove('sel'); });
-  el.classList.add('sel');
-  var nextBtn = document.getElementById('spw-next');
-  if (nextBtn) nextBtn.className = 'spw-btn-next enabled';
-  el.style.transform = 'scale(0.95)';
-  setTimeout(function(){ el.style.transform = ''; }, 130);
-}
-function spwNext() {
-  var cfg = SPW_CONFIG.steps[spwState.step];
-  if (cfg && spwState[cfg.key] === null) return;
-  spwState.step++;
-  spwRenderStep();
-}
-function spwBack() {
-  if (spwState.step > 0) { spwState.step--; spwRenderStep(); }
-}
-
-function spwFindPresets() {
-  var daysVal = typeof spwState.days === 'string' ? parseInt(spwState.days) : spwState.days;
-  return FT_PRESETS_V8.filter(function(p) {
-    var goalMatch = p.goal === spwState.goal;
-    var levelMatch = p.level === spwState.level;
-    var gearMatch = p.gear === spwState.gear;
-    var daysMatch = (daysVal === 5) ? (p.days >= 4) : (p.days === daysVal);
-    return goalMatch && levelMatch && gearMatch;
-  }).sort(function(a, b) { return Math.abs(a.days - daysVal) - Math.abs(b.days - daysVal); });
-}
-
-function spwRenderResult() {
-  var inner = document.getElementById('spw-inner');
-  if (!inner) return;
-  var nextBtn = document.getElementById('spw-next');
-  if (nextBtn) nextBtn.style.display = 'none';
-  var matches = spwFindPresets();
-
-  if (!matches.length) {
-    // Fallback: cerca solo per obiettivo
-    matches = FT_PRESETS_V8.filter(function(p){ return p.goal === spwState.goal; });
-  }
-
-  if (!matches.length) {
-    inner.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
-      '<div style="font-size:48px;margin-bottom:16px;">🔍</div>' +
-      '<div style="font-size:18px;font-weight:800;margin-bottom:8px;">Nessun preset trovato</div>' +
-      '<div style="font-size:13px;color:var(--text2);">Prova a modificare le tue selezioni.</div>' +
-      '<button onclick="spwState.step=0;spwRenderStep();" style="margin-top:20px;padding:14px 24px;background:var(--acc);color:#06060E;border:none;border-radius:12px;font-weight:800;cursor:pointer;">Riprova ↩</button>' +
-    '</div>';
-    return;
-  }
-
-  var preset = matches[0];
-  inner.innerHTML = spwBuildPresetCard(preset, matches.length > 1 ? matches.slice(1) : []);
-}
-
-function spwBuildPresetCard(preset, alternatives) {
-  var weekHtml = preset.schedule.map(function(s) {
-    return '<div class="spw-week-row">' +
-      '<div class="spw-week-day">' + s.day + '</div>' +
-      '<div style="flex:1;">' +
-        '<div class="spw-week-nm">' + s.name + '</div>' +
-        '<div class="spw-week-sub">' + s.focus + '</div>' +
-        '<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;">' +
-          s.exs.slice(0,3).map(function(e){ return '<span style="font-size:9px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:2px 6px;color:var(--text2);">' + e + '</span>'; }).join('') +
-          (s.exs.length > 3 ? '<span style="font-size:9px;color:var(--text3);">+' + (s.exs.length-3) + ' altri</span>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  var tagsHtml = preset.tags.map(function(t){ return '<span class="spw-tag">' + t + '</span>'; }).join('');
-
-  var altHtml = '';
-  if (alternatives.length > 0) {
-    altHtml = '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">' +
-      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;">Alternative simili</div>' +
-      alternatives.slice(0,3).map(function(a) {
-        return '<div onclick="spwShowPreset(\'' + a.id + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);cursor:pointer;margin-bottom:6px;">' +
-          '<div style="flex:1;">' +
-            '<div style="font-size:12px;font-weight:700;">' + a.short + '</div>' +
-            '<div style="font-size:10px;color:var(--text2);">' + a.tags.slice(0,3).join(' · ') + '</div>' +
-          '</div>' +
-          '<div style="font-size:16px;color:var(--border2);">›</div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
-  }
-
-  // Load logic preview
-  var loadHtml = '';
-  if (typeof preset.loadLogic === 'function') {
-    var exId = 'squat';
-    var mxmRec = mxmGet(exId);
-    if (mxmRec && mxmRec.current) {
-      var lc = preset.loadLogic(mxmRec.current.kg);
-      if (lc) {
-        var lcKeys = Object.keys(lc);
-        loadHtml = '<div style="background:rgba(200,245,60,.06);border:1px solid rgba(200,245,60,.18);border-radius:12px;padding:12px 14px;margin-bottom:12px;">' +
-          '<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--acc);margin-bottom:8px;">💡 Carichi personalizzati (basati sul tuo massimale squat)</div>' +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-            lcKeys.map(function(k){ return '<div style="text-align:center;background:var(--bg4);border-radius:8px;padding:8px 12px;">' +
-              '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--acc);">' + lc[k] + ' kg</div>' +
-              '<div style="font-size:9px;color:var(--text2);text-transform:uppercase;">' + k + '</div>' +
-            '</div>'; }).join('') +
-          '</div>' +
-        '</div>';
-      }
-    }
-  }
-
-  return '<div style="animation:fadeUp .35s cubic-bezier(.22,1,.36,1)">' +
-    '<div style="font-size:12px;color:var(--acc);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">🎯 Preset consigliato per te</div>' +
-    '<div class="spw-result">' +
-      '<div class="spw-result-badge">✨ Match perfetto</div>' +
-      '<div class="spw-result-nm">' + preset.name + '</div>' +
-      '<div class="spw-result-desc">' + preset.desc + '</div>' +
-      (preset.progression ? '<div style="background:rgba(200,245,60,.05);border:1px solid rgba(200,245,60,.15);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--text2);line-height:1.7;"><span style="color:var(--acc);font-weight:800;">📈 Progressione: </span>' + preset.progression + '</div>' : '') +
-      loadHtml +
-      '<div class="spw-result-tags">' + tagsHtml + '</div>' +
-      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:8px;">Piano settimanale</div>' +
-      '<div class="spw-week-grid">' + weekHtml + '</div>' +
-      '<button class="spw-apply-btn" onclick="spwApply(\'' + preset.id + '\')">🚀 Usa questo programma</button>' +
-      '<button class="spw-more-btn" onclick="spwState.step=0;spwRenderStep();">↩ Ricerca diversa</button>' +
-    '</div>' +
-    altHtml +
-  '</div>';
-}
-
-function spwShowPreset(id) {
-  var preset = FT_PRESETS_V8.find(function(p){ return p.id === id; });
-  if (!preset) return;
-  var inner = document.getElementById('spw-inner');
-  if (!inner) return;
-  inner.innerHTML = spwBuildPresetCard(preset, []);
-  inner.scrollTop = 0;
-}
-
-function spwApply(presetId) {
-  var preset = FT_PRESETS_V8.find(function(p){ return p.id === presetId; });
-  // Try to find existing preset in the app's preset library
-  var appPreset = (typeof PRESETS !== 'undefined') ? PRESETS.find(function(p){ return p.id === presetId; }) : null;
-  if (appPreset && typeof openPreset === 'function') {
-    spwClose();
-    openPreset(appPreset);
-  } else {
-    spwClose();
-    if (typeof showToast === 'function') showToast('📋 Programma selezionato! Cercalo nella libreria preset.');
-    if (typeof showPage === 'function') showPage('esplora');
-  }
-}
-
-// ─── INTEGRAZIONE MASSIMALE NEL WORKOUT OVERLAY ──────────
-// Patch per il rendering degli esercizi nell'overlay di allenamento
-var _patchWoExApplied = false;
-function patchWoExercises() {
-  if (_patchWoExApplied) return;
-  _patchWoExApplied = true;
-  var woExs = document.getElementById('wo-exs');
-  if (!woExs) return;
-  var observer = new MutationObserver(function() {
-    woExs.querySelectorAll('.wo-ex-card, .wo-ex-hdr').forEach(function(card) {
-      if (card.querySelector('.mxm-wo-btn')) return;
-      var exId = card.dataset.exId || (card.closest('[data-ex-id]') && card.closest('[data-ex-id]').dataset.exId);
-      if (!exId) return;
-      var btn = document.createElement('button');
-      btn.className = 'mxm-wo-btn';
-      btn.style.cssText = 'background:rgba(200,245,60,.1);border:1px solid rgba(200,245,60,.2);color:var(--acc);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.04em;white-space:nowrap;';
-      btn.textContent = '💪 Massimale';
-      btn.onclick = function(e) {
-        e.stopPropagation();
-        var nm = card.querySelector('.wo-ex-nm, .wo-ex-name');
-        mxmQuickPanel(exId, nm ? nm.textContent.trim() : exId);
-      };
-      var hdr = card.querySelector('.wo-ex-top, .wo-ex-hdr-inner');
-      if (hdr) hdr.appendChild(btn);
-      else card.appendChild(btn);
-    });
-  });
-  observer.observe(woExs, { childList: true, subtree: true });
-}
-document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(patchWoExercises, 500);
-});
-
-// ─── MASSIMALE INLINE TAG helper ────────────────────────
-function mxmInlineTag(exId, exName) {
-  var rec = mxmGet(exId);
-  if (rec && rec.current) {
-    return '<span onclick="mxmQuickPanel(\'' + exId + '\',\'' + (exName||exId).replace(/'/g,"\\'") + '\')" ' +
-      'style="font-size:9px;font-weight:700;background:rgba(200,245,60,.1);color:var(--acc);border:1px solid rgba(200,245,60,.18);border-radius:6px;padding:2px 7px;cursor:pointer;">' +
-      '💪 ' + rec.current.kg + 'kg × ' + rec.current.reps + 'rep</span>';
-  }
-  return '<span onclick="mxmQuickPanel(\'' + exId + '\',\'' + (exName||exId).replace(/'/g,"\\'") + '\')" ' +
-    'style="font-size:9px;font-weight:700;background:var(--bg4);color:var(--text3);border:1px solid var(--border);border-radius:6px;padding:2px 7px;cursor:pointer;">' +
-    '💪 Massimale</span>';
-}
-window.mxmInlineTag = mxmInlineTag;
-
-// ─── INIT RITARDATO (aspetta che l'app sia pronta) ───────
-(function() {
-  var attempts = 0;
-  var timer = setInterval(function() {
-    attempts++;
-    var ready = document.querySelector('.page.active, .screen.active, #scr-app');
-    if (ready || attempts > 40) {
-      clearInterval(timer);
-      setTimeout(patchWoExercises, 800);
-    }
-  }, 300);
-})();
-
-console.log('[FitTrack v9] ✅ Massimale System + Nutrizione fix pronti.');
 </script>
 </body>
 </html>
