@@ -3320,7 +3320,8 @@ input:focus, textarea:focus, select:focus {
       if (!snap.exists()) return false;
       const data = snap.data();
 
-      // Merge intelligente: usa cloud solo se più recente
+      // Merge intelligente: il profilo viene sempre caricato dal cloud se esiste
+      // (essenziale su nuovo dispositivo / browser pulito dove ft_last_local_save è assente)
       const localUpdated = localStorage.getItem('ft_last_local_save') || '0';
       const cloudUpdated = data.updatedAt || '0';
       const cloudIsNewer = cloudUpdated > localUpdated;
@@ -3334,9 +3335,19 @@ input:focus, textarea:focus, select:focus {
         } catch(e) {}
       };
 
+      // Il profilo viene SEMPRE caricato dal cloud se presente — evita falso onboarding
+      if (data.profile && data.profile.name) {
+        await save('profile', data.profile);
+        // Aggiorna RAM subito così ftEnterApp trova profile.name
+        try {
+          if (typeof profile !== 'undefined' && !profile.name) {
+            profile = Object.assign(profile, data.profile);
+          }
+        } catch(e) {}
+      }
+
       if (cloudIsNewer) {
         await Promise.all([
-          save('profile',   data.profile),
           save('sessions',  data.sessions),
           save('nutrition', data.nutrition),
           save('metrics',   data.metrics),
@@ -3348,7 +3359,7 @@ input:focus, textarea:focus, select:focus {
       } else {
         // Cloud più vecchio: carica solo PRO status (dati sensibili)
         if (data.proStatus) localStorage.setItem('ft_pro_status', JSON.stringify(data.proStatus));
-        }
+      }
 
       // Espone helper per verifica PRO
       window._fsGetDoc = async function(path) {
@@ -15426,15 +15437,22 @@ function _startOnboarding() {
 
 /* ── Google Login Flow ── */
 async function ftEnterApp() {
+  // Guard contro doppia chiamata simultanea
+  if (window._ftEnterAppRunning) return;
+  window._ftEnterAppRunning = true;
+  // Rilascia il guard al termine (anche in caso di errore)
+  const _releaseGuard = () => { window._ftEnterAppRunning = false; };
+
   // Se reset in corso → onboarding
-  if (localStorage.getItem('ft_just_reset') === '1') { _startOnboarding(); return; }
+  if (localStorage.getItem('ft_just_reset') === '1') { _startOnboarding(); _releaseGuard(); return; }
   // Se onboarding già attivo → non fare niente
-  if (window._ftOnboardingActive) return;
+  if (window._ftOnboardingActive) { _releaseGuard(); return; }
   // Se i dati locali ci sono già → entra subito
   if (profile.name) {
     window._ftOnboardingActive = false;
     document.getElementById('scr-app').classList.add('active');
     initApp();
+    _releaseGuard();
     return;
   }
 
@@ -15446,6 +15464,7 @@ async function ftEnterApp() {
   // Se ha saltato il login Google → onboarding diretto (nessun cloud da caricare)
   if (skipGoogle && !googleUser) {
     _startOnboarding();
+    _releaseGuard();
     return;
   }
 
@@ -15536,6 +15555,7 @@ async function ftEnterApp() {
       _startOnboarding();
     }
   }
+  _releaseGuard();
 }
 
 async function ftGoogleLogin() {
