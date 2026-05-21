@@ -3422,7 +3422,7 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import {
-    getAuth, signInWithRedirect, getRedirectResult,
+    getAuth, signInWithPopup,
     GoogleAuthProvider, browserLocalPersistence, setPersistence,
     onAuthStateChanged, signOut,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -3623,46 +3623,39 @@ input:focus, textarea:focus, select:focus {
   // ═══════════════════════════════════════════════════
   window.firebaseSignIn = async function() {
     const btnG = document.getElementById('google-signin-btn');
-    if (btnG) { btnG.disabled = true; btnG.textContent = 'Reindirizzamento…'; }
+    if (btnG) { btnG.disabled = true; btnG.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.2);border-top-color:#3c4043;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;"></div> Accesso in corso…'; }
     const loadEl = document.getElementById('auth-loading');
-    if (loadEl) loadEl.style.display = 'block';
+    if (loadEl) loadEl.style.display = 'none'; // Il loader è nel bottone
     const errEl = document.getElementById('auth-error-msg');
     if (errEl) errEl.style.display = 'none';
 
-    localStorage.setItem('ft_pending_google_login', '1');
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      if (result && result.user) {
+        await _routeAfterLogin(result.user);
+      }
     } catch(e) {
       const msgs = {
         'auth/network-request-failed': 'Errore di rete. Controlla la connessione.',
         'auth/unauthorized-domain': 'Dominio non autorizzato in Firebase Console.',
         'auth/operation-not-allowed': 'Accesso Google non abilitato su Firebase.',
+        'auth/popup-blocked': 'Popup bloccato dal browser. Consenti i popup per questo sito.',
+        'auth/popup-closed-by-user': '', // silenzioso — utente ha chiuso il popup volontariamente
+        'auth/cancelled-popup-request': '', // silenzioso
       };
-      _showAuthError(msgs[e.code] || 'Errore Google: ' + e.message);
-      localStorage.removeItem('ft_pending_google_login');
+      const msg = msgs[e.code];
+      if (msg === undefined) {
+        _showAuthError('Errore Google: ' + e.message);
+      } else if (msg) {
+        _showAuthError(msg);
+      }
+      // Ripristina bottone
+      if (btnG) {
+        btnG.disabled = false;
+        btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
+      }
     }
   };
-
-  // ── Gestione risultato redirect (eseguita al caricamento pagina) ──
-  (async function handleRedirectResult() {
-    try {
-      const result = await getRedirectResult(auth);
-      if (result && result.user) {
-        await _routeAfterLogin(result.user);
-      }
-    } catch(e) {
-      if (e.code && e.code !== 'auth/no-current-user') {
-        const msgs = {
-          'auth/network-request-failed': 'Errore di rete. Controlla la connessione e riprova.',
-          'auth/unauthorized-domain': 'Dominio non autorizzato. Aggiungi il dominio su Firebase Console.',
-          'auth/user-disabled': 'Account disabilitato.',
-          'auth/operation-not-allowed': 'Accesso Google non abilitato.',
-        };
-        _showAuthError(msgs[e.code] || 'Errore accesso: ' + e.message);
-      }
-      localStorage.removeItem('ft_pending_google_login');
-    }
-  })();
 
   // ═══════════════════════════════════════════════════
   // EMAIL / PASSWORD
@@ -3763,15 +3756,12 @@ input:focus, textarea:focus, select:focus {
       }));
       localStorage.setItem('ft_google_user', localStorage.getItem('ft_firebase_user'));
 
-      // Se _routeAfterLogin ha già gestito il login (Google redirect o email) → skip
+      // Se _routeAfterLogin ha già gestito il login → skip
       if (window._authHandled) {
         _startAutoSave();
         _addCloudBadge();
         return;
       }
-
-      // Se c'è un redirect Google in corso → aspetta getRedirectResult
-      if (localStorage.getItem('ft_pending_google_login')) return;
 
       // Boot normale (utente era già loggato) → naviga dopo un tick
       setTimeout(function() {
@@ -15477,13 +15467,6 @@ async function boot(){
   const wait=Math.max(0,1400-(Date.now()-t));
   setTimeout(()=>{
     document.getElementById('scr-splash').classList.remove('active');
-
-    // Ripristina ft_just_reset se il redirect era partito durante un reset
-    // (il redirect ricarica la pagina, il flag potrebbe essere sopravvissuto o meno)
-    const pendingLogin = localStorage.getItem('ft_pending_google_login');
-    if (pendingLogin === 'reset' && !localStorage.getItem('ft_just_reset')) {
-      localStorage.setItem('ft_just_reset', '1');
-    }
 
     // Se appena resettato — mostra login Google, onboarding parte dopo il login
     if (localStorage.getItem('ft_just_reset') === '1') {
