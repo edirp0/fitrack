@@ -3736,18 +3736,24 @@ input:focus, textarea:focus, select:focus {
         // Timeout: se entro 2 minuti non arriva nulla, annulla
         var timeout = setTimeout(function() { reject(new Error("timeout")); }, 120000);
 
-        // Guard: initialize only once to avoid "called multiple times" warning
+        // Il callback è globale: aggiornato ad ogni chiamata, eseguito da GSI quando arriva il token.
+        // initialize() viene chiamato UNA SOLA VOLTA (la libreria GSI non supporta chiamate multiple),
+        // ma il callback punta sempre alla Promise corrente tramite il riferimento aggiornato.
+        window._gsiPendingResolve = function(credential) { clearTimeout(timeout); resolve(credential); };
+        window._gsiPendingReject  = function(err)        { clearTimeout(timeout); reject(err); };
+
         if (!window._gsiInitialized) {
           window._gsiInitialized = true;
           google.accounts.id.initialize({
             client_id: _GOOGLE_CLIENT_ID,
             callback: function(response) {
-              clearTimeout(timeout);
-              if (response.credential) {
-                resolve(response.credential);
+              // Smista alla Promise attiva al momento della risposta
+              if (response && response.credential) {
+                if (window._gsiPendingResolve) window._gsiPendingResolve(response.credential);
               } else {
-                reject(new Error("Nessuna credenziale ricevuta da Google"));
+                if (window._gsiPendingReject) window._gsiPendingReject(new Error("Nessuna credenziale ricevuta da Google"));
               }
+              window._gsiPendingResolve = window._gsiPendingReject = null;
             },
             auto_select: false,
             cancel_on_tap_outside: false,
@@ -3766,12 +3772,13 @@ input:focus, textarea:focus, select:focus {
             var isWebView = /FBAN|FBAV|Instagram|Line|MicroMessenger|wv/i.test(ua);
             if (isMobile || isWebView) {
               signInWithRedirect(auth, provider)
-                .catch(function(e) { reject(e); });
+                .catch(function(e) { window._gsiPendingResolve = window._gsiPendingReject = null; reject(e); });
               // Il redirect ricarica la pagina — non chiamiamo reject
             } else {
               signInWithPopup(auth, provider)
-                .then(function(result) { resolve("__popup__:" + JSON.stringify({uid:result.user.uid})); window._popupUser = result.user; })
+                .then(function(result) { window._gsiPendingResolve = window._gsiPendingReject = null; resolve("__popup__:" + JSON.stringify({uid:result.user.uid})); window._popupUser = result.user; })
                 .catch(function(e) {
+                  window._gsiPendingResolve = window._gsiPendingReject = null;
                   if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") {
                     reject(new Error("__cancelled__"));
                   } else {
@@ -3810,8 +3817,8 @@ input:focus, textarea:focus, select:focus {
         "auth/popup-blocked": "Popup bloccato. Consenti i popup per questo sito.",
       };
       _showAuthError(msgs[e.code] || "Errore Google: " + (e.message || "sconosciuto"));
-      // Reset flag so the user can try again
-      window._gsiInitialized = false;
+      // Pulisci i callback pending (non resettare _gsiInitialized: GSI non supporta re-initialize)
+      window._gsiPendingResolve = window._gsiPendingReject = null;
       _resetGoogleBtn();
     }
   };
