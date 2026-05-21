@@ -3731,17 +3731,28 @@ input:focus, textarea:focus, select:focus {
   // LOGOUT
   // ═══════════════════════════════════════════════════
   window.firebaseSignOut = async function() {
-    if (!confirm('Vuoi davvero uscire dall'account?')) return;
     try {
       await signOut(auth);
-      localStorage.removeItem('ft_firebase_user');
-      localStorage.removeItem('ft_google_user');
-      window._firebaseUser = null;
-      window._authHandled = false;
-      if (typeof showToast === 'function') showToast('👋 Disconnesso.');
-      setTimeout(function() { location.reload(); }, 800);
-    } catch(e) { console.error('Logout error:', e); }
-  };
+    } catch(e) { console.warn('Firebase signOut error:', e); }
+    var keysToRemove = [
+      'ft_firebase_user', 'ft_google_user', 'ft_skip_google',
+      'ft_google_token', 'ft_apple_user', 'ft_user_session',
+      'ft_auth_provider', 'ft_logged_in', 'ft_pending_google_login'
+    ];
+    keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+    window._firebaseUser = null;
+    window._authHandled = false;
+    window._ftOnboardingActive = false;
+    window._ftEnterAppRunning = false;
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    var loginScr = document.getElementById('scr-google-login');
+    if (loginScr) {
+      loginScr.classList.add('active');
+    } else {
+      location.reload();
+    }
+    if (typeof showToast === 'function') showToast('Uscito dall\'account');
+  };;
 
   // ═══════════════════════════════════════════════════
   // onAuthStateChanged — solo per auto-login al boot
@@ -35191,28 +35202,25 @@ window.ftLogoutAndGoLogin = function() {
 };
 
 function _doLogout() {
-  var keysToRemove = [
-    'ft_firebase_user', 'ft_google_user', 'ft_skip_google',
-    'ft_google_token', 'ft_apple_user', 'ft_user_session',
-    'ft_auth_provider', 'ft_logged_in'
-  ];
-  keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
-
-  // Nascondi tutte le schermate
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-
-  // Mostra login
-  var loginScr = document.getElementById('scr-google-login');
-  if (loginScr) {
-    loginScr.classList.add('active');
-    loginScr.style.display = 'flex';
+  if (typeof window.firebaseSignOut === 'function') {
+    window.firebaseSignOut();
   } else {
-    // fallback: ricarica la pagina
-    location.reload();
-    return;
+    // fallback diretto
+    var keysToRemove = [
+      'ft_firebase_user', 'ft_google_user', 'ft_skip_google',
+      'ft_google_token', 'ft_apple_user', 'ft_user_session',
+      'ft_auth_provider', 'ft_logged_in', 'ft_pending_google_login'
+    ];
+    keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+    window._firebaseUser = null;
+    window._authHandled = false;
+    window._ftOnboardingActive = false;
+    window._ftEnterAppRunning = false;
+    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+    var loginScr = document.getElementById('scr-google-login');
+    if (loginScr) { loginScr.classList.add('active'); } else { location.reload(); }
+    if (typeof showToast === 'function') showToast('Uscito dall\'account');
   }
-
-  if (typeof showToast === 'function') showToast('✅ Uscito dall\'account');
 };
 
 /* ══════════════════════════════════════════════════════════
