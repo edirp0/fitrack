@@ -3422,7 +3422,7 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import {
-    getAuth, signInWithPopup,
+    getAuth, signInWithPopup, signInWithRedirect, getRedirectResult,
     GoogleAuthProvider, browserLocalPersistence, setPersistence,
     onAuthStateChanged, signOut,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -3556,9 +3556,9 @@ input:focus, textarea:focus, select:focus {
       return;
     }
 
-    // 2. Nessun dato locale — prova cloud
-    _showSplash('Caricamento dati…');
-    const cloudOk = await _waitFirestoreLoad(5000);
+    // 2. Nessun dato locale — prova cloud (timeout ridotto a 3s)
+    _showSplash('Caricamento dati...');
+    const cloudOk = await _waitFirestoreLoad(3000);
     _hideSplash();
 
     if (cloudOk) await _reloadProfile();
@@ -3566,9 +3566,27 @@ input:focus, textarea:focus, select:focus {
     if (typeof profile !== 'undefined' && profile.name) {
       _goToApp(displayName, cloudOk);
     } else {
-      // Nuovo utente — onboarding
-      _startOnboarding();
-      if (typeof showToast==='function') showToast('👋 Ciao ' + displayName.split(' ')[0] + '! Configura il tuo profilo');
+      // Nuovo utente — avvia onboarding
+      // Usa setTimeout per garantire che il DOM sia pronto
+      if (typeof _startOnboarding === 'function') {
+        _startOnboarding();
+      } else {
+        // Fallback: aspetta che _startOnboarding sia disponibile
+        var _obWait = 0;
+        var _obInterval = setInterval(function() {
+          _obWait += 100;
+          if (typeof _startOnboarding === 'function') {
+            clearInterval(_obInterval);
+            _startOnboarding();
+          } else if (_obWait > 3000) {
+            clearInterval(_obInterval);
+            // Ultima risorsa: mostra schermata login
+            var ls = document.getElementById('scr-google-login');
+            if (ls) ls.classList.add('active');
+          }
+        }, 100);
+      }
+      if (typeof showToast==='function') setTimeout(function(){ showToast('Ciao ' + displayName.split(' ')[0] + '! Configura il tuo profilo'); }, 400);
     }
   }
 
@@ -3620,72 +3638,80 @@ input:focus, textarea:focus, select:focus {
 
   // ═══════════════════════════════════════════════════
   // GOOGLE LOGIN
-  // ═══════════════════════════════════════════════════
-  window.firebaseSignIn = async function() {
-    const btnG = document.getElementById('google-signin-btn');
-    if (btnG) { btnG.disabled = true; btnG.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.2);border-top-color:#3c4043;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;"></div> Accesso in corso…'; }
-    const loadEl = document.getElementById('auth-loading');
-    if (loadEl) loadEl.style.display = 'none'; // Il loader è nel bottone
-    const errEl = document.getElementById('auth-error-msg');
-    if (errEl) errEl.style.display = 'none';
+  // Mobile/WebView => redirect, Desktop => popup
+  function _isMobileOrWebView() {
+    var ua = navigator.userAgent || "";
+    if (/FBAN|FBAV|Instagram|Line|MicroMessenger|wv|WebView/i.test(ua)) return true;
+    if (/Android|iPhone|iPad|iPod/i.test(ua) && ("ontouchstart" in window)) return true;
+    return false;
+  }
 
+  // Controlla risultato redirect Google al boot
+  (async function _handleGoogleRedirect() {
     try {
-      const result = await signInWithPopup(auth, provider);
-      if (result && result.user) {
-        await _routeAfterLogin(result.user);
-      }
+      var r = await getRedirectResult(auth);
+      if (r && r.user) { window._authHandled = false; await _routeAfterLogin(r.user); }
     } catch(e) {
-      const msgs = {
-        'auth/network-request-failed': 'Errore di rete. Controlla la connessione.',
-        'auth/unauthorized-domain': 'Dominio non autorizzato in Firebase Console.',
-        'auth/operation-not-allowed': 'Accesso Google non abilitato su Firebase.',
-        'auth/popup-blocked': 'Popup bloccato dal browser. Consenti i popup per questo sito.',
-        'auth/popup-closed-by-user': '', // silenzioso — utente ha chiuso il popup volontariamente
-        'auth/cancelled-popup-request': '', // silenzioso
-      };
-      const msg = msgs[e.code];
-      if (msg === undefined) {
-        _showAuthError('Errore Google: ' + e.message);
-      } else if (msg) {
-        _showAuthError(msg);
+      var ignore = ["auth/no-current-user","auth/null-user","auth/user-cancelled"];
+      if (e.code && !ignore.includes(e.code)) {
+        var m = {"auth/network-request-failed":"Errore di rete. Riprova.","auth/unauthorized-domain":"Dominio non autorizzato in Firebase Console."};
+        _showAuthError(m[e.code] || "Errore Google: " + e.message);
       }
-      // Ripristina bottone
-      if (btnG) {
-        btnG.disabled = false;
-        btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
+    }
+  })();
+
+  var _GSVG = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
+  var _SPIN = '<div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.2);border-top-color:#3c4043;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;"></div>';
+
+  window.firebaseSignIn = async function() {
+    var btnG = document.getElementById("google-signin-btn");
+    var errEl = document.getElementById("auth-error-msg");
+    if (errEl) errEl.style.display = "none";
+    var mobile = _isMobileOrWebView();
+    if (btnG) { btnG.disabled = true; btnG.innerHTML = _SPIN + " " + (mobile ? "Reindirizzamento..." : "Accesso in corso..."); }
+    if (mobile) {
+      try { await signInWithRedirect(auth, provider); }
+      catch(e) { _showAuthError("Errore Google: " + e.message); if (btnG) { btnG.disabled = false; btnG.innerHTML = _GSVG; } }
+    } else {
+      try {
+        var result = await signInWithPopup(auth, provider);
+        if (result && result.user) await _routeAfterLogin(result.user);
+      } catch(e) {
+        var silent = ["auth/popup-closed-by-user","auth/cancelled-popup-request"];
+        var msgs = {"auth/network-request-failed":"Errore di rete.","auth/unauthorized-domain":"Dominio non autorizzato.","auth/operation-not-allowed":"Google non abilitato su Firebase.","auth/popup-blocked":"Popup bloccato: consenti i popup e riprova."};
+        if (!silent.includes(e.code)) _showAuthError(msgs[e.code] || "Errore Google: " + e.message);
+        if (btnG) { btnG.disabled = false; btnG.innerHTML = _GSVG; }
       }
     }
   };
 
-  // ═══════════════════════════════════════════════════
-  // EMAIL / PASSWORD
-  // ═══════════════════════════════════════════════════
   window.firebaseEmailLogin = async function() {
-    const email = document.getElementById('auth-email')?.value?.trim();
-    const pwd   = document.getElementById('auth-password')?.value;
-    if (!email || !pwd) { _showAuthError('Inserisci email e password.'); return; }
-    const loadEl = document.getElementById('auth-loading');
-    if (loadEl) loadEl.style.display = 'block';
-    const errEl = document.getElementById('auth-error-msg');
-    if (errEl) errEl.style.display = 'none';
+    var email = (document.getElementById("auth-email")||{}).value;
+    var pwd   = (document.getElementById("auth-password")||{}).value;
+    if (email) email = email.trim();
+    if (!email || !pwd) { _showAuthError("Inserisci email e password."); return; }
+    var loadEl = document.getElementById("auth-loading");
+    var btnAcc = document.querySelector("#scr-google-login button[onclick*=firebaseEmailLogin], #scr-google-login button.ft-email-login-btn");
+    if (loadEl) loadEl.style.display = "block";
+    var errEl = document.getElementById("auth-error-msg");
+    if (errEl) errEl.style.display = "none";
     try {
-      const result = await signInWithEmailAndPassword(auth, email, pwd);
+      var result = await signInWithEmailAndPassword(auth, email, pwd);
+      if (loadEl) loadEl.style.display = "none";
       await _routeAfterLogin(result.user);
     } catch(e) {
-      const msgs = {
-        'auth/user-not-found': 'Account non trovato. Registrati prima.',
-        'auth/wrong-password': 'Password errata.',
-        'auth/invalid-email': 'Email non valida.',
-        'auth/too-many-requests': 'Troppi tentativi. Attendi qualche minuto.',
-        'auth/invalid-credential': 'Email o password errati.'
+      if (loadEl) loadEl.style.display = "none";
+      var msgs = {
+        "auth/user-not-found": "Account non trovato. Registrati prima.",
+        "auth/wrong-password": "Password errata.",
+        "auth/invalid-email": "Email non valida.",
+        "auth/too-many-requests": "Troppi tentativi. Attendi qualche minuto.",
+        "auth/invalid-credential": "Email o password errati."
       };
-      _showAuthError(msgs[e.code] || 'Errore: ' + e.message);
+      _showAuthError(msgs[e.code] || "Errore: " + e.message);
     }
   };
 
-  // ═══════════════════════════════════════════════════
-  // REGISTRAZIONE
-  // ═══════════════════════════════════════════════════
   window.firebaseEmailRegister = async function() {
     const name  = document.getElementById('auth-name')?.value?.trim();
     const email = document.getElementById('auth-email')?.value?.trim();
