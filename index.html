@@ -3244,7 +3244,7 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-  import { getFirestore, doc, setDoc, getDoc, enableIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  import { getFirestore, doc, setDoc, getDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyDDUoIkszKgK_9Yu5wHlqZ9IifIQWnhvv0",
@@ -3258,11 +3258,17 @@ input:focus, textarea:focus, select:focus {
 
   // Use existing app if already initialized
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  // Use new cache API instead of deprecated enableIndexedDbPersistence()
+  let db;
+  try {
+    db = initializeFirestore(app, {
+      cache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch(e) {
+    // Falls back to getFirestore if already initialized
+    db = getFirestore(app);
+  }
   const auth = getAuth(app);
-
-  // Enable offline persistence
-  try { enableIndexedDbPersistence(db); } catch(e) {}
 
   // Save all local data to Firestore
   window.firestoreSave = async function() {
@@ -3730,20 +3736,24 @@ input:focus, textarea:focus, select:focus {
         // Timeout: se entro 2 minuti non arriva nulla, annulla
         var timeout = setTimeout(function() { reject(new Error("timeout")); }, 120000);
 
-        google.accounts.id.initialize({
-          client_id: _GOOGLE_CLIENT_ID,
-          callback: function(response) {
-            clearTimeout(timeout);
-            if (response.credential) {
-              resolve(response.credential);
-            } else {
-              reject(new Error("Nessuna credenziale ricevuta da Google"));
-            }
-          },
-          auto_select: false,
-          cancel_on_tap_outside: false,
-          use_fedcm_for_prompt: true
-        });
+        // Guard: initialize only once to avoid "called multiple times" warning
+        if (!window._gsiInitialized) {
+          window._gsiInitialized = true;
+          google.accounts.id.initialize({
+            client_id: _GOOGLE_CLIENT_ID,
+            callback: function(response) {
+              clearTimeout(timeout);
+              if (response.credential) {
+                resolve(response.credential);
+              } else {
+                reject(new Error("Nessuna credenziale ricevuta da Google"));
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: false,
+            use_fedcm_for_prompt: true
+          });
+        }
 
         // Mostra il prompt One Tap
         google.accounts.id.prompt(function(notification) {
@@ -3800,6 +3810,8 @@ input:focus, textarea:focus, select:focus {
         "auth/popup-blocked": "Popup bloccato. Consenti i popup per questo sito.",
       };
       _showAuthError(msgs[e.code] || "Errore Google: " + (e.message || "sconosciuto"));
+      // Reset flag so the user can try again
+      window._gsiInitialized = false;
       _resetGoogleBtn();
     }
   };
