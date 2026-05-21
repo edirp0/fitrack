@@ -3248,7 +3248,7 @@ input:focus, textarea:focus, select:focus {
 
   const firebaseConfig = {
     apiKey: "AIzaSyDDUoIkszKgK_9Yu5wHlqZ9IifIQWnhvv0",
-    authDomain: "fittrack-fb939.firebaseapp.com",
+    authDomain: (window.location.hostname === "localhost" || window.location.hostname.endsWith(".firebaseapp.com")) ? "fittrack-fb939.firebaseapp.com" : window.location.hostname,
     databaseURL: "https://fittrack-fb939-default-rtdb.europe-west1.firebaseio.com",
     projectId: "fittrack-fb939",
     storageBucket: "fittrack-fb939.firebasestorage.app",
@@ -3422,7 +3422,7 @@ input:focus, textarea:focus, select:focus {
 <script type="module">
   import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
   import {
-    getAuth, signInWithPopup, signInWithRedirect, getRedirectResult,
+    getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCredential,
     GoogleAuthProvider, browserLocalPersistence, setPersistence,
     onAuthStateChanged, signOut,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
@@ -3431,7 +3431,7 @@ input:focus, textarea:focus, select:focus {
 
   const firebaseConfig = {
     apiKey: "AIzaSyDDUoIkszKgK_9Yu5wHlqZ9IifIQWnhvv0",
-    authDomain: "fittrack-fb939.firebaseapp.com",
+    authDomain: (window.location.hostname === "localhost" || window.location.hostname.endsWith(".firebaseapp.com")) ? "fittrack-fb939.firebaseapp.com" : window.location.hostname,
     databaseURL: "https://fittrack-fb939-default-rtdb.europe-west1.firebaseio.com",
     projectId: "fittrack-fb939",
     storageBucket: "fittrack-fb939.firebasestorage.app",
@@ -3594,18 +3594,39 @@ input:focus, textarea:focus, select:focus {
     window._ftOnboardingActive = false;
     window._ftEnterAppRunning = false;
     // Nascondi tutte le schermate, mostra solo app
-    document.querySelectorAll('.screen.active').forEach(function(s) {
-      if (s.id !== 'scr-app') s.classList.remove('active');
+    document.querySelectorAll('.screen').forEach(function(s) {
+      s.classList.remove('active');
     });
-    const appScreen = document.getElementById('scr-app');
-    if (appScreen) appScreen.classList.add('active');
-    if (typeof initApp === 'function') initApp();
+    var appScreen = document.getElementById('scr-app');
+    if (appScreen) {
+      appScreen.classList.add('active');
+      appScreen.style.display = '';
+    } else {
+      // scr-app non trovato: ricarica come fallback
+      location.reload();
+      return;
+    }
+    // Chiudi login e splash per sicurezza
+    var ls = document.getElementById('scr-google-login');
+    if (ls) ls.classList.remove('active');
+    var sp = document.getElementById('scr-splash');
+    if (sp) sp.classList.remove('active');
+    // Avvia app
+    if (typeof initApp === 'function') {
+      initApp();
+    } else {
+      // initApp non ancora disponibile - aspetta
+      var _wait = 0;
+      var _iv = setInterval(function() {
+        _wait += 100;
+        if (typeof initApp === 'function') { clearInterval(_iv); initApp(); }
+        else if (_wait > 3000) { clearInterval(_iv); location.reload(); }
+      }, 100);
+    }
     if (typeof showToast === 'function') setTimeout(function() {
       showToast('Bentornato ' + displayName.split(' ')[0] + '!' + (fromCloud ? ' ☁️' : ''));
     }, 500);
-    // Avvia auto-save ogni 3 minuti
     _startAutoSave();
-    // Badge cloud
     _addCloudBadge();
   }
 
@@ -3637,16 +3658,153 @@ input:focus, textarea:focus, select:focus {
   }
 
   // ═══════════════════════════════════════════════════
-  // GOOGLE LOGIN
-  // Mobile/WebView => redirect, Desktop => popup
-  function _isMobileOrWebView() {
-    var ua = navigator.userAgent || "";
-    if (/FBAN|FBAV|Instagram|Line|MicroMessenger|wv|WebView/i.test(ua)) return true;
-    if (/Android|iPhone|iPad|iPod/i.test(ua) && ("ontouchstart" in window)) return true;
-    return false;
+  // ═══════════════════════════════════════════════════
+  // GOOGLE LOGIN — via GSI id_token (no popup/iframe Firebase)
+  // Funziona su mobile, WebView, desktop senza blocchi
+  // ═══════════════════════════════════════════════════
+
+  // CLIENT_ID Google OAuth del progetto (stesso usato per GoogleSync)
+  var _GOOGLE_CLIENT_ID = "652881121853-1puaphengv2o19v2thnc3jhpgihfl0gj.apps.googleusercontent.com";
+
+  // Carica GSI se non ancora caricato
+  function _loadGSI() {
+    return new Promise(function(resolve, reject) {
+      if (window.google && window.google.accounts && window.google.accounts.id) { resolve(); return; }
+      if (window._gisLoading) {
+        var poll = setInterval(function() {
+          if (window.google && window.google.accounts && window.google.accounts.id) { clearInterval(poll); resolve(); }
+        }, 100);
+        setTimeout(function() { clearInterval(poll); reject(new Error("GSI load timeout")); }, 8000);
+        return;
+      }
+      // Se lo script GSI e' gia' nel DOM (caricato da GoogleSync) aspetta
+      var existing = document.querySelector("script[src*=\"accounts.google.com/gsi\"]");
+      if (existing) {
+        var poll2 = setInterval(function() {
+          if (window.google && window.google.accounts && window.google.accounts.id) { clearInterval(poll2); resolve(); }
+        }, 100);
+        setTimeout(function() { clearInterval(poll2); reject(new Error("GSI load timeout")); }, 8000);
+        return;
+      }
+      window._gisLoading = true;
+      var s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.onload = function() { window._gisLoading = false; resolve(); };
+      s.onerror = function() { window._gisLoading = false; reject(new Error("Impossibile caricare Google Sign-In")); };
+      document.head.appendChild(s);
+    });
   }
 
-  // Controlla risultato redirect Google al boot
+  // Helper per ripristinare il bottone Google
+  function _resetGoogleBtn() {
+    var btnG = document.getElementById("google-signin-btn");
+    if (btnG) {
+      btnG.disabled = false;
+      btnG.innerHTML = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
+    }
+  }
+
+  window.firebaseSignIn = async function() {
+    var btnG = document.getElementById("google-signin-btn");
+    var errEl = document.getElementById("auth-error-msg");
+    if (errEl) errEl.style.display = "none";
+    if (btnG) {
+      btnG.disabled = true;
+      btnG.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.2);border-top-color:#3c4043;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;"></div> Accesso in corso...';
+    }
+
+    try {
+      await _loadGSI();
+    } catch(e) {
+      // GSI non caricato — fallback a signInWithRedirect (funziona sempre)
+      console.warn("[FitTrack] GSI non disponibile, uso redirect:", e.message);
+      try { await signInWithRedirect(auth, provider); } catch(e2) { _showAuthError("Errore Google: " + e2.message); _resetGoogleBtn(); }
+      return;
+    }
+
+    // Usa Google One Tap / id_token flow — niente iframe, niente popup Firebase
+    // Questo e' il metodo piu' compatibile: apre il selettore account Google nativo
+    try {
+      var idToken = await new Promise(function(resolve, reject) {
+        // Timeout: se entro 2 minuti non arriva nulla, annulla
+        var timeout = setTimeout(function() { reject(new Error("timeout")); }, 120000);
+
+        google.accounts.id.initialize({
+          client_id: _GOOGLE_CLIENT_ID,
+          callback: function(response) {
+            clearTimeout(timeout);
+            if (response.credential) {
+              resolve(response.credential);
+            } else {
+              reject(new Error("Nessuna credenziale ricevuta da Google"));
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: true
+        });
+
+        // Mostra il prompt One Tap
+        google.accounts.id.prompt(function(notification) {
+          // Se il prompt viene ignorato/chiuso senza selezione
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // Fallback: usa signInWithPopup (desktop) o signInWithRedirect (mobile)
+            clearTimeout(timeout);
+            var ua = navigator.userAgent || "";
+            var isMobile = /Android|iPhone|iPad|iPod/i.test(ua) && ("ontouchstart" in window);
+            var isWebView = /FBAN|FBAV|Instagram|Line|MicroMessenger|wv/i.test(ua);
+            if (isMobile || isWebView) {
+              signInWithRedirect(auth, provider)
+                .catch(function(e) { reject(e); });
+              // Il redirect ricarica la pagina — non chiamiamo reject
+            } else {
+              signInWithPopup(auth, provider)
+                .then(function(result) { resolve("__popup__:" + JSON.stringify({uid:result.user.uid})); window._popupUser = result.user; })
+                .catch(function(e) {
+                  if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") {
+                    reject(new Error("__cancelled__"));
+                  } else {
+                    reject(e);
+                  }
+                });
+            }
+          }
+        });
+      });
+
+      // Caso popup desktop — utente gia' gestito
+      if (typeof idToken === "string" && idToken.startsWith("__popup__:")) {
+        if (window._popupUser) {
+          await _routeAfterLogin(window._popupUser);
+          window._popupUser = null;
+        }
+        return;
+      }
+
+      // Normale: id_token ricevuto da One Tap → passa a Firebase
+      var credential = GoogleAuthProvider.credential(idToken);
+      var result = await signInWithCredential(auth, credential);
+      await _routeAfterLogin(result.user);
+
+    } catch(e) {
+      if (e.message === "__cancelled__" || e.message === "timeout") {
+        // Utente ha chiuso il selettore — silenzioso
+        _resetGoogleBtn();
+        return;
+      }
+      var msgs = {
+        "auth/network-request-failed": "Errore di rete. Controlla la connessione.",
+        "auth/user-disabled": "Account disabilitato.",
+        "auth/invalid-credential": "Credenziale Google non valida. Riprova.",
+        "auth/popup-blocked": "Popup bloccato. Consenti i popup per questo sito.",
+      };
+      _showAuthError(msgs[e.code] || "Errore Google: " + (e.message || "sconosciuto"));
+      _resetGoogleBtn();
+    }
+  };
+
+  // Gestione risultato redirect Google al boot
   (async function _handleGoogleRedirect() {
     try {
       var r = await getRedirectResult(auth);
@@ -3654,53 +3812,24 @@ input:focus, textarea:focus, select:focus {
     } catch(e) {
       var ignore = ["auth/no-current-user","auth/null-user","auth/user-cancelled"];
       if (e.code && !ignore.includes(e.code)) {
-        var m = {"auth/network-request-failed":"Errore di rete. Riprova.","auth/unauthorized-domain":"Dominio non autorizzato in Firebase Console."};
-        _showAuthError(m[e.code] || "Errore Google: " + e.message);
+        _showAuthError("Errore accesso Google: " + e.message);
       }
     }
   })();
 
-  var _GSVG = '<svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Continua con Google';
-  var _SPIN = '<div style="width:18px;height:18px;border-radius:50%;border:2px solid rgba(0,0,0,0.2);border-top-color:#3c4043;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px;"></div>';
-
-  window.firebaseSignIn = async function() {
-    var btnG = document.getElementById("google-signin-btn");
-    var errEl = document.getElementById("auth-error-msg");
-    if (errEl) errEl.style.display = "none";
-    var mobile = _isMobileOrWebView();
-    if (btnG) { btnG.disabled = true; btnG.innerHTML = _SPIN + " " + (mobile ? "Reindirizzamento..." : "Accesso in corso..."); }
-    if (mobile) {
-      try { await signInWithRedirect(auth, provider); }
-      catch(e) { _showAuthError("Errore Google: " + e.message); if (btnG) { btnG.disabled = false; btnG.innerHTML = _GSVG; } }
-    } else {
-      try {
-        var result = await signInWithPopup(auth, provider);
-        if (result && result.user) await _routeAfterLogin(result.user);
-      } catch(e) {
-        var silent = ["auth/popup-closed-by-user","auth/cancelled-popup-request"];
-        var msgs = {"auth/network-request-failed":"Errore di rete.","auth/unauthorized-domain":"Dominio non autorizzato.","auth/operation-not-allowed":"Google non abilitato su Firebase.","auth/popup-blocked":"Popup bloccato: consenti i popup e riprova."};
-        if (!silent.includes(e.code)) _showAuthError(msgs[e.code] || "Errore Google: " + e.message);
-        if (btnG) { btnG.disabled = false; btnG.innerHTML = _GSVG; }
-      }
-    }
-  };
-
   window.firebaseEmailLogin = async function() {
-    var email = (document.getElementById("auth-email")||{}).value;
-    var pwd   = (document.getElementById("auth-password")||{}).value;
-    if (email) email = email.trim();
+    var email = ((document.getElementById("auth-email")||{}).value||"").trim();
+    var pwd   = (document.getElementById("auth-password")||{}).value || "";
     if (!email || !pwd) { _showAuthError("Inserisci email e password."); return; }
-    var loadEl = document.getElementById("auth-loading");
-    var btnAcc = document.querySelector("#scr-google-login button[onclick*=firebaseEmailLogin], #scr-google-login button.ft-email-login-btn");
-    if (loadEl) loadEl.style.display = "block";
+    var btn = document.getElementById("auth-email-btn");
+    if (btn) { btn.disabled = true; btn.textContent = "Accesso..."; }
     var errEl = document.getElementById("auth-error-msg");
     if (errEl) errEl.style.display = "none";
     try {
       var result = await signInWithEmailAndPassword(auth, email, pwd);
-      if (loadEl) loadEl.style.display = "none";
       await _routeAfterLogin(result.user);
     } catch(e) {
-      if (loadEl) loadEl.style.display = "none";
+      if (btn) { btn.disabled = false; btn.textContent = "Accedi"; }
       var msgs = {
         "auth/user-not-found": "Account non trovato. Registrati prima.",
         "auth/wrong-password": "Password errata.",
