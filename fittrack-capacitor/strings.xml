@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FitTrack AI</string>
+    <string name="title_activity_main">FitTrack AI</string>
+    <string name="package_name">com.paride.fittrack</string>
+    <string name="custom_url_scheme">com.paride.fittrack</string>
+
+    <!--
+      IMPORTANTE: sostituisci il valore qui sotto con il tuo Server Client ID.
+      Lo trovi su: console.cloud.google.com → API e servizi → Credenziali
+      → "Web client (auto created by Google Service)"
+      Forma: 828892951236-xxxxxxxx.apps.googleusercontent.com
+    -->
+    <string name="server_client_id">QUI_INCOLLA_IL_TUO_SERVER_CLIENT_ID</string>
+</resources>

@@ -1,0 +1,248 @@
+# FitTrack AI — Guida Setup Capacitor per Play Store
+# Segui i passi IN ORDINE. Non saltare nessuno.
+
+═══════════════════════════════════════════════════════════
+PASSO 0 — COSA INSTALLARE SUL PC (fallo prima di tutto)
+═══════════════════════════════════════════════════════════
+
+1. Node.js 18+
+   → https://nodejs.org  (scarica "LTS")
+   → Verifica: apri terminale e scrivi: node --version
+
+2. Android Studio
+   → https://developer.android.com/studio
+   → Durante installazione seleziona:
+      ✅ Android SDK
+      ✅ Android Virtual Device (AVD)
+      ✅ Performance (Intel HAXM)
+   → Dopo l'installazione: SDK Manager → installa "Android 14 (API 34)"
+
+3. JDK 17
+   → Android Studio lo installa automaticamente
+   → Verifica: java --version (deve dire "17.x")
+
+4. Variabile d'ambiente ANDROID_HOME
+   → Su Windows: Pannello di controllo → Variabili d'ambiente → aggiungi:
+      ANDROID_HOME = C:\Users\TUO_NOME\AppData\Local\Android\Sdk
+      PATH aggiungi: %ANDROID_HOME%\tools;%ANDROID_HOME%\platform-tools
+
+
+═══════════════════════════════════════════════════════════
+PASSO 1 — SETUP PROGETTO
+═══════════════════════════════════════════════════════════
+
+Apri il terminale nella cartella fittrack-capacitor e lancia:
+
+  npm install
+
+Poi:
+
+  npx cap add android
+
+Poi copia il tuo index.html nella cartella www/:
+
+  www/
+    index.html   ← il tuo file principale
+
+
+═══════════════════════════════════════════════════════════
+PASSO 2 — TROVARE IL SERVER CLIENT ID (FONDAMENTALE)
+═══════════════════════════════════════════════════════════
+
+Il "serverClientId" nel capacitor.config.json deve essere
+l'ID OAuth del tuo progetto Firebase. Ecco dove trovarlo:
+
+  A) Vai su: console.firebase.google.com
+  B) Seleziona progetto fittrack-fb939
+  C) Ingranaggio (⚙) → Impostazioni progetto
+  D) Tab "Integrazione con Google Play" OPPURE:
+  E) Vai su: console.cloud.google.com → stesso progetto
+     → API e servizi → Credenziali
+     → Cerca "Web client (auto created by Google Service)"
+     → Copia l'"ID client" — ha la forma:
+        828892951236-xxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+
+  F) Incollalo in capacitor.config.json al posto di:
+        "serverClientId": "828892951236-XXXXXXXX..."
+
+
+═══════════════════════════════════════════════════════════
+PASSO 3 — MODIFICARE index.html PER IL LOGIN NATIVO
+═══════════════════════════════════════════════════════════
+
+Nel file www/index.html devi fare 2 modifiche:
+
+--- MODIFICA A ---
+Trova il blocco (nel <script type="module"> di Firebase):
+
+    // GOOGLE LOGIN
+    // ═══════════════════════════════...
+
+Sostituisci TUTTO quel blocco (fino a window.firebaseSignIn incluso)
+con il contenuto del file GOOGLE_LOGIN_NATIVO.js
+
+--- MODIFICA B ---
+Prima del tag </body> (alla fine dell'HTML), aggiungi:
+
+    <!-- Capacitor runtime — DEVE stare prima di tutto il resto -->
+    <script src="capacitor.js"></script>
+
+    <!-- Espone il plugin GoogleAuth globalmente per il modulo ES -->
+    <script>
+      document.addEventListener('deviceready', function() {
+        if (window.Capacitor && window.Capacitor.Plugins) {
+          window.CapacitorGoogleAuth = window.Capacitor.Plugins.GoogleAuth;
+        }
+      });
+      // Fallback immediato (Capacitor 6 non usa deviceready)
+      if (window.Capacitor && window.Capacitor.Plugins) {
+        window.CapacitorGoogleAuth = window.Capacitor.Plugins.GoogleAuth;
+      }
+    </script>
+
+
+═══════════════════════════════════════════════════════════
+PASSO 4 — CONFIGURARE GOOGLE AUTH SU ANDROID
+═══════════════════════════════════════════════════════════
+
+Nel file android/app/src/main/AndroidManifest.xml
+aggiungi dentro <application>:
+
+    <meta-data
+      android:name="com.google.android.gms.version"
+      android:value="@integer/google_play_services_version" />
+
+Nel file android/app/build.gradle aggiungi nelle dependencies:
+
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+
+Nel file android/app/src/main/res/values/strings.xml aggiungi:
+
+    <string name="server_client_id">QUI_IL_TUO_SERVER_CLIENT_ID</string>
+
+Poi lancia:
+
+    npx cap sync
+
+
+═══════════════════════════════════════════════════════════
+PASSO 5 — SHA-1 FINGERPRINT (OBBLIGATORIO PER GOOGLE LOGIN)
+═══════════════════════════════════════════════════════════
+
+Google Sign-In su Android richiede che il fingerprint SHA-1
+della tua app sia registrato su Firebase.
+
+Per generarlo:
+
+  → In Android Studio: menu Gradle (pannello dx) →
+    :app → Tasks → android → signingReport
+  → Copia il valore SHA-1 che appare
+
+  → Vai su: console.firebase.google.com → fittrack-fb939
+  → Impostazioni progetto → App Android
+  → "Aggiungi fingerprint" → incolla il SHA-1
+
+  NOTA: Devi fare questo PER IL DEBUG e poi di nuovo
+  con il keystore di produzione prima di pubblicare.
+
+
+═══════════════════════════════════════════════════════════
+PASSO 6 — PRIMO TEST SULL'EMULATORE
+═══════════════════════════════════════════════════════════
+
+  npx cap sync
+  npx cap open android
+
+Android Studio si apre. Poi:
+  → Seleziona un emulatore (o collega un telefono Android via USB)
+  → Premi il pulsante ▶ Play
+  → L'app si avvia — testa il login Google
+
+Se il login non funziona nell'emulatore, testa su un
+telefono fisico — l'emulatore a volte ha problemi con
+Google Play Services.
+
+
+═══════════════════════════════════════════════════════════
+PASSO 7 — BUILD FIRMATO PER PLAY STORE
+═══════════════════════════════════════════════════════════
+
+1. In Android Studio:
+   Build → Generate Signed Bundle / APK
+   → Scegli "Android App Bundle (.aab)" ← OBBLIGATORIO per Play Store
+
+2. "Create new keystore":
+   → Scegli dove salvarlo (non perderlo mai — serve per ogni update)
+   → Alias: fittrack
+   → Password: sceglila tu (annotala)
+   → Validity: 25 years
+   → First and Last Name: il tuo nome
+
+3. Build type: Release
+4. Attendi il build → trovi il file in:
+   android/app/release/app-release.aab
+
+
+═══════════════════════════════════════════════════════════
+PASSO 8 — PUBBLICARE SUL PLAY STORE
+═══════════════════════════════════════════════════════════
+
+1. Vai su: play.google.com/console
+2. Crea account sviluppatore (25$ una tantum con carta)
+3. "Crea app" → nome: FitTrack AI, italiano, app gratuita
+4. Compila le schede obbligatorie:
+   ✅ Informazioni sull'app (descrizione, screenshot)
+   ✅ Classificazione dei contenuti (compila il questionario)
+   ✅ Privacy policy (obbligatoria — vedi nota sotto)
+   ✅ Target audience
+5. Upload del file .aab in "Produzione" o "Test interno"
+6. Invia per revisione → Google risponde in 3-7 giorni
+
+NOTA PRIVACY POLICY:
+   È obbligatoria. Puoi usare un generatore gratuito:
+   → https://www.privacypolicygenerator.info
+   Caricala su GitHub Pages o Vercel e incolla il link.
+
+
+═══════════════════════════════════════════════════════════
+STRUTTURA FINALE CARTELLA PROGETTO
+═══════════════════════════════════════════════════════════
+
+fittrack-capacitor/
+├── package.json
+├── capacitor.config.json
+├── www/
+│   └── index.html          ← il tuo file modificato
+├── android/                ← generata da "npx cap add android"
+│   ├── app/
+│   │   ├── src/main/
+│   │   │   ├── AndroidManifest.xml
+│   │   │   └── res/values/strings.xml
+│   │   └── build.gradle
+│   └── build.gradle
+└── GOOGLE_LOGIN_NATIVO.js  ← il codice da incollare in index.html
+
+
+═══════════════════════════════════════════════════════════
+PROBLEMI COMUNI E SOLUZIONI
+═══════════════════════════════════════════════════════════
+
+ERRORE: "Google sign in failed — 10"
+→ Il SHA-1 non è stato aggiunto su Firebase Console (vedi Passo 5)
+→ Oppure il serverClientId è sbagliato (vedi Passo 2)
+
+ERRORE: "Plugin GoogleAuth not found"
+→ Non hai fatto "npx cap sync" dopo npm install
+→ Oppure il tag <script src="capacitor.js"> manca in index.html
+
+ERRORE: "JAVA_HOME not set"
+→ Aggiungi variabile d'ambiente JAVA_HOME che punta al JDK 17
+
+SCHERMO NERO dopo login
+→ Apri Android Studio → Logcat → cerca errori rossi
+→ Di solito è initApp() che crasha — controlla la console
+
+APP RIFIUTATA DA GOOGLE PLAY
+→ Manca privacy policy → aggiungila
+→ Le icone non rispettano le dimensioni → usa 512x512 PNG
+→ Screenshot obbligatori → falli dall'emulatore

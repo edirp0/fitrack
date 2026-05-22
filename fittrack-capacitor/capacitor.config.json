@@ -1,0 +1,17 @@
+{
+  "appId": "com.paride.fittrack",
+  "appName": "FitTrack AI",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#06060E"
+  },
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "828892951236-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
+}

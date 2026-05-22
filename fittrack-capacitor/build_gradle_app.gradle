@@ -1,0 +1,62 @@
+// QUESTO FILE va in: android/app/build.gradle
+// Sostituisce quello generato da Capacitor
+
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'  // ← obbligatorio per Firebase/Google Auth
+
+android {
+    namespace "com.paride.fittrack"
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.paride.fittrack"
+        minSdk 22
+        targetSdk 34
+        versionCode 1          // ← aumenta di 1 ad ogni update sul Play Store
+        versionName "1.0.0"    // ← versione visibile agli utenti
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // signingConfig signingConfigs.release  ← decommenta dopo aver creato il keystore
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    // Capacitor core
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation project(':capacitor-android')
+
+    // Plugin GoogleAuth
+    implementation project(':codetrix-studio-capacitor-google-auth')
+
+    // Google Play Services Auth — obbligatorio per Google Sign-In nativo
+    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+
+    // Firebase BOM — gestisce le versioni di tutte le librerie Firebase
+    implementation platform('com.google.firebase:firebase-bom:33.1.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-database'
+
+    // AndroidX
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}
