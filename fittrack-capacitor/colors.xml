@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-  QUESTO FILE va in: android/app/src/main/res/values/colors.xml
--->
-<resources>
-    <color name="background">#06060E</color>
-    <color name="accent">#C8F53C</color>
-    <color name="white">#FFFFFF</color>
-</resources>
