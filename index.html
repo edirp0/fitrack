@@ -64,6 +64,97 @@ input,select,button{font-family:'Syne',sans-serif;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
 @keyframes countUp{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes coachSlideIn{from{opacity:0;transform:translateY(-14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes coachNotifPop{0%{opacity:0;transform:translateX(-10px)}60%{transform:translateX(3px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes btnPressGlow{0%{transform:scale(1)}40%{transform:scale(.93)}100%{transform:scale(1)}}
+
+/* ── AI COACH AUTOREGULATION MODULE ── */
+#wo-ai-coach-module{
+  margin:12px 16px 0;
+  background:linear-gradient(135deg,rgba(200,245,60,.07) 0%,rgba(91,156,239,.05) 100%);
+  border:1.5px solid rgba(200,245,60,.22);
+  border-radius:var(--r-lg);
+  padding:13px 15px;
+  animation:coachSlideIn .45s cubic-bezier(.22,1,.36,1) both;
+  position:relative;
+  overflow:hidden;
+}
+#wo-ai-coach-module::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--acc),var(--blue),var(--acc));
+  background-size:200% 100%;
+  animation:shimmer 3s linear infinite;
+}
+.wo-coach-header{
+  display:flex;align-items:center;gap:9px;margin-bottom:10px;
+}
+.wo-coach-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--acc),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+  box-shadow:0 0 12px rgba(200,245,60,.3);
+}
+.wo-coach-label{
+  font-size:9px;font-weight:700;color:var(--acc);
+  text-transform:uppercase;letter-spacing:.12em;line-height:1.1;
+}
+.wo-coach-q{
+  font-size:13px;font-weight:700;color:var(--text);line-height:1.3;
+}
+.wo-coach-btns{
+  display:flex;gap:7px;flex-wrap:wrap;
+}
+.wo-coach-btn{
+  flex:1;min-width:0;
+  padding:9px 8px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.09);
+  border-radius:10px;
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:11px;font-weight:700;
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:all .18s cubic-bezier(.22,1,.36,1);
+  white-space:nowrap;
+  letter-spacing:-.2px;
+}
+.wo-coach-btn:active{animation:btnPressGlow .25s ease-out;}
+.wo-coach-btn .cb-ico{font-size:18px;line-height:1;}
+.wo-coach-btn.cb-time:hover,.wo-coach-btn.cb-time:focus{background:rgba(255,154,60,.15);border-color:rgba(255,154,60,.45);color:var(--orange);}
+.wo-coach-btn.cb-energy:hover,.wo-coach-btn.cb-energy:focus{background:rgba(91,156,239,.15);border-color:rgba(91,156,239,.45);color:var(--blue);}
+.wo-coach-btn.cb-joint:hover,.wo-coach-btn.cb-joint:focus{background:rgba(255,92,106,.15);border-color:rgba(255,92,106,.45);color:var(--red);}
+.wo-coach-btn.cb-active.cb-time{background:rgba(255,154,60,.18);border-color:rgba(255,154,60,.6);color:var(--orange);}
+.wo-coach-btn.cb-active.cb-energy{background:rgba(91,156,239,.18);border-color:rgba(91,156,239,.6);color:var(--blue);}
+.wo-coach-btn.cb-active.cb-joint{background:rgba(255,92,106,.18);border-color:rgba(255,92,106,.6);color:var(--red);}
+
+/* Coach notification banner */
+.wo-coach-notif{
+  margin:10px 16px 0;
+  padding:11px 14px;
+  border-radius:var(--r);
+  display:flex;align-items:flex-start;gap:10px;
+  animation:coachNotifPop .35s cubic-bezier(.22,1,.36,1) both;
+  font-size:12px;line-height:1.55;font-weight:600;
+}
+.wo-coach-notif.cn-time{background:rgba(255,154,60,.12);border:1px solid rgba(255,154,60,.3);color:var(--orange);}
+.wo-coach-notif.cn-energy{background:rgba(91,156,239,.12);border:1px solid rgba(91,156,239,.3);color:var(--blue);}
+.wo-coach-notif.cn-joint{background:rgba(255,92,106,.12);border:1px solid rgba(255,92,106,.3);color:var(--red);}
+.wo-coach-notif-ico{font-size:18px;flex-shrink:0;margin-top:1px;}
+.wo-coach-notif-txt b{display:block;font-size:12px;font-weight:800;margin-bottom:2px;}
+
+/* Superserie tag on exercise card */
+.wo-superset-tag{
+  display:inline-block;font-size:9px;font-weight:800;padding:2px 7px;
+  border-radius:99px;background:rgba(255,154,60,.15);color:var(--orange);
+  border:1px solid rgba(255,154,60,.3);margin-left:6px;vertical-align:middle;
+  text-transform:uppercase;letter-spacing:.06em;
+}
+/* modified set badge */
+.wo-set-modified{
+  font-size:9px;color:var(--text3);margin-left:4px;font-weight:400;
+}
 
 /* ── SCREEN SYSTEM ── */
 .screen{display:none;position:fixed;inset:0;overflow:hidden;background:var(--bg);}
@@ -6416,6 +6507,28 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
       </div>
     </div>
   </div>
+  <!-- AI COACH AUTOREGULATION MODULE -->
+  <div id="wo-ai-coach-module">
+    <div class="wo-coach-header">
+      <div class="wo-coach-avatar">🤖</div>
+      <div>
+        <div class="wo-coach-label">AI Coach · Autoregolazione</div>
+        <div class="wo-coach-q">Come ti senti oggi?</div>
+      </div>
+    </div>
+    <div class="wo-coach-btns">
+      <button class="wo-coach-btn cb-time" onclick="applyAutoregulation('time')">
+        <span class="cb-ico">⏱️</span>Poco Tempo
+      </button>
+      <button class="wo-coach-btn cb-energy" onclick="applyAutoregulation('energy')">
+        <span class="cb-ico">🔋</span>Bassa Energia
+      </button>
+      <button class="wo-coach-btn cb-joint" onclick="applyAutoregulation('joint')">
+        <span class="cb-ico">⚠️</span>Fastidi Articolari
+      </button>
+    </div>
+  </div>
+  <div id="wo-coach-notif-wrap"></div>
   <div id="wo-exs"></div>
 </div>
 
@@ -12656,6 +12769,8 @@ function startPreset(preset){
 
 function beginWorkout(prog,day){
   woProgram=prog;woDayData=day;woSets={};woWeights={};woStart=Date.now();
+  // Reset autoregulation state for new session
+  _resetAutoReg();
   const _wonm=document.getElementById('wo-nm'); if(_wonm) _wonm.textContent=(prog.name||'Allenamento').toUpperCase();
   const _woday=document.getElementById('wo-day'); if(_woday) _woday.textContent=day.name;
   renderWoExs();
@@ -12675,26 +12790,63 @@ function renderWoExs(){
   if(progFill) progFill.style.width=pct+'%';
   if(pctLabel) pctLabel.textContent=pct+'% completato';
 
+  const arMode = window._woAutoReg?.mode || null;
+
   const _woExsEl=document.getElementById('wo-exs'); if(_woExsEl) _woExsEl.innerHTML=exs.map((ex,ei)=>{
     const exD=EX_DB.find(e=>e.id===ex.id)||{name:ex.name||ex.id,tags:[]};
     const sets=safeSets(ex.s);
     const isPushPull=ex.id&&!['burpees','mt-cl','jump-j','hi-kn','sprint','plank','side-plank','hollow','lsit','hshold'].includes(ex.id);
-    return `<div class="wo-ex-card">
+
+    // ── Autoregulation decorators ──
+    const isArModified = ex._arModified === arMode;
+    const isSuperSet   = ex._superset && arMode === 'time';
+    const isJointSwap  = ex._originalId && arMode === 'joint';
+    const isEnergyMode = arMode === 'energy';
+
+    // Card border accent per modalità attiva
+    let cardBorder = '';
+    if(isArModified){
+      if(arMode==='time')   cardBorder = 'border-left:3px solid var(--orange);';
+      if(arMode==='energy') cardBorder = 'border-left:3px solid var(--blue);';
+      if(arMode==='joint')  cardBorder = 'border-left:3px solid var(--red);';
+    }
+
+    // Superset tag
+    const superTag = isSuperSet
+      ? `<span class="wo-superset-tag">Superserie</span>` : '';
+
+    // Joint swap info
+    const jointInfo = isJointSwap
+      ? `<div style="font-size:10px;color:var(--red);background:rgba(255,92,106,.08);border:1px solid rgba(255,92,106,.2);border-radius:7px;padding:4px 9px;margin-bottom:7px;"><b>🔄 Sostituisce:</b> ${ex._originalName} · ${ex._jointAltReason||'Variante sicura'}</div>`
+      : '';
+
+    // Energy scale info on set rows
+    const energyScale = isEnergyMode && isArModified ? 0.90 : 1.0;
+
+    return `<div class="wo-ex-card" style="${cardBorder}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="wo-ex-nm" style="margin-bottom:0">${exD.name}</div>
-        <div style="display:flex;gap:5px;flex-shrink:0;">
-        </div>
+        <div class="wo-ex-nm" style="margin-bottom:0">${exD.name}${superTag}</div>
+        <div style="display:flex;gap:5px;flex-shrink:0;"></div>
       </div>
+      ${jointInfo}
       ${(()=>{try{const prog=typeof checkAutoProgression==='function'?checkAutoProgression(ex.id):null;return prog?`<div style="font-size:11px;color:var(--acc);background:rgba(200,245,60,.08);border:1px solid rgba(200,245,60,.2);border-radius:8px;padding:5px 10px;margin-bottom:8px;">${prog.message}</div>`:'';} catch(e){return '';} })()}
       ${(()=>{try{const smartSec=typeof getSmartRestTime==='function'?getSmartRestTime(ex.id,ex.rs):parseRest(ex.rs||'75s');return `<div style="font-size:10px;color:var(--text3);margin-bottom:8px;">⏱ Riposo consigliato: <strong style="color:var(--text2)">${smartSec}s</strong></div>`;}catch(e){return '';}})()}
       ${Array.from({length:sets},(_,si)=>{
         const done=!!woSets[ei+'_'+si];
         const wKey='wo_w_'+ei+'_'+si;
         const savedW=woWeights[wKey]||'';
+
+        // Energy mode: show scaled weight suggestion
+        let energyHint = '';
+        if(isEnergyMode && isArModified && savedW){
+          const scaled = Math.round(parseFloat(savedW) * 0.90 * 4) / 4; // round to 0.25
+          if(!isNaN(scaled)) energyHint = `<span class="wo-set-modified" title="−10% energia bassa">→ ${scaled}kg</span>`;
+        }
+
         return `<div class="wo-set-row${done?' done':''}" style="cursor:default;display:block;padding:10px 13px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="wo-set-n">Serie ${si+1}</div>
-            <div class="wo-set-info" style="flex:1">${ex.r||'10'} reps · riposo ${ex.rs||'75s'}</div>
+            <div class="wo-set-info" style="flex:1">${ex.r||'10'} reps · riposo ${ex.rs||'75s'}${energyHint}</div>
             ${isPushPull?`<div style="display:flex;align-items:center;gap:4px;">
               <input type="number" inputmode="decimal" placeholder="kg" min="0" max="999" step="0.5"
                 value="${savedW}"
@@ -12812,6 +12964,213 @@ window.suggestExVariant = function(exId) {
   return altEx ? {...v, altEx} : null;
 };
 
+/* ══════════════════════════════════════════════════════════════
+   AI COACH — AUTOREGOLAZIONE SESSIONE (v1)
+   Modifica dinamica in-memory: non altera i preset salvati.
+   Stato globale: window._woAutoReg
+══════════════════════════════════════════════════════════════ */
+
+// Map esercizi ad alto impatto assiale → variante guidata/sicura
+const JOINT_SAFE_MAP = {
+  // Squat libero / bilanciere → Leg Press o Goblet Squat
+  'squat':       {alt:'leg-press', label:'Leg Press', icon:'🦵', reason:'Meno stress vertebrale'},
+  'back-squat':  {alt:'leg-press', label:'Leg Press', icon:'🦵', reason:'Protegge la colonna'},
+  'front-squat': {alt:'leg-press', label:'Leg Press', icon:'🦵', reason:'Variante più stabile'},
+  'squat-w':     {alt:'leg-press', label:'Leg Press', icon:'🦵', reason:'Carico guidato'},
+  'squat-j':     {alt:'ct-squat',  label:'Squat Isometrico', icon:'🟡', reason:'Niente impatto articolare'},
+  'pistol':      {alt:'bss',       label:'Split Squat', icon:'🟡', reason:'Meno stress monopodalico'},
+  'pistol-w':    {alt:'bss',       label:'Split Squat', icon:'🟡', reason:'Variante bipodale'},
+  // Stacco da terra → Stacco rumeno (minor carico lombare)
+  'dl':          {alt:'rdl',  label:'Stacco Rumeno', icon:'🔴', reason:'Riduce stress lombare'},
+  'deadlift':    {alt:'rdl',  label:'Stacco Rumeno', icon:'🔴', reason:'Riduce stress lombare'},
+  'sumo-dl':     {alt:'rdl',  label:'Stacco Rumeno', icon:'🔴', reason:'Riduce torsione anche'},
+  // Panca piana bilanciere → Panca manubri (ROM protetto)
+  'bp':          {alt:'db-press',  label:'Panca Manubri', icon:'🔵', reason:'ROM controllato'},
+  'inc-bp':      {alt:'db-press',  label:'Panca Inclinata Manubri', icon:'🔵', reason:'Meno stress spalle'},
+  // Overhead Press → Manubri (meno stress AC)
+  'ohp':         {alt:'db-ohp',   label:'Shoulder Press Manubri', icon:'🟢', reason:'Spalle protette'},
+  'mil-press':   {alt:'db-ohp',   label:'Shoulder Press Manubri', icon:'🟢', reason:'Arco naturale'},
+  // Bulgarian Split Squat → Affondi in piano
+  'bss':         {alt:'lunge',    label:'Affondi in Piano', icon:'🟡', reason:'Meno stress ginocchio'},
+  // Hip Thrust → Glute Bridge
+  'hip-thr':     {alt:'glute-b',  label:'Glute Bridge', icon:'🟠', reason:'Senza bilanciere sull\'anca'},
+  // Box Jump → Step Up
+  'box-j':       {alt:'step-up',  label:'Step Up', icon:'🟡', reason:'Elimina impatto atterraggio'},
+  // Dips → Push-up inclinato
+  'dips-w':      {alt:'push-up-w',label:'Push-up (variante)', icon:'🟣', reason:'Meno stress spalla'},
+  'dips':        {alt:'push-up-w',label:'Push-up (variante)', icon:'🟣', reason:'Meno stress spalla'},
+  // Running / Sprint → Bike / Ellittica
+  'sprint':      {alt:'burpees',  label:'Burpees Low-Impact', icon:'🔥', reason:'Zero impatto articolare'},
+};
+window.JOINT_SAFE_MAP = JOINT_SAFE_MAP;
+
+// Stato autoregolazione sessione corrente
+window._woAutoReg = {
+  mode: null,   // 'time' | 'energy' | 'joint' | null
+  originalExercises: null,  // deep copy degli esercizi originali prima di qualsiasi modifica
+};
+
+function _deepCopyExercises(exs){
+  return JSON.parse(JSON.stringify(exs || []));
+}
+
+function _restoreOriginalExercises(){
+  if(window._woAutoReg.originalExercises && woDayData){
+    woDayData.exercises = _deepCopyExercises(window._woAutoReg.originalExercises);
+  }
+}
+
+/* Funzione principale chiamata dai 3 pulsanti del micro-modulo */
+function applyAutoregulation(mode){
+  if(!woDayData || !woDayData.exercises){
+    showToast('⚠️ Nessuna sessione attiva');
+    return;
+  }
+
+  // Salva copia originale solo alla PRIMA chiamata
+  if(!window._woAutoReg.originalExercises){
+    window._woAutoReg.originalExercises = _deepCopyExercises(woDayData.exercises);
+  }
+
+  // Se stesso tasto → toggle off (ripristina originale)
+  if(window._woAutoReg.mode === mode){
+    _restoreOriginalExercises();
+    window._woAutoReg.mode = null;
+    _renderCoachNotif(null);
+    _updateCoachBtnStates(null);
+    renderWoExs();
+    showToast('↩️ Sessione ripristinata');
+    return;
+  }
+
+  // Ripristina sempre dall'originale prima di applicare nuova modalità
+  _restoreOriginalExercises();
+  window._woAutoReg.mode = mode;
+
+  if(mode === 'time')   _applyTimeMode();
+  else if(mode === 'energy') _applyEnergyMode();
+  else if(mode === 'joint')  _applyJointMode();
+
+  _updateCoachBtnStates(mode);
+  renderWoExs();
+}
+
+/* ── MODE: POCO TEMPO ── */
+function _applyTimeMode(){
+  const exs = woDayData.exercises;
+  // Quanti esercizi ci sono?
+  const total = exs.length;
+  // Divide in primari (fondamentali o primi N/2) e secondari
+  const primaryCount = Math.max(1, Math.ceil(total / 2));
+
+  exs.forEach((ex, i) => {
+    const origSets = parseInt(window._woAutoReg.originalExercises[i]?.s || ex.s || 3);
+    if(i < primaryCount){
+      // Primari: taglia da 4→2 o 3→2
+      ex.s = String(Math.max(2, Math.floor(origSets / 2)));
+      ex._arModified = 'time';
+    } else {
+      // Secondari: accorpa in superserie (flag visivo)
+      ex.s = String(Math.max(2, Math.floor(origSets / 2)));
+      ex._arModified = 'time';
+      ex._superset = true;  // flag per UI superserie
+    }
+  });
+
+  // Ricalcola stima tempo
+  const totalSets = exs.reduce((a,e)=>a+parseInt(e.s||2),0);
+  const estMin = Math.round(totalSets * 2.2 + (exs.length * 0.5)); // ~2.2 min/serie + setup
+  _renderCoachNotif('time',
+    '⏱️ Sessione compressa',
+    `Serie dimezzate e esercizi secondari in superserie. Stima: ~${estMin} min. Carico invariato.`
+  );
+}
+
+/* ── MODE: BASSA ENERGIA ── */
+function _applyEnergyMode(){
+  const exs = woDayData.exercises;
+  exs.forEach((ex, i) => {
+    const origW = parseFloat(ex._suggestedKg || ex.kg || 0);
+    // Segna per riduzione carico -10% nella UI
+    const origRpe = parseInt(ex.rpe || 8);
+    ex._arEnergyScalePct = 0.90;  // 90% del peso
+    ex._arRpeAdj = Math.max(1, origRpe - 1);
+    ex._arModified = 'energy';
+  });
+  _renderCoachNotif('energy',
+    '🔋 Sessione a bassa intensità',
+    'Pesi suggeriti ridotti del 10%, RPE abbassato di 1 punto. Evita il sovrallenamento: oggi recupera bene!'
+  );
+}
+
+/* ── MODE: FASTIDI ARTICOLARI ── */
+function _applyJointMode(){
+  const exs = woDayData.exercises;
+  const _exdb = (typeof EX_DB !== 'undefined' && Array.isArray(EX_DB)) ? EX_DB : [];
+  let replacedCount = 0;
+
+  exs.forEach((ex, i) => {
+    const safe = JOINT_SAFE_MAP[ex.id];
+    if(safe){
+      // Trova l'esercizio sostitutivo nel DB
+      const altData = _exdb.find(e => e.id === safe.alt);
+      if(altData){
+        ex._originalId   = ex.id;
+        ex._originalName = ex.name || _exdb.find(e=>e.id===ex.id)?.name || ex.id;
+        ex.id   = safe.alt;
+        ex.name = altData.name || safe.label;
+        ex._arModified = 'joint';
+        ex._jointAltReason = safe.reason;
+        replacedCount++;
+      }
+    }
+  });
+
+  const notifBody = replacedCount > 0
+    ? `${replacedCount} esercizi ad alto impatto sostituiti con varianti guidate. Allena la stessa catena muscolare in sicurezza.`
+    : 'Nessun esercizio critico rilevato. Riduci i carichi del 15% e usa ROM parziale dove necessario.';
+
+  _renderCoachNotif('joint',
+    '🛡️ Sessione ottimizzata per le articolazioni',
+    notifBody
+  );
+}
+
+/* Renderizza la notifica del Coach sotto il modulo */
+function _renderCoachNotif(mode, title, body){
+  const wrap = document.getElementById('wo-coach-notif-wrap');
+  if(!wrap) return;
+  if(!mode){ wrap.innerHTML = ''; return; }
+  const cls = mode === 'time' ? 'cn-time' : mode === 'energy' ? 'cn-energy' : 'cn-joint';
+  const ico = mode === 'time' ? '⏱️' : mode === 'energy' ? '🔋' : '🛡️';
+  wrap.innerHTML = `
+    <div class="wo-coach-notif ${cls}">
+      <span class="wo-coach-notif-ico">${ico}</span>
+      <div class="wo-coach-notif-txt"><b>${title}</b>${body}</div>
+    </div>`;
+}
+
+/* Aggiorna stile visivo pulsanti attivi */
+function _updateCoachBtnStates(activeMode){
+  const btnMap = {time:'cb-time', energy:'cb-energy', joint:'cb-joint'};
+  document.querySelectorAll('.wo-coach-btn').forEach(btn => {
+    btn.classList.remove('cb-active');
+  });
+  if(activeMode){
+    const cls = btnMap[activeMode];
+    document.querySelector('.wo-coach-btn.'+cls)?.classList.add('cb-active');
+  }
+}
+
+/* Reset quando si chiude/finisce l'allenamento */
+function _resetAutoReg(){
+  window._woAutoReg = { mode: null, originalExercises: null };
+  const wrap = document.getElementById('wo-coach-notif-wrap');
+  if(wrap) wrap.innerHTML = '';
+  document.querySelectorAll('.wo-coach-btn').forEach(b=>b.classList.remove('cb-active'));
+}
+window._resetAutoReg = _resetAutoReg;
+
 /* ══ MACHINE LOG — traccia il macchinario usato ══ */
 window.woMachineLog = {};
 window.logMachineUsed = function(ei, machineName) {
@@ -12925,6 +13284,11 @@ function skipRest(){clearInterval(restInterval);const _rm=document.getElementByI
 async function finishWorkout(){
   clearInterval(woTimer);
   _clearAutoSave();
+  // Restore original exercises before saving (autoregulation is session-only, not persisted)
+  if(window._woAutoReg && window._woAutoReg.originalExercises && woDayData){
+    woDayData.exercises = _deepCopyExercises(window._woAutoReg.originalExercises);
+  }
+  _resetAutoReg();
   const dur=Math.round((Date.now()-woStart)/60000);
   const exs=woDayData.exercises||[];
   let vol=0;(Array.isArray(exs)?exs:[]).forEach(ex=>{vol+=safeSets(ex.s)*safeReps(ex.r);});
