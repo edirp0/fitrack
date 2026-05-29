@@ -36964,6 +36964,348 @@ html, body {
 })();
 </script>
 
+<style id="ft-nutrition-recipes-style">
+.ft-macro-ring-card{margin:12px 0;padding:14px;border:1px solid rgba(200,245,60,.16);border-radius:16px;background:linear-gradient(180deg,rgba(200,245,60,.055),rgba(255,255,255,.018));overflow:hidden}
+.ft-macro-ring-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.ft-macro-ring-title{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.ft-macro-ring-sub{font-size:11px;color:var(--text2);line-height:1.35}
+.ft-macro-ring-body{display:grid;grid-template-columns:116px 1fr;gap:14px;align-items:center}
+.ft-macro-ring-svg{width:116px;height:116px;display:block;filter:drop-shadow(0 0 10px rgba(200,245,60,.12))}
+.ft-macro-seg-bg{fill:none;stroke:rgba(255,255,255,.07);stroke-width:12;stroke-linecap:round}
+.ft-macro-seg{fill:none;stroke-width:12;stroke-linecap:round;cursor:pointer;transition:stroke-dasharray .25s ease,opacity .2s ease,filter .2s ease}
+.ft-macro-seg:hover{opacity:1;filter:drop-shadow(0 0 7px currentColor)}
+.ft-macro-ring-center{font-family:'DM Mono',monospace;font-size:11px;font-weight:900;fill:var(--text1)}
+.ft-macro-ring-kcal{font-family:'DM Mono',monospace;font-size:7px;font-weight:800;fill:var(--text3)}
+.ft-macro-legend{display:grid;gap:7px}
+.ft-macro-pill{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.025);color:var(--text1);font-family:'Syne',sans-serif;cursor:pointer;text-align:left}
+.ft-macro-pill b{font-size:12px}
+.ft-macro-pill span{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)}
+.ft-macro-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 8px currentColor;flex:0 0 auto}
+.ft-shop-card{margin:12px 0;padding:14px;border:1px solid rgba(200,245,60,.14);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015))}
+.ft-shop-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.ft-shop-title{font-size:13px;font-weight:900;color:var(--text1)}
+.ft-shop-sub{font-size:10px;color:var(--text3);line-height:1.45;margin-top:3px}
+.ft-shop-clear{border:1px solid var(--border2);background:var(--bg3);color:var(--text2);border-radius:99px;padding:6px 10px;font-family:'Syne',sans-serif;font-size:10px;font-weight:800;cursor:pointer}
+.ft-shop-recipes{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.ft-shop-recipe-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:99px;border:1px solid rgba(200,245,60,.22);background:rgba(200,245,60,.08);color:var(--acc);font-size:10px;font-weight:800}
+.ft-shop-recipe-chip button{border:0;background:transparent;color:var(--acc);font-weight:900;cursor:pointer;padding:0;font-size:12px}
+.ft-shop-list{display:grid;gap:6px}
+.ft-shop-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border:1px solid var(--border);border-radius:11px;background:rgba(0,0,0,.12)}
+.ft-shop-item input{accent-color:#C8F53C;width:16px;height:16px}
+.ft-shop-item label{flex:1;font-size:12px;color:var(--text1);line-height:1.35}
+.ft-shop-item small{font-family:'DM Mono',monospace;color:var(--text3);font-size:10px}
+.ft-shop-item.done label{text-decoration:line-through;color:var(--text3)}
+.ft-recipe-plan-btn{margin-top:8px;width:100%;padding:10px 11px;border-radius:12px;border:1px solid rgba(200,245,60,.25);background:rgba(200,245,60,.08);color:var(--acc);font-family:'Syne',sans-serif;font-size:12px;font-weight:900;cursor:pointer}
+.ft-recipe-plan-btn.on{background:var(--acc);color:#070807;border-color:var(--acc)}
+.ft-macro-coach-sheet{position:fixed;inset:0;z-index:720;background:rgba(0,0,0,.68);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.ft-macro-coach-panel{width:100%;max-width:430px;border:1px solid rgba(200,245,60,.22);border-radius:22px;background:var(--bg2);padding:18px;box-shadow:0 -20px 70px rgba(0,0,0,.5)}
+.ft-macro-coach-kicker{font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
+.ft-macro-coach-title{font-size:19px;font-weight:900;margin:5px 0 8px;color:var(--text1)}
+.ft-macro-coach-text{font-size:13px;line-height:1.55;color:var(--text2)}
+.ft-macro-coach-actions{display:flex;gap:8px;margin-top:14px}
+.ft-macro-coach-actions button{flex:1;padding:11px;border-radius:12px;border:0;font-family:'Syne',sans-serif;font-weight:900;cursor:pointer}
+@media(max-width:420px){.ft-macro-ring-body{grid-template-columns:1fr}.ft-macro-ring-svg{margin:auto}.ft-macro-coach-actions{flex-direction:column}}
+</style>
+
+<script>
+(function FitTrackNutritionRecipesV51(){
+  'use strict';
+  if (window._ftNutritionRecipesV51) return;
+  window._ftNutritionRecipesV51 = true;
+
+  var PLAN_KEY = 'ft_recipe_plan_v1';
+  var CHECK_KEY = 'ft_shopping_checked_v1';
+  var macroMeta = {
+    p: { label:'Proteine', color:'#C8F53C', field:'p' },
+    c: { label:'Carboidrati', color:'#5B9CEF', field:'c' },
+    g: { label:'Grassi', color:'#FFB43C', field:'g' }
+  };
+
+  function readJson(key, fallback){
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e) { return fallback; }
+  }
+  function writeJson(key, value){
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+  }
+  function recipes(){ return Array.isArray(window.RICETTE) ? window.RICETTE : []; }
+  function planIds(){ return readJson(PLAN_KEY, []).filter(Boolean); }
+  function setPlanIds(ids){ writeJson(PLAN_KEY, ids); }
+  function checkedMap(){ return readJson(CHECK_KEY, {}); }
+  function setCheckedMap(map){ writeJson(CHECK_KEY, map || {}); }
+  function toast(msg){ if (typeof window.showToast === 'function') showToast(msg); }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+  function normalizeName(s){
+    return String(s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\([^)]*\)/g,' ')
+      .replace(/\b(q\.?b\.?|a piacere|fresco|fresca|cotto|cotta|grigliato|grigliata|extra-firm|mature|grande|intero|intera)\b/g,' ')
+      .replace(/\b(di|del|della|dello|dei|degli|alle|alla|al|con|in|per|e|o)\b/g,' ')
+      .replace(/[^a-z0-9 ]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+  function prettyName(s){
+    s = normalizeName(s);
+    if (!s) return 'Ingredienti vari';
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function splitIngredients(row){
+    row = String(row || '').replace(/^[^:]{1,24}:\s*/,'');
+    if (row.indexOf(',') >= 0 && /(\d+[,.]?\d*)\s*(g|kg|ml|l)\b/i.test(row)) {
+      return row.split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+    }
+    return [row.trim()].filter(Boolean);
+  }
+  function parseIngredient(raw){
+    var text = String(raw || '').trim();
+    var match = text.match(/(\d+[,.]?\d*)\s*(kg|g|ml|l|pz|uova|uovo|albumi|cucchiai|cucchiaio|cucchiaini|cucchiaino|scoop|fette|spicchi|spicchio|lattina|lattine)\b/i);
+    var qty = match ? parseFloat(match[1].replace(',','.')) : 1;
+    var unit = match ? match[2].toLowerCase() : 'q.b.';
+    if (unit === 'kg') { qty *= 1000; unit = 'g'; }
+    if (unit === 'l') { qty *= 1000; unit = 'ml'; }
+    if (unit === 'uovo' || unit === 'uova' || unit === 'albumi' || unit === 'fette' || unit === 'spicchio' || unit === 'spicchi' || unit === 'lattina' || unit === 'lattine') unit = 'pz';
+    if (unit === 'cucchiaio') unit = 'cucchiai';
+    if (unit === 'cucchiaino') unit = 'cucchiaini';
+    var name = text;
+    if (match) name = text.slice(0, match.index) + ' ' + text.slice(match.index + match[0].length);
+    name = prettyName(name);
+    var group = (unit === 'g' || unit === 'ml') ? unit : unit;
+    return { key: normalizeName(name) + '|' + group, name:name, qty:qty, unit:unit, raw:text };
+  }
+  function aggregateShopping(){
+    var byKey = {};
+    var selected = planIds().map(function(id){ return recipes().find(function(r){ return r.id === id; }); }).filter(Boolean);
+    selected.forEach(function(r){
+      (r.ingredienti || []).forEach(function(row){
+        splitIngredients(row).forEach(function(part){
+          var it = parseIngredient(part);
+          if (!it.key || it.key === '|q.b.') it.key = normalizeName(it.raw) + '|q.b.';
+          if (!byKey[it.key]) byKey[it.key] = { key:it.key, name:it.name, unit:it.unit, qty:0, notes:[] };
+          if (it.unit === byKey[it.key].unit) byKey[it.key].qty += it.qty;
+          else byKey[it.key].notes.push(it.raw);
+        });
+      });
+    });
+    return Object.values(byKey).sort(function(a,b){ return a.name.localeCompare(b.name); });
+  }
+  function qtyLabel(item){
+    if (item.unit === 'q.b.') return 'q.b.';
+    var qty = Math.round(item.qty * 10) / 10;
+    return qty + ' ' + item.unit;
+  }
+  function macroTotals(){
+    var totals = { eaten:0, p:0, c:0, g:0 };
+    try {
+      var nt = typeof window.todayNutr === 'function' ? todayNutr() : null;
+      totals = typeof window.calcNutritionTotals === 'function' ? calcNutritionTotals(nt) : totals;
+    } catch(e) {}
+    var macros = (window.profile && profile.macros) || { p:180, c:280, g:70 };
+    var kcal = (window.profile && (typeof window.safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2500;
+    return {
+      eaten: Number(totals.eaten || 0),
+      targetKcal: Number(kcal || 2500),
+      p: Number(totals.p || 0), c: Number(totals.c || 0), g: Number(totals.g || 0),
+      tp: Number(macros.p || 180), tc: Number(macros.c || 280), tg: Number(macros.g || 70)
+    };
+  }
+  function segment(offsetIndex, value, target, color, kind){
+    var r = 42, circ = 2 * Math.PI * r, seg = circ / 3 - 8;
+    var pct = target > 0 ? Math.max(0, Math.min(1, value / target)) : 0;
+    var filled = Math.max(0.01, seg * pct);
+    var gap = circ - seg;
+    var off = -offsetIndex * (circ / 3);
+    return '<circle class="ft-macro-seg" cx="58" cy="58" r="'+r+'" stroke="'+color+'" style="stroke-dasharray:'+filled+' '+(seg-filled)+' '+gap+';stroke-dashoffset:'+off+'" onclick="ftMacroCoach(\''+kind+'\')"></circle>';
+  }
+  function macroRingHtml(){
+    var t = macroTotals();
+    var kcalPct = t.targetKcal > 0 ? Math.round(Math.min(100, t.eaten / t.targetKcal * 100)) : 0;
+    var rows = [
+      ['p', t.p, t.tp, macroMeta.p.color],
+      ['c', t.c, t.tc, macroMeta.c.color],
+      ['g', t.g, t.tg, macroMeta.g.color]
+    ];
+    return '<section class="ft-macro-ring-card" id="ft-macro-ring-card">' +
+      '<div class="ft-macro-ring-head"><div><div class="ft-macro-ring-title">Macro giornalieri</div><div class="ft-macro-ring-sub">Tocca un segmento per un consiglio del Coach IA.</div></div><div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--acc)">'+kcalPct+'%</div></div>' +
+      '<div class="ft-macro-ring-body">' +
+        '<svg class="ft-macro-ring-svg" viewBox="0 0 116 116" aria-label="Anello macro interattivo">' +
+          '<g transform="rotate(-90 58 58)">' +
+            '<circle class="ft-macro-seg-bg" cx="58" cy="58" r="42" style="stroke-dasharray:80 8 80 8 80 8"></circle>' +
+            segment(0,t.p,t.tp,macroMeta.p.color,'p') +
+            segment(1,t.c,t.tc,macroMeta.c.color,'c') +
+            segment(2,t.g,t.tg,macroMeta.g.color,'g') +
+          '</g>' +
+          '<text class="ft-macro-ring-center" x="58" y="56" text-anchor="middle">'+Math.round(t.eaten)+'</text>' +
+          '<text class="ft-macro-ring-kcal" x="58" y="68" text-anchor="middle">kcal oggi</text>' +
+        '</svg>' +
+        '<div class="ft-macro-legend">' +
+          rows.map(function(row){
+            var pct = row[2] > 0 ? Math.round(Math.min(100, row[1] / row[2] * 100)) : 0;
+            return '<button class="ft-macro-pill" onclick="ftMacroCoach(\''+row[0]+'\')"><i class="ft-macro-dot" style="color:'+row[3]+';background:'+row[3]+'"></i><b>'+macroMeta[row[0]].label+'</b><span>'+Math.round(row[1])+'/'+Math.round(row[2])+'g · '+pct+'%</span></button>';
+          }).join('') +
+        '</div>' +
+      '</div>' +
+    '</section>';
+  }
+  function recipeScore(r, kind, gap){
+    var val = Number(r && r[kind] || 0);
+    if (!val) return -9999;
+    var kcal = Math.max(1, Number(r.kcal || 1));
+    var close = Math.abs(gap - val);
+    return (val / kcal) * 1000 - close * 0.08;
+  }
+  function bestRecipe(kind, gap){
+    return recipes().slice().sort(function(a,b){ return recipeScore(b, kind, gap) - recipeScore(a, kind, gap); })[0];
+  }
+  window.ftMacroCoach = function(kind){
+    var meta = macroMeta[kind] || macroMeta.p;
+    var t = macroTotals();
+    var current = kind === 'p' ? t.p : kind === 'c' ? t.c : t.g;
+    var target = kind === 'p' ? t.tp : kind === 'c' ? t.tc : t.tg;
+    var gap = Math.max(0, Math.round(target - current));
+    var recipe = bestRecipe(meta.field, gap || target * .25);
+    document.getElementById('ft-macro-coach-sheet')?.remove();
+    var done = gap <= 0;
+    var text = done
+      ? 'Obiettivo ' + meta.label.toLowerCase() + ' gia centrato oggi. Mantieni il piano e punta su qualita e digestione.'
+      : 'Ti mancano circa ' + gap + 'g di ' + meta.label.toLowerCase() + '. ' + (recipe ? 'Prova "' + recipe.name + '": porta ' + recipe[meta.field] + 'g in una porzione e si integra bene nel piano.' : 'Aggiungi una fonte mirata nel prossimo pasto.');
+    var sheet = document.createElement('div');
+    sheet.id = 'ft-macro-coach-sheet';
+    sheet.className = 'ft-macro-coach-sheet';
+    sheet.innerHTML = '<div class="ft-macro-coach-panel">' +
+      '<div class="ft-macro-coach-kicker">Coach IA · '+esc(meta.label)+'</div>' +
+      '<div class="ft-macro-coach-title">'+(done ? 'Macro in target' : 'Aggiustamento intelligente')+'</div>' +
+      '<div class="ft-macro-coach-text">'+esc(text)+'</div>' +
+      '<div class="ft-macro-coach-actions">' +
+        (recipe ? '<button style="background:var(--acc);color:#070807" onclick="ftAddRecipeToPlan(\''+esc(recipe.id)+'\');document.getElementById(\'ft-macro-coach-sheet\')?.remove()">Aggiungi ricetta</button>' : '') +
+        '<button style="background:var(--bg4);color:var(--text2)" onclick="document.getElementById(\'ft-macro-coach-sheet\')?.remove()">Chiudi</button>' +
+      '</div>' +
+    '</div>';
+    document.body.appendChild(sheet);
+    sheet.addEventListener('click', function(e){ if (e.target === sheet) sheet.remove(); });
+  };
+  function shoppingHtml(){
+    var ids = planIds();
+    var selected = ids.map(function(id){ return recipes().find(function(r){ return r.id === id; }); }).filter(Boolean);
+    var checked = checkedMap();
+    var items = aggregateShopping();
+    if (!selected.length) {
+      return '<section class="ft-shop-card" id="ft-shop-card"><div class="ft-shop-head"><div><div class="ft-shop-title">Lista della Spesa</div><div class="ft-shop-sub">Aggiungi ricette dal piano settimanale per generare la lista cumulativa.</div></div></div></section>';
+    }
+    return '<section class="ft-shop-card" id="ft-shop-card">' +
+      '<div class="ft-shop-head"><div><div class="ft-shop-title">Lista della Spesa</div><div class="ft-shop-sub">'+selected.length+' ricette nel piano · ingredienti aggregati automaticamente</div></div><button class="ft-shop-clear" onclick="ftClearRecipePlan()">Svuota</button></div>' +
+      '<div class="ft-shop-recipes">' + selected.map(function(r){
+        return '<span class="ft-shop-recipe-chip">'+esc(r.name)+' <button onclick="ftRemoveRecipeFromPlan(\''+esc(r.id)+'\')">x</button></span>';
+      }).join('') + '</div>' +
+      '<div class="ft-shop-list">' + items.map(function(item){
+        var done = !!checked[item.key];
+        return '<div class="ft-shop-item '+(done?'done':'')+'"><input type="checkbox" '+(done?'checked':'')+' onchange="ftToggleShopItem(\''+esc(item.key)+'\',this.checked)"><label>'+esc(item.name)+'</label><small>'+esc(qtyLabel(item))+'</small></div>';
+      }).join('') + '</div>' +
+    '</section>';
+  }
+  function injectNutrition(){
+    var meals = document.getElementById('meals-wrap');
+    var quick = document.getElementById('v45-quick-add');
+    var anchor = quick || meals;
+    if (!anchor || !anchor.parentElement) return;
+    document.getElementById('ft-macro-ring-card')?.remove();
+    document.getElementById('ft-shop-card')?.remove();
+    anchor.insertAdjacentHTML('beforebegin', macroRingHtml());
+    if (meals) meals.insertAdjacentHTML('beforebegin', shoppingHtml());
+  }
+  function currentFilteredRecipes(){
+    try {
+      if (typeof window._ricettaMatchFiltri === 'function') return recipes().filter(window._ricettaMatchFiltri);
+    } catch(e) {}
+    return recipes();
+  }
+  function injectRecipeButtons(){
+    var cards = document.querySelectorAll('#ricette-list .recipe-card');
+    if (!cards.length) return;
+    var filtered = currentFilteredRecipes();
+    var ids = planIds();
+    cards.forEach(function(card, i){
+      if (card.querySelector('.ft-recipe-plan-btn')) return;
+      var r = filtered[i];
+      if (!r) {
+        var name = card.querySelector('.recipe-name');
+        r = recipes().find(function(x){ return name && name.textContent.trim() === x.name; });
+      }
+      if (!r) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'ft-recipe-plan-btn' + (ids.indexOf(r.id) >= 0 ? ' on' : '');
+      btn.textContent = ids.indexOf(r.id) >= 0 ? 'Nel piano settimanale' : '+ Aggiungi al piano settimanale';
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        window.ftAddRecipeToPlan(r.id);
+      });
+      var body = card.querySelector('.recipe-body') || card;
+      body.appendChild(btn);
+    });
+  }
+  window.ftAddRecipeToPlan = function(id){
+    var ids = planIds();
+    if (ids.indexOf(id) < 0) ids.push(id);
+    setPlanIds(ids);
+    toast('Ricetta aggiunta al piano settimanale');
+    injectNutrition();
+    injectRecipeButtons();
+    if (typeof window.renderRicette === 'function' && document.getElementById('ricette-list')) {
+      setTimeout(function(){ try { window.renderRicette(); } catch(e) {} }, 20);
+    }
+  };
+  window.ftRemoveRecipeFromPlan = function(id){
+    setPlanIds(planIds().filter(function(x){ return x !== id; }));
+    injectNutrition();
+    if (typeof window.renderRicette === 'function' && document.getElementById('ricette-list')) {
+      try { window.renderRicette(); } catch(e) {}
+    }
+  };
+  window.ftClearRecipePlan = function(){
+    setPlanIds([]);
+    setCheckedMap({});
+    injectNutrition();
+    if (typeof window.renderRicette === 'function' && document.getElementById('ricette-list')) {
+      try { window.renderRicette(); } catch(e) {}
+    }
+  };
+  window.ftToggleShopItem = function(key, on){
+    var map = checkedMap();
+    if (on) map[key] = true; else delete map[key];
+    setCheckedMap(map);
+    var card = document.getElementById('ft-shop-card');
+    if (card) card.outerHTML = shoppingHtml();
+  };
+
+  var prevNutr = window.renderNutrizione;
+  if (typeof prevNutr === 'function') {
+    window.renderNutrizione = function(){
+      prevNutr.apply(this, arguments);
+      setTimeout(injectNutrition, 30);
+    };
+  }
+  var prevRic = window.renderRicette;
+  if (typeof prevRic === 'function') {
+    window.renderRicette = function(){
+      prevRic.apply(this, arguments);
+      setTimeout(injectRecipeButtons, 30);
+    };
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ injectNutrition(); injectRecipeButtons(); }, 120);
+  });
+})();
+</script>
+
 <style id="ft-workout-sparkline-style">
 .ft-spark-card{margin:9px 0 12px;padding:10px 11px;border:1px solid rgba(200,245,60,.14);border-radius:12px;background:linear-gradient(180deg,rgba(200,245,60,.055),rgba(255,255,255,.018));overflow:hidden}
 .ft-spark-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
