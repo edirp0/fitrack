@@ -897,6 +897,599 @@ input,select,button{font-family:'Syne',sans-serif;}
 }
 
 /* ═══════════════════════════════════════════
+   V66 — DAILY WIDGET (Calorie ring + Peso)
+═══════════════════════════════════════════ */
+.v66-daily-widget{
+  display:flex;align-items:center;
+  margin:4px 16px 14px;
+  background:linear-gradient(155deg,rgba(255,255,255,.038),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  box-shadow:0 8px 36px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter:blur(20px) saturate(170%);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+  padding:18px 16px;
+  gap:0;
+  position:relative;
+  overflow:hidden;
+}
+.v66-daily-widget::before{
+  content:'';position:absolute;top:0;left:14px;right:14px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,245,60,.2),transparent);
+}
+
+/* Calorie side */
+.v66-kcal-side{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.v66-ring-wrap{
+  position:relative;width:110px;height:110px;flex-shrink:0;
+}
+.v66-ring-wrap svg{transform:rotate(-90deg);display:block;}
+.v66-ring-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:9;}
+.v66-ring-fg{
+  fill:none;stroke:var(--acc);stroke-width:9;stroke-linecap:round;
+  stroke-dasharray:289;stroke-dashoffset:289;
+  transition:stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1);
+  filter:drop-shadow(0 0 8px rgba(200,245,60,.6));
+}
+.v66-ring-inner{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;
+}
+.v66-ring-val{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--acc);
+  line-height:1;filter:drop-shadow(0 0 10px rgba(200,245,60,.4));
+  letter-spacing:.02em;
+}
+.v66-ring-label{
+  font-size:8.5px;color:rgba(255,255,255,.38);text-align:center;
+  text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+  line-height:1.3;max-width:72px;
+}
+.v66-kcal-consumed{
+  font-size:11px;color:rgba(255,255,255,.32);font-weight:500;
+  text-align:center;
+}
+.v66-kcal-consumed b{color:rgba(255,255,255,.55);}
+
+/* Divider */
+.v66-divider{
+  width:1px;background:rgba(255,255,255,.07);
+  align-self:stretch;margin:0 14px;border-radius:1px;
+}
+
+/* Weight side */
+.v66-weight-side{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:6px;
+}
+.v66-weight-label{
+  font-size:9px;color:rgba(255,255,255,.32);text-transform:uppercase;
+  letter-spacing:.1em;font-weight:700;
+}
+.v66-weight-val{
+  font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--text);
+  line-height:1;letter-spacing:.02em;
+  filter:drop-shadow(0 0 12px rgba(255,255,255,.08));
+}
+.v66-weight-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 14px;border-radius:99px;
+  border:1px solid rgba(200,245,60,.32);
+  background:rgba(200,245,60,.06);
+  color:var(--acc);font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .14s;
+  letter-spacing:.02em;
+}
+.v66-weight-pill:active{transform:scale(.95);background:rgba(200,245,60,.12);}
+.v66-weight-pill:hover{background:rgba(200,245,60,.1);border-color:rgba(200,245,60,.5);}
+.v66-kcal-tgt-mini{
+  font-size:10px;color:rgba(255,255,255,.22);margin-top:2px;
+}
+
+/* ══════════════════════════════════════════
+   V66 — SELETTORE GIORNI
+══════════════════════════════════════════ */
+.v66-day-selector-wrap{
+  padding:0 16px 14px;
+}
+.v66-day-selector{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:18px;
+  padding:6px 8px;
+  gap:4px;
+  box-shadow:0 3px 16px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.v66-day-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 4px;border-radius:13px;border:1.5px solid transparent;
+  background:transparent;color:rgba(255,255,255,.36);cursor:pointer;
+  font-family:'Syne',sans-serif;transition:all .18s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+.v66-day-btn .v66-day-letter{
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;
+  line-height:1;
+}
+.v66-day-btn .v66-day-num{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;line-height:1;
+}
+.v66-day-btn .v66-day-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:transparent;transition:background .2s;
+}
+.v66-day-btn:hover{
+  color:rgba(255,255,255,.72);
+  background:rgba(255,255,255,.05);
+}
+.v66-day-btn.active{
+  border-color:var(--acc);
+  background:rgba(200,245,60,.08);
+  color:var(--acc);
+  box-shadow:0 0 16px rgba(200,245,60,.18), inset 0 0 8px rgba(200,245,60,.06);
+}
+.v66-day-btn.active .v66-day-dot{
+  background:var(--acc);
+  box-shadow:0 0 6px rgba(200,245,60,.6);
+}
+.v66-day-btn.has-wo .v66-day-dot{
+  background:rgba(200,245,60,.45);
+}
+
+/* ══════════════════════════════════════════
+   V66 — MENU DI OGGI (Auto-Pilota)
+══════════════════════════════════════════ */
+.v66-menu-section{
+  margin:0 16px 14px;
+}
+.v66-menu-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;padding:0 2px;
+}
+.v66-menu-title{
+  display:flex;align-items:center;gap:7px;
+  font-size:13px;font-weight:800;letter-spacing:-.1px;
+  color:rgba(255,255,255,.82);
+}
+.v66-menu-ico{font-size:16px;}
+.v66-autopilot-badge{
+  font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--acc);
+  background:rgba(200,245,60,.1);
+  border:1px solid rgba(200,245,60,.22);
+  border-radius:99px;padding:4px 10px;
+  filter:drop-shadow(0 0 6px rgba(200,245,60,.22));
+}
+
+/* Meal card */
+.v66-meal-card{
+  background:linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.085);
+  border-radius:18px;
+  padding:14px 14px 14px 14px;
+  margin-bottom:10px;
+  box-shadow:0 4px 22px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  transition:border-color .2s,transform .18s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.v66-meal-card::before{
+  content:'';position:absolute;top:0;left:12px;right:12px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+}
+.v66-meal-card:active{transform:scale(.99);}
+.v66-meal-type{
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+  color:rgba(255,255,255,.3);margin-bottom:10px;
+}
+.v66-meal-row{
+  display:flex;align-items:center;gap:12px;
+}
+.v66-meal-thumb{
+  width:56px;height:56px;border-radius:14px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;
+  box-shadow:0 2px 10px rgba(0,0,0,.28);
+}
+.v66-meal-info{flex:1;min-width:0;}
+.v66-meal-name{
+  font-size:14px;font-weight:800;letter-spacing:-.2px;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-bottom:5px;
+}
+.v66-meal-meta{
+  font-size:11px;color:rgba(255,255,255,.38);display:flex;align-items:center;gap:5px;
+  margin-bottom:6px;
+}
+.v66-meal-dot{color:rgba(255,255,255,.2);}
+.v66-meal-kcal{color:var(--acc);font-weight:700;}
+.v66-meal-macros{display:flex;gap:5px;flex-wrap:wrap;}
+.v66-mmacro{
+  font-size:9.5px;font-weight:700;border-radius:6px;padding:2px 7px;
+  letter-spacing:.02em;
+}
+.v66-mmacro-p{color:var(--green);background:rgba(62,223,138,.1);}
+.v66-mmacro-c{color:var(--blue);background:rgba(91,156,239,.1);}
+.v66-mmacro-g{color:var(--orange);background:rgba(255,153,60,.1);}
+
+/* Action buttons */
+.v66-meal-actions{
+  display:flex;flex-direction:column;gap:8px;flex-shrink:0;
+}
+.v66-meal-btn{
+  width:34px;height:34px;border-radius:50%;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .17s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+  flex-shrink:0;
+}
+.v66-meal-btn:active{transform:scale(.88);}
+.v66-meal-btn-swap{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.55);
+  border:1px solid rgba(255,255,255,.09);
+}
+.v66-meal-btn-swap:hover{
+  background:rgba(255,255,255,.12);color:rgba(255,255,255,.9);
+  border-color:rgba(255,255,255,.2);
+}
+.v66-meal-btn-ok{
+  background:rgba(200,245,60,.12);color:var(--acc);
+  border:1px solid rgba(200,245,60,.25);
+}
+.v66-meal-btn-ok:hover{
+  background:rgba(200,245,60,.2);
+  box-shadow:0 0 14px rgba(200,245,60,.25);
+}
+
+/* Genera menu button */
+.v66-gen-menu-btn{
+  width:100%;padding:13px;margin-top:4px;
+  background:rgba(200,245,60,.06);
+  border:1.5px dashed rgba(200,245,60,.28);
+  border-radius:14px;
+  color:var(--acc);font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:800;cursor:pointer;
+  letter-spacing:.04em;
+  transition:background .18s,border-color .18s,transform .14s;
+}
+.v66-gen-menu-btn:hover{
+  background:rgba(200,245,60,.1);
+  border-color:rgba(200,245,60,.5);
+  box-shadow:0 0 20px rgba(200,245,60,.15);
+}
+.v66-gen-menu-btn:active{transform:scale(.985);}
+
+/* V66 macro card (slim) */
+.v66-macro-card{padding:16px 18px;}
+
+/* ══════════════════════════════════════════════════════
+   V68 — PREFERENZE ALIMENTARI & LISTA SPESA
+══════════════════════════════════════════════════════ */
+
+/* Card piccola onboarding allergie */
+.ob-card-sm{
+  padding:10px 8px;
+  text-align:center;
+  min-height:60px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+}
+.ob-card-sm .ob-card-nm{font-size:11px;line-height:1.3;}
+
+/* Badge preferenze alimentari nel menu */
+.v68-pref-badges-wrap{
+  display:flex;flex-wrap:wrap;gap:5px;
+  padding:0 2px 12px;
+}
+.v68-pref-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:800;letter-spacing:.04em;
+  padding:3px 8px;border-radius:99px;
+  white-space:nowrap;
+}
+.v68-diet-badge{
+  background:rgba(91,156,239,.12);
+  border:1px solid rgba(91,156,239,.25);
+  color:#5B9CEF;
+}
+.v68-allergy-badge{
+  background:rgba(255,99,72,.1);
+  border:1px solid rgba(255,99,72,.22);
+  color:#FF6348;
+}
+.v68-shop-badge{
+  background:rgba(200,245,60,.08);
+  border:1px solid rgba(200,245,60,.2);
+  color:var(--acc);
+}
+
+/* Bottone modifica preferenze nel menu */
+.v68-nutr-edit-btn{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:800;
+  padding:5px 11px;border-radius:99px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.45);
+  cursor:pointer;transition:all .15s;
+  font-family:'Syne',sans-serif;
+  white-space:nowrap;
+}
+.v68-nutr-edit-btn:hover{
+  background:rgba(255,255,255,.09);
+  color:rgba(255,255,255,.75);
+}
+.v68-nutr-edit-btn:active{transform:scale(.95);}
+
+/* Lista spesa migliorata nella pagina nutrizione */
+.ft-shop-card{
+  border-radius:20px !important;
+  padding:16px !important;
+  background:linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.015)) !important;
+  border-color:rgba(200,245,60,.18) !important;
+}
+.ft-shop-title{
+  font-size:14px !important;
+  font-weight:800 !important;
+  letter-spacing:-.1px;
+}
+.ft-shop-sub{
+  font-size:11px !important;
+  color:rgba(255,255,255,.38) !important;
+  margin-top:2px;line-height:1.5;
+}
+.ft-shop-item{
+  border-radius:12px !important;
+  padding:10px 12px !important;
+  background:rgba(255,255,255,.03) !important;
+  border-color:rgba(255,255,255,.07) !important;
+  transition:background .15s;
+}
+.ft-shop-item:hover{background:rgba(255,255,255,.06) !important;}
+.ft-shop-item label{
+  font-size:13px !important;
+  font-weight:600;
+}
+.ft-shop-item small{
+  font-size:11px !important;
+  color:var(--acc) !important;
+  font-weight:700;
+}
+.ft-shop-item.done{opacity:.55;}
+.ft-shop-item.done label{text-decoration:line-through;}
+.ft-shop-recipe-chip{
+  font-size:11px !important;
+  padding:5px 10px !important;
+}
+.ft-shop-clear{
+  padding:7px 12px !important;
+  font-size:11px !important;
+  border-radius:10px !important;
+}
+
+/* Sezione lista spesa vuota — stato migliorato */
+.ft-shop-empty-state{
+  text-align:center;padding:20px 16px;
+}
+.ft-shop-empty-ico{font-size:32px;margin-bottom:8px;}
+.ft-shop-empty-ttl{font-size:13px;font-weight:700;color:rgba(255,255,255,.45);margin-bottom:4px;}
+.ft-shop-empty-sub{font-size:11px;color:rgba(255,255,255,.25);line-height:1.6;}
+
+/* ══════════════════════════════════════════════════════
+   V67 — HUB GIORNALIERO UNIFICATO
+   Calendario → Allenamento → Nutrizione Auto-Pilota
+══════════════════════════════════════════════════════ */
+
+/* Wrapper Hub con separatore sezione */
+.v67-hub-section-label{
+  display:flex;align-items:center;gap:8px;
+  padding:0 16px 10px;
+  font-size:9.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.12em;color:rgba(255,255,255,.22);
+}
+.v67-hub-section-label::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.1),transparent);
+}
+
+/* Sezione Allenamento — wrapper dentro il hub */
+.v67-workout-hub{
+  margin:0 16px 14px;
+  background:linear-gradient(155deg,rgba(255,255,255,.038),rgba(255,255,255,.012));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.07);
+  position:relative;
+}
+.v67-workout-hub::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--acc),var(--green),var(--acc));
+  opacity:.6;
+}
+
+/* Header allenamento hub */
+.v67-wo-hub-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+}
+.v67-wo-hub-label{
+  font-size:9px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.12em;color:rgba(255,255,255,.32);
+}
+.v67-wo-hub-date{
+  font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+}
+
+/* Corpo allenamento hub */
+.v67-wo-hub-body{padding:0 16px 16px;}
+.v67-wo-hub-name{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:28px;line-height:1;letter-spacing:-.3px;
+  color:#fff;margin-bottom:8px;
+}
+.v67-wo-hub-meta{
+  display:flex;align-items:center;gap:10px;
+  flex-wrap:wrap;margin-bottom:12px;
+}
+.v67-wo-hub-meta-pill{
+  font-size:10px;font-weight:700;
+  padding:4px 10px;border-radius:99px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.55);
+}
+
+/* Fase ciclo badge nel hub */
+.v67-cycle-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;
+  padding:4px 10px;border-radius:99px;
+  background:rgba(255,92,160,.1);border:1px solid rgba(255,92,160,.2);
+  color:#FF5CA0;
+}
+
+/* Lista esercizi compatta nel hub */
+.v67-exs-list{
+  display:flex;flex-direction:column;gap:6px;margin-bottom:14px;
+}
+.v67-ex-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:11px;
+}
+.v67-ex-row-ico{font-size:14px;flex-shrink:0;}
+.v67-ex-row-name{
+  flex:1;font-size:12px;font-weight:700;
+  letter-spacing:-.1px;color:rgba(255,255,255,.82);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.v67-ex-row-sets{
+  font-size:10px;font-weight:800;color:var(--acc);
+  font-family:'Bebas Neue',sans-serif;font-size:13px;
+  flex-shrink:0;
+}
+
+/* Bottone Inizia Allenamento nel hub */
+.v67-start-btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--acc),#a8d620);
+  border:none;border-radius:14px;
+  font-family:'Syne',sans-serif;
+  font-size:14px;font-weight:800;letter-spacing:.04em;
+  color:#06060E;cursor:pointer;
+  box-shadow:0 4px 22px rgba(200,245,60,.32);
+  transition:all .18s cubic-bezier(.22,1,.36,1);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.v67-start-btn:hover{
+  background:linear-gradient(135deg,#d8ff44,var(--acc));
+  box-shadow:0 6px 28px rgba(200,245,60,.45);
+  transform:translateY(-1px);
+}
+.v67-start-btn:active{transform:scale(.97) translateY(0);}
+
+/* Rest day state */
+.v67-wo-rest{
+  padding:16px;text-align:center;
+}
+.v67-wo-rest-ico{font-size:32px;margin-bottom:8px;}
+.v67-wo-rest-txt{font-size:13px;font-weight:700;color:rgba(255,255,255,.45);}
+.v67-wo-rest-sub{font-size:11px;color:rgba(255,255,255,.28);margin-top:4px;}
+
+/* ─── Meal Card States ─── */
+
+/* Confirmed (spunta cliccata) */
+.v66-meal-card.v67-confirmed{
+  border-color:rgba(200,245,60,.25);
+  background:linear-gradient(155deg,rgba(200,245,60,.06),rgba(200,245,60,.02));
+}
+.v66-meal-card.v67-confirmed .v66-meal-btn-ok{
+  background:rgba(200,245,60,.25);
+  box-shadow:0 0 14px rgba(200,245,60,.35);
+}
+.v66-meal-card.v67-confirmed .v66-meal-type::after{
+  content:' ✓';color:var(--acc);
+}
+
+/* Swap animation */
+.v66-meal-card.v67-swapping{
+  opacity:.5;
+  transform:scale(.97);
+  transition:opacity .2s,transform .2s;
+}
+.v66-meal-card.v67-swapped{
+  animation:v67SwapIn .35s cubic-bezier(.22,1,.36,1);
+}
+@keyframes v67SwapIn{
+  0%{opacity:0;transform:translateX(12px) scale(.97);}
+  100%{opacity:1;transform:translateX(0) scale(1);}
+}
+
+/* Genera menu — loading state */
+.v66-gen-menu-btn.v67-loading{
+  opacity:.55;pointer-events:none;
+}
+.v66-gen-menu-btn.v67-loading::after{
+  content:' ⏳';
+}
+
+/* Menu section shimmer animation on regenerate */
+@keyframes v67MenuFadeIn{
+  0%{opacity:0;transform:translateY(8px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+.v67-menu-animate{
+  animation:v67MenuFadeIn .4s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Day selector active state upgrade for hub sync */
+.v66-day-btn.active{
+  border-color:var(--acc);
+  background:rgba(200,245,60,.1);
+  color:var(--acc);
+  box-shadow:0 0 18px rgba(200,245,60,.22), inset 0 0 10px rgba(200,245,60,.07);
+}
+
+/* Colazione toggle indicator */
+.v67-bf-toggle-wrap{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px 0;margin-bottom:2px;
+}
+.v67-bf-toggle-lbl{
+  font-size:10px;font-weight:700;color:rgba(255,255,255,.35);
+  flex:1;
+}
+.v67-bf-toggle{
+  position:relative;width:34px;height:19px;
+  background:rgba(255,255,255,.1);border-radius:99px;
+  border:1px solid rgba(255,255,255,.1);
+  cursor:pointer;transition:background .2s;
+  flex-shrink:0;
+}
+.v67-bf-toggle.on{
+  background:rgba(200,245,60,.25);
+  border-color:rgba(200,245,60,.35);
+}
+.v67-bf-toggle-dot{
+  position:absolute;top:2px;left:2px;
+  width:13px;height:13px;border-radius:50%;
+  background:rgba(255,255,255,.35);
+  transition:transform .2s,background .2s;
+}
+.v67-bf-toggle.on .v67-bf-toggle-dot{
+  transform:translateX(15px);background:var(--acc);
+}
+
+/* ═══════════════════════════════════════════
    ALLENAMENTO PAGE
 ═══════════════════════════════════════════ */
 .al-head{padding:20px 18px 14px;display:flex;align-items:flex-end;justify-content:space-between;}
@@ -5595,8 +6188,100 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
         ⚡ <b>Deload automatico</b> — se vai in stallo per 2+ settimane, il programma riduce e riparte
       </div>
 
-      <button class="max-skip-btn" onclick="obNext(14)">Non ho bilanciere / salto per ora →</button>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(12)">← Indietro</button><button class="btn btn-acc" onclick="obSaveMaximals();obNext(14)">Continua →</button></div>
+      <button class="max-skip-btn" onclick="obNext('13b')">Non ho bilanciere / salto per ora →</button>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(12)">← Indietro</button><button class="btn btn-acc" onclick="obSaveMaximals();obNext('13b')">Continua →</button></div>
+    </div>
+
+    <!-- ── STEP 13b: Allergie, Intolleranze & Preferenze Alimentari ── -->
+    <div class="ob-step" id="ob_s13b">
+      <div class="ob-eyebrow">Passo 13b di 15 — Alimentazione</div>
+      <div class="ob-ttl">Allergie & Preferenze 🍽️</div>
+      <div class="ob-sub">Questi dati vengono usati per personalizzare ogni ricetta e il menu giornaliero, escludendo automaticamente gli alimenti che non puoi o non vuoi consumare.</div>
+
+      <!-- DIETA BASE -->
+      <div class="ob-section-lbl" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin:0 0 8px;">Tipo di Dieta</div>
+      <div class="ob-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
+        <div class="ob-card" onclick="obPickNutri(this,'diet','omnivore')">
+          <span class="ob-card-ico">🍗</span>
+          <div class="ob-card-nm">Onnivoro</div>
+          <div class="ob-card-sub">Mangio tutto</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','vegetariano')">
+          <span class="ob-card-ico">🥗</span>
+          <div class="ob-card-nm">Vegetariano</div>
+          <div class="ob-card-sub">No carne, sì uova/latticini</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','vegano')">
+          <span class="ob-card-ico">🌱</span>
+          <div class="ob-card-nm">Vegano</div>
+          <div class="ob-card-sub">Solo vegetale</div>
+        </div>
+        <div class="ob-card" onclick="obPickNutri(this,'diet','pescetariano')">
+          <span class="ob-card-ico">🐟</span>
+          <div class="ob-card-nm">Pescetariano</div>
+          <div class="ob-card-sub">No carne, sì pesce</div>
+        </div>
+      </div>
+
+      <!-- ALLERGIE & INTOLLERANZE -->
+      <div class="ob-section-lbl" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin:0 0 8px;">Allergie & Intolleranze <span style="font-weight:400;color:rgba(255,255,255,.25)">(puoi selezionare più opzioni)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'glutine')">
+          <span class="ob-card-ico" style="font-size:18px;">🌾</span>
+          <div class="ob-card-nm" style="font-size:12px;">Glutine / Celiaco</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'lattosio')">
+          <span class="ob-card-ico" style="font-size:18px;">🥛</span>
+          <div class="ob-card-nm" style="font-size:12px;">Lattosio</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'uova')">
+          <span class="ob-card-ico" style="font-size:18px;">🥚</span>
+          <div class="ob-card-nm" style="font-size:12px;">Uova</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'fruttadisecco')">
+          <span class="ob-card-ico" style="font-size:18px;">🥜</span>
+          <div class="ob-card-nm" style="font-size:12px;">Frutta Secca / Nocciole</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'pesce')">
+          <span class="ob-card-ico" style="font-size:18px;">🐟</span>
+          <div class="ob-card-nm" style="font-size:12px;">Pesce / Frutti di mare</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'soia')">
+          <span class="ob-card-ico" style="font-size:18px;">🫘</span>
+          <div class="ob-card-nm" style="font-size:12px;">Soia</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'nichel')">
+          <span class="ob-card-ico" style="font-size:18px;">⚗️</span>
+          <div class="ob-card-nm" style="font-size:12px;">Nichel</div>
+        </div>
+        <div class="ob-card ob-card-sm" onclick="obMultiNutri(this,'intoll_none')">
+          <span class="ob-card-ico" style="font-size:18px;">✅</span>
+          <div class="ob-card-nm" style="font-size:12px;">Nessuna intolleranza</div>
+        </div>
+      </div>
+
+      <!-- ALIMENTI NON GRADITI -->
+      <div class="ob-section-lbl" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin:0 0 8px;">Alimenti che non gradisci <span style="font-weight:400;color:rgba(255,255,255,.25)">(facoltativo)</span></div>
+      <input type="text" id="ob-cibi-no" class="ob-inp tdee-inp"
+        placeholder="es. fegato, cavolfiore, coriandolo..."
+        style="width:100%;margin-bottom:18px;"
+        oninput="v68SyncCibiNo(this.value)">
+
+      <!-- LISTA DELLA SPESA -->
+      <div class="ob-section-lbl" style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin:0 0 8px;">📦 Ho questi ingredienti a casa <span style="font-weight:400;color:rgba(255,255,255,.25)">(facoltativo — il menu si adatta)</span></div>
+      <textarea id="ob-lista-spesa" class="ob-inp tdee-inp"
+        placeholder="es. pollo, riso, uova, yogurt greco, broccoli, avena..."
+        rows="3"
+        style="width:100%;resize:vertical;margin-bottom:6px;font-family:'Syne',sans-serif;font-size:13px;"
+        oninput="v68SyncListaSpesa(this.value)"></textarea>
+      <div style="font-size:10px;color:rgba(255,255,255,.28);margin-bottom:18px;line-height:1.6;">
+        💡 Se inserisci gli ingredienti disponibili, il menu giornaliero darà priorità a ricette che li usano. Se lasci vuoto, il menu viene generato in base ai tuoi obiettivi e alle allergie.
+      </div>
+
+      <div class="ob-nav">
+        <button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button>
+        <button class="btn btn-acc" onclick="obSaveNutriPrefs();obNext(14)">Continua →</button>
+      </div>
     </div>
 
     <!-- ── STEP 14: Ciclo mestruale (solo donne) ── -->
@@ -5679,9 +6364,8 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
            Layout: greeting → stats → CTA → cards
       ════════════════════════════════════════ -->
 
-      <!-- ── 1. V60 DASHBOARD (mantiene ID per compatibilità patch) ── -->
+      <!-- ── V66: HEADER — mantiene greeting + avatar ── -->
       <section id="v60-home-dashboard" class="v60-home-dashboard">
-        <!-- Greeting hero V63 -->
         <div class="v63-greeting">
           <div class="v63-greeting-row">
             <div class="v63-greeting-text">
@@ -5692,14 +6376,9 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
             <div class="v63-avatar" id="h-avatar">🏋️</div>
           </div>
         </div>
-
-        <!-- Weight button compatto -->
-        <button class="v60-weight-btn" type="button" onclick="v60OpenWeight()">
-          ⚖️ Registra Peso
-        </button>
       </section>
 
-      <!-- ── 2. STATS STRIP — 4 tile glassmorphic ── -->
+      <!-- ── V66: STATS STRIP — 4 tile glassmorphic (invariato) ── -->
       <div class="stats-strip">
         <div class="stat-tile">
           <div class="stat-v" id="s-streak">0</div>
@@ -5719,11 +6398,117 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
         </div>
       </div>
 
-      <!-- ── 3. CTA BANNER (Start Workout) — renderHome la compila ── -->
+      <!-- ── V66: CTA BANNER ── -->
       <div id="home-cta-banner"></div>
 
-      <!-- ── 4. CALENDARIO SETTIMANALE ── -->
-      <div class="cal-card" id="home-cal-card">
+      <!-- ══════════════════════════════════════════════
+           V66 — WIDGET STATO GIORNALIERO
+           Calorie ring (sx) + Peso (dx) affiancati
+      ══════════════════════════════════════════════ -->
+      <div class="v66-daily-widget">
+        <!-- Sinistra: Calorie ring -->
+        <div class="v66-kcal-side">
+          <div class="v66-ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle class="v66-ring-bg" cx="55" cy="55" r="46"/>
+              <circle class="v66-ring-fg" id="h-kring" cx="55" cy="55" r="46"/>
+            </svg>
+            <div class="v66-ring-inner">
+              <div class="v66-ring-val" id="h-kv">0</div>
+              <div class="v66-ring-label">Kcal rimanenti</div>
+            </div>
+          </div>
+          <div class="v66-kcal-consumed">Consumate: <span id="h-kbig">0</span> kcal</div>
+        </div>
+
+        <!-- Divisore verticale -->
+        <div class="v66-divider"></div>
+
+        <!-- Destra: Peso -->
+        <div class="v66-weight-side">
+          <div class="v66-weight-label">Ultimo peso</div>
+          <div class="v66-weight-val" id="v66-last-weight">—</div>
+          <button class="v66-weight-pill" type="button" onclick="v60OpenWeight()">
+            ⚖️ + Peso
+          </button>
+          <!-- Micro kcal target info -->
+          <div class="v66-kcal-tgt-mini">Target: <span id="h-ktgt-ring">0</span> kcal</div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════
+           V66 — SELETTORE GIORNI INTERATTIVO
+      ══════════════════════════════════════════════ -->
+      <!-- ══════════════════════════════════════════════
+           V67 — HUB GIORNALIERO UNIFICATO
+           Calendario → Allenamento → Nutrizione
+      ══════════════════════════════════════════════ -->
+
+      <!-- 1. CALENDARIO SETTIMANALE — il comando -->
+      <div class="v66-day-selector-wrap">
+        <div class="v66-day-selector" id="v66-day-selector">
+          <!-- Populated by v67RenderDayHub() -->
+        </div>
+      </div>
+
+      <!-- 2. SEZIONE ALLENAMENTO del giorno selezionato -->
+      <div class="v67-hub-section-label">💪 Allenamento</div>
+      <div class="v67-workout-hub" id="v67-workout-hub">
+        <!-- Populated by v67UpdateWorkoutHub() -->
+        <div class="v67-wo-hub-head">
+          <span class="v67-wo-hub-label">⚡ Workout di Oggi</span>
+          <span class="v67-wo-hub-date" id="v67-wo-date">—</span>
+        </div>
+        <div class="v67-wo-hub-body" id="v67-wo-body">
+          <div class="v67-wo-rest">
+            <div class="v67-wo-rest-ico">🧘</div>
+            <div class="v67-wo-rest-txt">Giorno di riposo</div>
+            <div class="v67-wo-rest-sub">Recupero attivo consigliato</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. SEZIONE NUTRIZIONE AUTO-PILOTA -->
+      <div class="v67-hub-section-label">🍽️ Nutrizione Auto-Pilota</div>
+
+      <!-- ══════════════════════════════════════════════
+           V66/V67 — IL TUO MENU DI OGGI (Nutrizione Auto-Pilota)
+      ══════════════════════════════════════════════ -->
+      <div class="v66-menu-section" id="v67-menu-section">
+        <div class="v66-menu-header">
+          <div class="v66-menu-title">
+            <span class="v66-menu-ico">🍽️</span>
+            Il Tuo Menu di Oggi
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="v68-nutr-edit-btn" onclick="v68OpenNutritionSettings()" title="Modifica preferenze alimentari">
+              ⚙️ Preferenze
+            </button>
+            <div class="v66-autopilot-badge">Auto-Pilota ✨</div>
+          </div>
+        </div>
+
+        <!-- Toggle Colazione -->
+        <div class="v67-bf-toggle-wrap">
+          <span class="v67-bf-toggle-lbl">Mostra colazione</span>
+          <div class="v67-bf-toggle on" id="v67-bf-toggle" onclick="v67ToggleBreakfast()" title="Attiva/disattiva colazione">
+            <div class="v67-bf-toggle-dot"></div>
+          </div>
+        </div>
+
+        <!-- Cards dinamiche (popolate da JS) -->
+        <div id="v67-meal-cards-wrap">
+          <!-- Populated by v67RenderMenuCards() -->
+        </div>
+
+        <!-- Genera menu button -->
+        <button class="v66-gen-menu-btn" id="v67-gen-menu-btn" onclick="v67GenerateNewMenu()">
+          ✦ Genera Nuovo Menu
+        </button>
+      </div>
+
+      <!-- Calendario settimanale legacy (invisibile per compatibilità JS) -->
+      <div class="cal-card" id="home-cal-card" style="display:none;">
         <div class="cal-card-top"></div>
         <div class="cal-header">
           <div class="cal-title-wrap">
@@ -5823,43 +6608,37 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
         </div>
       </div>
 
-      <!-- ── 6. CALORIE + MACRO CARD ── -->
-      <div class="glass-card v63-kcal-card">
+      <!-- ── 6 LEGACY: kcal IDs nascosti — usati dal JS per aggiornare v66-daily-widget ── -->
+      <div style="display:none" aria-hidden="true">
+        <span id="h-kpct">0%</span>
+        <span id="h-kpct2"></span>
+        <span id="h-ktgt"></span>
+        <span id="h-krem"></span>
+        <div id="mp-pv">0g</div><div id="mp-pb" style="width:0%"></div>
+        <div id="mp-cv">0g</div><div id="mp-cb" style="width:0%"></div>
+        <div id="mp-gv">0g</div><div id="mp-gb" style="width:0%"></div>
+      </div>
+
+      <!-- ── V66: MACRO CARD visibile (collegata al widget sopra) ── -->
+      <div class="glass-card v63-kcal-card v66-macro-card">
         <div class="card-hdr">
-          <span class="card-hdr-l">⚡ Calorie Giornaliere</span>
-          <span class="card-hdr-r" id="h-kpct" onclick="goPage('nutrizione')" style="cursor:pointer;">0%</span>
-        </div>
-        <div class="kcal-wrap">
-          <div class="kcal-ring-wrap">
-            <svg width="92" height="92" viewBox="0 0 90 90">
-              <circle class="kr-bg" cx="45" cy="45" r="39"/>
-              <circle class="kr-fg" id="h-kring" cx="45" cy="45" r="39"/>
-            </svg>
-            <div class="kcal-ring-num">
-              <div class="kcal-ring-val" id="h-kv">0</div>
-              <div class="kcal-ring-pct" id="h-kpct2">di <span id="h-ktgt-ring">0</span></div>
-            </div>
-          </div>
-          <div class="kcal-info-col">
-            <div class="kcal-big" id="h-kbig">0</div>
-            <div class="kcal-tgt" id="h-ktgt">/ 0 kcal obiettivo</div>
-            <div class="kcal-rem" id="h-krem">— rimanenti</div>
-          </div>
+          <span class="card-hdr-l">📊 Macronutrienti</span>
+          <span class="card-hdr-r" onclick="goPage('nutrizione')" style="cursor:pointer;">Dettagli ›</span>
         </div>
         <div class="macro-grid">
           <div class="macro-pill">
-            <div class="macro-pill-val" id="mp-pv" style="color:var(--green)">0g</div>
-            <div class="macro-pill-bar"><div class="macro-pill-fill" id="mp-pb" style="background:var(--green);width:0%"></div></div>
+            <div class="macro-pill-val" id="v66-mp-pv" style="color:var(--green)">0g</div>
+            <div class="macro-pill-bar"><div class="macro-pill-fill" id="v66-mp-pb" style="background:var(--green);width:0%"></div></div>
             <div class="macro-pill-lbl">Proteine</div>
           </div>
           <div class="macro-pill">
-            <div class="macro-pill-val" id="mp-cv" style="color:var(--blue)">0g</div>
-            <div class="macro-pill-bar"><div class="macro-pill-fill" id="mp-cb" style="background:var(--blue);width:0%"></div></div>
+            <div class="macro-pill-val" id="v66-mp-cv" style="color:var(--blue)">0g</div>
+            <div class="macro-pill-bar"><div class="macro-pill-fill" id="v66-mp-cb" style="background:var(--blue);width:0%"></div></div>
             <div class="macro-pill-lbl">Carbs</div>
           </div>
           <div class="macro-pill">
-            <div class="macro-pill-val" id="mp-gv" style="color:var(--orange)">0g</div>
-            <div class="macro-pill-bar"><div class="macro-pill-fill" id="mp-gb" style="background:var(--orange);width:0%"></div></div>
+            <div class="macro-pill-val" id="v66-mp-gv" style="color:var(--orange)">0g</div>
+            <div class="macro-pill-bar"><div class="macro-pill-fill" id="v66-mp-gb" style="background:var(--orange);width:0%"></div></div>
             <div class="macro-pill-lbl">Grassi</div>
           </div>
         </div>
@@ -12049,6 +12828,9 @@ function obSaveNutriPrefs() {
     diet: obNutriSel.diet || 'omnivore',
     intolleranze: [...obNutriSel.intolleranze],
     budget: obNutriSel.budget || 'medium',
+    // V68: nuovi campi
+    cibiNo: (document.getElementById('ob-cibi-no')?.value || '').trim(),
+    listaSpesa: (document.getElementById('ob-lista-spesa')?.value || '').trim(),
   };
   // Stress già salvato nel TDEE step, aggiunge anche qui
   const stressEl = document.getElementById('ob-stress');
@@ -12063,6 +12845,435 @@ function obSaveNutriPrefs() {
   }
   if (typeof saveAll === 'function') saveAll();
 }
+
+/* ── V68: sync helper per i nuovi campi onboarding ── */
+window.v68SyncCibiNo = function(val) {
+  if (!profile.nutriPrefs) profile.nutriPrefs = {};
+  profile.nutriPrefs.cibiNo = val.trim();
+};
+window.v68SyncListaSpesa = function(val) {
+  if (!profile.nutriPrefs) profile.nutriPrefs = {};
+  profile.nutriPrefs.listaSpesa = val.trim();
+};
+
+/* ═══════════════════════════════════════════════════════
+   V68 — MOTORE MENU INTELLIGENTE
+   Allergie + Lista Spesa → Selezione Ricette Adattiva
+═══════════════════════════════════════════════════════ */
+
+/* Mappa ingredienti bloccanti per intolleranza */
+window._v68AllergyMap = {
+  glutine:       ['pasta','pane','farro','couscous','orzo','grano','fette','toast','pangrattato','avena','seitan','udon','soba','crackers','pizza','farina','biscotti','waffle','pancake','muffin','brioche'],
+  lattosio:      ['latte','latticini','formaggio','ricotta','yogurt','burro','parmigiano','mozzarella','feta','skyr','kefir','panna','cream'],
+  uova:          ['uova','uovo','albumi','albume','frittata','omelette','strapazzate','mayonnaise'],
+  fruttadisecco: ['mandorle','noci','nocciole','pistacchi','arachidi','burro di arachidi','cashew','pinoli','frutta secca'],
+  pesce:         ['salmone','tonno','merluzzo','polpo','gamberi','gamberoni','pesce','sardine','sgombro','alici','baccalà','frutti di mare'],
+  soia:          ['soia','tofu','tempeh','edamame','latte di soia','miso'],
+  nichel:        ['ceci','lenticchie','pomodori','spinaci','noci','cioccolato','avena','farine integrali'],
+};
+
+/* Controlla se una ricetta è sicura per il profilo utente */
+window.v68RecipeSafe = function(recipe) {
+  const prefs = (typeof profile !== 'undefined' && profile.nutriPrefs) || {};
+  const intolleranze = prefs.intolleranze || [];
+  const diet = prefs.diet || 'omnivore';
+  const cibiNoRaw = prefs.cibiNo || '';
+  const cibiNo = cibiNoRaw.toLowerCase().split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);
+
+  // Ricetta come testo unico da analizzare
+  const recipeText = [
+    recipe.name || '',
+    (recipe.ingredienti || []).join(' '),
+    (recipe.ing || []).join(' '),
+    (recipe.alimenti || []).join(' '),
+    recipe.desc || '',
+  ].join(' ').toLowerCase();
+
+  // Controlla allergie/intolleranze
+  for (const intoll of intolleranze) {
+    if (intoll === 'intoll_none') continue;
+    const blocklist = window._v68AllergyMap[intoll] || [];
+    for (const keyword of blocklist) {
+      if (recipeText.includes(keyword)) return false;
+    }
+  }
+
+  // Controlla dieta
+  const meatKeywords = ['pollo','manzo','maiale','tacchino','agnello','carne','bistecca','spezzatino','bresaola','prosciutto','salame','salsiccia','cotechino'];
+  const fishKeywords = ['salmone','tonno','merluzzo','polpo','gamberi','pesce','sardine','sgombro','alici','baccalà','frutti di mare'];
+  const animalKeywords = [...meatKeywords,'uova','uovo','albumi','latte','yogurt','formaggio','ricotta','burro','parmigiano','feta','mozzarella','kefir'];
+
+  if (diet === 'vegano') {
+    for (const kw of animalKeywords) {
+      if (recipeText.includes(kw)) return false;
+    }
+  } else if (diet === 'vegetariano') {
+    for (const kw of meatKeywords) {
+      if (recipeText.includes(kw)) return false;
+    }
+  } else if (diet === 'pescetariano') {
+    for (const kw of meatKeywords) {
+      if (recipeText.includes(kw)) return false;
+    }
+  }
+
+  // Controlla cibi non graditi
+  for (const cibo of cibiNo) {
+    if (cibo.length > 2 && recipeText.includes(cibo)) return false;
+  }
+
+  return true;
+};
+
+/* Costruisce ingredienti disponibili dalla lista spesa profilo */
+window.v68GetAvailableIngredients = function() {
+  const prefs = (typeof profile !== 'undefined' && profile.nutriPrefs) || {};
+  const raw = prefs.listaSpesa || '';
+  if (!raw.trim()) return null; // null = nessuna lista → ignora il filtro
+  return raw.toLowerCase().split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean);
+};
+
+/* Calcola score di un ricetta rispetto alla lista spesa */
+window.v68RecipeShoppingScore = function(recipe, available) {
+  if (!available || !available.length) return 0;
+  const recipeText = [
+    recipe.name || '',
+    (recipe.ingredienti || []).join(' '),
+    (recipe.ing || []).join(' '),
+    (recipe.alimenti || []).join(' '),
+  ].join(' ').toLowerCase();
+
+  let hits = 0;
+  for (const ingr of available) {
+    if (ingr.length > 2 && recipeText.includes(ingr)) hits++;
+  }
+  return hits;
+};
+
+/* Seleziona la ricetta migliore per tipo pasto (colazione/pranzo/cena) rispettando profilo */
+window.v68SelectBestRecipe = function(mealType, kcalTarget, exclude) {
+  // Determina categorie cercate
+  const catMap = {
+    colazione: ['🌅 Colazione','colazione'],
+    pranzo:    ['🍽️ Pranzo','pranzo'],
+    cena:      ['🌙 Cena','cena'],
+  };
+  const cats = catMap[mealType] || [];
+  exclude = exclude || [];
+
+  // Pool: RECIPES_DB + ricette nei DB V67
+  let pool = [];
+  if (typeof RECIPES_DB !== 'undefined') pool = pool.concat(RECIPES_DB);
+
+  // Filtra per categoria e sicurezza allergie
+  let candidates = pool.filter(r => {
+    if (exclude.includes(r.id)) return false;
+    const cat = (r.cat || '').toLowerCase();
+    const tags = (r.tags || []).join(' ').toLowerCase();
+    const name = (r.name || '').toLowerCase();
+    const matchCat = cats.some(c => cat.includes(c.replace(/[🌅🍽️🌙]/g,'').trim().toLowerCase()) || tags.includes(c.replace(/[🌅🍽️🌙]/g,'').trim().toLowerCase()));
+    if (!matchCat) return false;
+    return window.v68RecipeSafe(r);
+  });
+
+  if (!candidates.length) return null; // nessuna ricetta sicura
+
+  // Peso kcal target (se fornito)
+  const available = window.v68GetAvailableIngredients();
+
+  candidates.sort((a, b) => {
+    // Score lista spesa (priorità massima se lista presente)
+    const scoreA = window.v68RecipeShoppingScore(a, available);
+    const scoreB = window.v68RecipeShoppingScore(b, available);
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    // Vicinanza kcal target
+    if (kcalTarget) {
+      const dA = Math.abs((a.kcal||0) - kcalTarget);
+      const dB = Math.abs((b.kcal||0) - kcalTarget);
+      return dA - dB;
+    }
+    return 0;
+  });
+
+  const best = candidates[0];
+  return {
+    id: best.id,
+    ico: best.ico || best.cat?.split(' ')[0] || '🍽️',
+    name: best.name,
+    time: best.time || 15,
+    kcal: best.kcal || 0,
+    p: best.p || 0,
+    c: best.c || 0,
+    g: best.g || best.fat || 0,
+    ingredienti: best.ingredienti || best.ing || [],
+  };
+};
+
+/* Costruisce un menu giornaliero intelligente (rispetta allergie + lista spesa + fabbisogno) */
+window.v68BuildSmartMenu = function() {
+  const prefs = (typeof profile !== 'undefined' && profile.nutriPrefs) || {};
+  const kcalTarget = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2500;
+  const macros = (typeof profile !== 'undefined' && profile.macros) || { p:180, c:280, g:70 };
+
+  // Distribuisci kcal: colazione 25%, pranzo 40%, cena 35%
+  const bf = window._v67State.showBreakfast;
+  const kcalBf    = Math.round(kcalTarget * 0.25);
+  const kcalPranzo = Math.round(kcalTarget * (bf ? 0.40 : 0.55));
+  const kcalCena  = Math.round(kcalTarget * (bf ? 0.35 : 0.45));
+
+  const used = [];
+  let colazione = null, pranzo = null, cena = null;
+
+  if (bf) {
+    colazione = window.v68SelectBestRecipe('colazione', kcalBf, used);
+    if (colazione) used.push(colazione.id);
+  }
+  pranzo = window.v68SelectBestRecipe('pranzo', kcalPranzo, used);
+  if (pranzo) used.push(pranzo.id);
+  cena = window.v68SelectBestRecipe('cena', kcalCena, used);
+
+  // Fallback ai mockup V67 se nessuna ricetta trovata
+  const day = window._v67State.selectedDay || 0;
+  const fallback = window._v67MenuDB[day] || window._v67MenuDB[0];
+  if (!colazione) colazione = Object.assign({}, fallback.colazione);
+  if (!pranzo)   pranzo   = Object.assign({}, fallback.pranzo);
+  if (!cena)     cena     = Object.assign({}, fallback.cena);
+
+  return { colazione, pranzo, cena };
+};
+
+/* Badge allergie nella sezione menu */
+window.v68GetAllergiesBadges = function() {
+  const prefs = (typeof profile !== 'undefined' && profile.nutriPrefs) || {};
+  const intolleranze = (prefs.intolleranze || []).filter(i => i !== 'intoll_none');
+  const diet = prefs.diet;
+  const available = window.v68GetAvailableIngredients();
+
+  let html = '';
+  if (diet && diet !== 'omnivore') {
+    const dietLabel = { vegetariano:'🥗 Veg', vegano:'🌱 Vegano', pescetariano:'🐟 Pescet.' };
+    html += `<span class="v68-pref-badge v68-diet-badge">${dietLabel[diet] || diet}</span>`;
+  }
+  const intollLabel = { glutine:'🌾 No Glutine', lattosio:'🥛 No Latt.', uova:'🥚 No Uova', fruttadisecco:'🥜 No Frutta Secca', pesce:'🐟 No Pesce', soia:'🫘 No Soia', nichel:'⚗️ No Nichel' };
+  for (const i of intolleranze) {
+    if (intollLabel[i]) html += `<span class="v68-pref-badge v68-allergy-badge">${intollLabel[i]}</span>`;
+  }
+  if (available && available.length) {
+    html += `<span class="v68-pref-badge v68-shop-badge">🛒 Lista spesa attiva (${available.length} ingr.)</span>`;
+  }
+  return html;
+};
+
+/* Override v67UpdateMenuForDay con versione intelligente V68 */
+const _v67UpdateMenuForDay_orig = window.v67UpdateMenuForDay;
+window.v67UpdateMenuForDay = function(dayIdx) {
+  const day = typeof dayIdx === 'number' ? dayIdx : window._v67State.selectedDay;
+  window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+  window._v67State.swapIdx   = { colazione:0, pranzo:0, cena:0 };
+
+  // Usa motore intelligente V68
+  try {
+    const smartMenu = window.v68BuildSmartMenu();
+    window._v67State.currentMenu = smartMenu;
+  } catch(e) {
+    // fallback V67
+    if (typeof _v67UpdateMenuForDay_orig === 'function') {
+      _v67UpdateMenuForDay_orig(day);
+      return;
+    }
+  }
+  v67RenderMenuCards();
+};
+
+/* Override v67GenerateNewMenu con versione intelligente V68 */
+window.v67GenerateNewMenu = function() {
+  const btn = document.getElementById('v67-gen-menu-btn');
+  if (btn) btn.classList.add('v67-loading');
+  if (typeof showToast === 'function') showToast('🤖 Generazione menu personalizzato...');
+
+  setTimeout(() => {
+    try {
+      const smartMenu = window.v68BuildSmartMenu();
+      window._v67State.currentMenu = smartMenu;
+      window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+      v67RenderMenuCards(true);
+    } catch(e) {
+      if (typeof showToast === 'function') showToast('⚠️ Errore generazione menu');
+    }
+    if (btn) btn.classList.remove('v67-loading');
+    if (typeof showToast === 'function') showToast('✨ Menu personalizzato generato!');
+  }, 900);
+};
+
+/* Inietta i badge preferenze nella sezione menu */
+window.v68InjectPreferencesBadges = function() {
+  const section = document.getElementById('v67-menu-section');
+  if (!section) return;
+  let badgeWrap = document.getElementById('v68-pref-badges');
+  const badges = window.v68GetAllergiesBadges();
+  if (!badges) { if (badgeWrap) badgeWrap.remove(); return; }
+  if (!badgeWrap) {
+    badgeWrap = document.createElement('div');
+    badgeWrap.id = 'v68-pref-badges';
+    badgeWrap.className = 'v68-pref-badges-wrap';
+    const header = section.querySelector('.v66-menu-header');
+    if (header) header.insertAdjacentElement('afterend', badgeWrap);
+    else section.prepend(badgeWrap);
+  }
+  badgeWrap.innerHTML = badges;
+};
+
+/* Modifica renderHome per iniettare anche i badges */
+const _v67InitHub_orig = window.v67InitHub;
+window.v67InitHub = function() {
+  if (typeof _v67InitHub_orig === 'function') _v67InitHub_orig();
+  try { window.v68InjectPreferencesBadges(); } catch(e) {}
+};
+
+/* Impostazioni nutrizione accessibili dal profilo (bottone "Modifica") */
+window.v68OpenNutritionSettings = function() {
+  // Bottom sheet con le preferenze modificabili post-onboarding
+  const prefs = (typeof profile !== 'undefined' && profile.nutriPrefs) || {};
+  const intolleranze = prefs.intolleranze || [];
+  const cibiNo = prefs.cibiNo || '';
+  const listaSpesa = prefs.listaSpesa || '';
+
+  const allergyOptions = [
+    {id:'glutine', label:'🌾 Glutine / Celiaco'},
+    {id:'lattosio', label:'🥛 Lattosio'},
+    {id:'uova', label:'🥚 Uova'},
+    {id:'fruttadisecco', label:'🥜 Frutta Secca'},
+    {id:'pesce', label:'🐟 Pesce'},
+    {id:'soia', label:'🫘 Soia'},
+    {id:'nichel', label:'⚗️ Nichel'},
+  ];
+  const dietOptions = [
+    {id:'omnivore',label:'🍗 Onnivoro'},
+    {id:'vegetariano',label:'🥗 Vegetariano'},
+    {id:'vegano',label:'🌱 Vegano'},
+    {id:'pescetariano',label:'🐟 Pescetariano'},
+  ];
+  const currentDiet = prefs.diet || 'omnivore';
+
+  const html = `
+  <div id="v68-nutr-sheet-ovl" style="position:fixed;inset:0;background:rgba(0,0,0,.8);
+    z-index:350;backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;">
+    <div style="background:var(--bg2);border:1px solid rgba(255,255,255,.1);
+      border-radius:24px 24px 0 0;width:100%;max-width:640px;
+      max-height:88dvh;overflow-y:auto;
+      padding:0 0 calc(24px + var(--safe-bot));
+      animation:slideUp .3s cubic-bezier(.22,1,.36,1);">
+      <div style="width:36px;height:4px;border-radius:99px;background:rgba(255,255,255,.15);margin:12px auto 0;"></div>
+      <div style="padding:16px 20px 4px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:17px;font-weight:800;">🍽️ Preferenze Alimentari</span>
+        <button onclick="document.getElementById('v68-nutr-sheet-ovl').remove()"
+          style="background:rgba(255,255,255,.08);border:none;border-radius:50%;
+            width:32px;height:32px;color:var(--text);cursor:pointer;font-size:15px;">✕</button>
+      </div>
+      <div style="padding:4px 20px 20px;">
+
+        <div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin:12px 0 8px;">Tipo di Dieta</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="v68-diet-grid">
+          ${dietOptions.map(d=>`
+            <button onclick="v68SetDiet('${d.id}',this)"
+              style="padding:10px;border-radius:12px;border:1.5px solid ${currentDiet===d.id?'var(--acc)':'rgba(255,255,255,.1)'};
+                background:${currentDiet===d.id?'rgba(200,245,60,.08)':'rgba(255,255,255,.03)'};
+                color:${currentDiet===d.id?'var(--acc)':'rgba(255,255,255,.6)'};
+                font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;
+                transition:all .15s;" data-diet="${d.id}">${d.label}</button>
+          `).join('')}
+        </div>
+
+        <div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin:0 0 8px;">Allergie & Intolleranze</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+          ${allergyOptions.map(a=>`
+            <button onclick="v68ToggleAllergy('${a.id}',this)"
+              style="padding:10px;border-radius:12px;border:1.5px solid ${intolleranze.includes(a.id)?'rgba(255,99,72,.45)':'rgba(255,255,255,.1)'};
+                background:${intolleranze.includes(a.id)?'rgba(255,99,72,.08)':'rgba(255,255,255,.03)'};
+                color:${intolleranze.includes(a.id)?'#FF6348':'rgba(255,255,255,.6)'};
+                font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;
+                transition:all .15s;" data-allergy="${a.id}">${a.label}</button>
+          `).join('')}
+        </div>
+
+        <div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin:0 0 6px;">Alimenti non graditi</div>
+        <input type="text" id="v68-cibi-no-inp" value="${cibiNo}"
+          placeholder="es. fegato, cavolfiore..."
+          style="width:100%;padding:11px 14px;background:var(--bg3);border:1.5px solid var(--border);
+            border-radius:12px;font-size:13px;color:var(--text);outline:none;
+            font-family:'Syne',sans-serif;margin-bottom:16px;box-sizing:border-box;">
+
+        <div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);margin:0 0 6px;">📦 Lista della Spesa / Ingredienti disponibili</div>
+        <textarea id="v68-lista-spesa-inp" rows="3"
+          placeholder="es. pollo, riso, uova, broccoli..."
+          style="width:100%;padding:11px 14px;background:var(--bg3);border:1.5px solid var(--border);
+            border-radius:12px;font-size:13px;color:var(--text);outline:none;
+            font-family:'Syne',sans-serif;resize:vertical;margin-bottom:6px;box-sizing:border-box;">${listaSpesa}</textarea>
+        <div style="font-size:10px;color:rgba(255,255,255,.28);margin-bottom:20px;line-height:1.6;">
+          Se inserisci gli ingredienti disponibili, il menu darà priorità alle ricette che li usano.
+        </div>
+
+        <button onclick="v68SaveNutritionSettings()"
+          style="width:100%;padding:15px;background:var(--acc);color:#06060E;border:none;
+            border-radius:14px;font-family:'Syne',sans-serif;font-size:15px;
+            font-weight:800;cursor:pointer;letter-spacing:.03em;
+            box-shadow:0 4px 22px rgba(200,245,60,.28);">
+          💾 Salva & Rigenera Menu
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.v68SetDiet = function(diet, btn) {
+  document.querySelectorAll('#v68-diet-grid button').forEach(b => {
+    const isThis = b.dataset.diet === diet;
+    b.style.borderColor = isThis ? 'var(--acc)' : 'rgba(255,255,255,.1)';
+    b.style.background  = isThis ? 'rgba(200,245,60,.08)' : 'rgba(255,255,255,.03)';
+    b.style.color       = isThis ? 'var(--acc)' : 'rgba(255,255,255,.6)';
+  });
+  if (!profile.nutriPrefs) profile.nutriPrefs = {};
+  profile.nutriPrefs.diet = diet;
+};
+
+window.v68ToggleAllergy = function(allergy, btn) {
+  if (!profile.nutriPrefs) profile.nutriPrefs = {};
+  if (!profile.nutriPrefs.intolleranze) profile.nutriPrefs.intolleranze = [];
+  const arr = profile.nutriPrefs.intolleranze;
+  const idx = arr.indexOf(allergy);
+  if (idx >= 0) {
+    arr.splice(idx, 1);
+    btn.style.borderColor = 'rgba(255,255,255,.1)';
+    btn.style.background  = 'rgba(255,255,255,.03)';
+    btn.style.color       = 'rgba(255,255,255,.6)';
+  } else {
+    arr.push(allergy);
+    btn.style.borderColor = 'rgba(255,99,72,.45)';
+    btn.style.background  = 'rgba(255,99,72,.08)';
+    btn.style.color       = '#FF6348';
+  }
+};
+
+window.v68SaveNutritionSettings = function() {
+  if (!profile.nutriPrefs) profile.nutriPrefs = {};
+  const cibiNoInp = document.getElementById('v68-cibi-no-inp');
+  const listaInp  = document.getElementById('v68-lista-spesa-inp');
+  if (cibiNoInp) profile.nutriPrefs.cibiNo = cibiNoInp.value.trim();
+  if (listaInp)  profile.nutriPrefs.listaSpesa = listaInp.value.trim();
+  if (typeof saveAll === 'function') saveAll();
+  document.getElementById('v68-nutr-sheet-ovl')?.remove();
+  // Rigenera il menu con le nuove preferenze
+  try {
+    const smartMenu = window.v68BuildSmartMenu();
+    window._v67State.currentMenu = smartMenu;
+    window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+    v67RenderMenuCards(true);
+    v68InjectPreferencesBadges();
+  } catch(e) {}
+  if (typeof showToast === 'function') showToast('✅ Preferenze salvate — menu aggiornato!');
+};
 
 // ob_s14_5 rimosso — obNext passa direttamente
 
@@ -32988,6 +34199,34 @@ window.renderHome = function renderHome() {
       setMpill('mp-cv','mp-cb', tot.c||0, tc, 'var(--blue)',  'g');
       setMpill('mp-gv','mp-gb', tot.g||0, tg, 'var(--orange)','g');
     }
+
+    /* ── V66: sync daily widget ring ── */
+    try {
+      const v66ring = document.querySelector('.v66-ring-fg');
+      if (v66ring) {
+        const v66circ = 2 * Math.PI * 46;
+        v66ring.style.strokeDasharray = v66circ;
+        v66ring.style.strokeDashoffset = v66circ * (1 - pct / 100);
+      }
+      _setText('v66-ring-val-id', rem); // se esiste alias
+      const rv = document.querySelector('.v66-ring-val');
+      if (rv) rv.textContent = rem;
+      const cv = document.querySelector('.v66-kcal-consumed');
+      if (cv) cv.innerHTML = 'Consumate: <b>' + eaten + '</b> kcal';
+      const tkMini = document.querySelector('.v66-kcal-tgt-mini');
+      if (tkMini) tkMini.innerHTML = 'Target: ' + tgt + ' kcal';
+      /* Sync macro pills V66 */
+      if (typeof setMpill === 'function') {
+        setMpill('v66-mp-pv','v66-mp-pb', tot.p||0, tp, 'var(--green)', 'g');
+        setMpill('v66-mp-cv','v66-mp-cb', tot.c||0, tc, 'var(--blue)',  'g');
+        setMpill('v66-mp-gv','v66-mp-gb', tot.g||0, tg, 'var(--orange)','g');
+      }
+      /* Peso: ultimo dalla history */
+      const wh = (typeof profile !== 'undefined' && profile.weightHistory) || [];
+      const lastW = wh.length ? wh[wh.length - 1] : null;
+      const wEl = _el('v66-last-weight');
+      if (wEl) wEl.textContent = lastW ? (lastW.w || lastW) + ' kg' : '— kg';
+    } catch(e2) {}
   } catch(e) {}
 
   // ── 5. Last session card ──
@@ -33065,6 +34304,420 @@ window.renderHome = function renderHome() {
   if (typeof v40InjectDashboard === 'function') {
     requestAnimationFrame(() => { try { v40InjectDashboard(); } catch(e) {} });
   }
+
+  // ── V66: Day selector ──
+  try { v66RenderDaySelector(); } catch(e) {}
+
+  // ── V67: Hub Giornaliero (workout + menu per giorno selezionato) ──
+  try { v67InitHub(); } catch(e) {}
+};
+
+/* ─────────────────────────────────────────
+   V66 — Day Selector Renderer
+───────────────────────────────────────── */
+window.v66RenderDaySelector = function() {
+  const el = document.getElementById('v66-day-selector');
+  if (!el) return;
+  const days = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const today = new Date();
+  const todayDow = (today.getDay() + 6) % 7; // 0=LUN
+
+  // Sessions per day of week (current week)
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - todayDow);
+  weekStart.setHours(0,0,0,0);
+
+  const woSet = new Set();
+  if (typeof sessions !== 'undefined') {
+    sessions.forEach(s => {
+      const d = new Date(s.date || s.ts || 0);
+      const diff = Math.floor((d - weekStart) / 86400000);
+      if (diff >= 0 && diff < 7) woSet.add(diff);
+    });
+  }
+
+  el.innerHTML = days.map((d, i) => {
+    const dateN = new Date(weekStart);
+    dateN.setDate(weekStart.getDate() + i);
+    const isActive = i === todayDow;
+    const hasWo = woSet.has(i);
+    return `<button class="v66-day-btn${isActive ? ' active' : ''}${hasWo ? ' has-wo' : ''}"
+      onclick="v66SelectDay(${i})"
+      title="${d} — ${dateN.toLocaleDateString('it-IT',{day:'numeric',month:'short'})}">
+      <span class="v66-day-letter">${d}</span>
+      <span class="v66-day-num">${dateN.getDate()}</span>
+      <span class="v66-day-dot"></span>
+    </button>`;
+  }).join('');
+};
+
+window.v66SelectDay = function(idx) {
+  const btns = document.querySelectorAll('.v66-day-btn');
+  btns.forEach((b,i) => b.classList.toggle('active', i === idx));
+  // V67: aggiorna anche workout hub e menu
+  try { v67UpdateWorkoutHub(idx); } catch(e) {}
+  try { v67UpdateMenuForDay(idx); } catch(e) {}
+};
+
+/* ═══════════════════════════════════════════════════════
+   V67 — HUB GIORNALIERO: sistema dati mockup settimanale
+═══════════════════════════════════════════════════════ */
+
+/* ── Mockup Workout per giorno (0=LUN … 6=DOM) ── */
+window._v67WorkoutDB = {
+  0: { name:'Push Day — Petto & Spalle', icon:'🔥', tag:'Ipertrofia', duration:'45 min', level:'Intermedio', restDay:false, exercises:[
+    {ico:'🏋️',name:'Panca Piana',sets:'4×8'},
+    {ico:'🤸',name:'Military Press',sets:'3×10'},
+    {ico:'💪',name:'Lateral Raises',sets:'3×15'},
+    {ico:'🔄',name:'Dips',sets:'3×12'},
+  ]},
+  1: { name:'Pull Day — Schiena & Bicipiti', icon:'⚡', tag:'Ipertrofia', duration:'50 min', level:'Intermedio', restDay:false, exercises:[
+    {ico:'🏋️',name:'Trazioni alla Sbarra',sets:'4×8'},
+    {ico:'💪',name:'Rematore Bilanciere',sets:'4×10'},
+    {ico:'🤸',name:'Curl con Bilanciere',sets:'3×12'},
+    {ico:'🔄',name:'Face Pull',sets:'3×15'},
+  ]},
+  2: { name:'Leg Day — Quadricipiti & Glutei', icon:'🦵', tag:'Forza', duration:'55 min', level:'Per Tutti', restDay:false, exercises:[
+    {ico:'🏋️',name:'Squat con Bilanciere',sets:'5×5'},
+    {ico:'🦵',name:'Leg Press',sets:'4×12'},
+    {ico:'🍑',name:'Hip Thrust',sets:'4×15'},
+    {ico:'🔄',name:'Leg Curl',sets:'3×12'},
+  ]},
+  3: { name:'Giorno di Riposo Attivo', icon:'🧘', tag:'Recupero', duration:'—', level:'—', restDay:true, exercises:[] },
+  4: { name:'Full Body HIIT', icon:'💥', tag:'Cardio/Forza', duration:'40 min', level:'Avanzato', restDay:false, exercises:[
+    {ico:'🏃',name:'Burpee',sets:'5×10'},
+    {ico:'🤸',name:'Push Up Esplosivi',sets:'4×12'},
+    {ico:'🦵',name:'Squat Jump',sets:'4×15'},
+    {ico:'💪',name:'Mountain Climber',sets:'3×30s'},
+  ]},
+  5: { name:'Core & Mobilità', icon:'🌀', tag:'Mobilità', duration:'35 min', level:'Per Tutti', restDay:false, exercises:[
+    {ico:'🔥',name:'Plank Variazioni',sets:'3×45s'},
+    {ico:'🤸',name:'Russian Twist',sets:'3×20'},
+    {ico:'🧘',name:'Hip Flexor Stretch',sets:'2×60s'},
+    {ico:'🌀',name:'Cat-Cow Flow',sets:'2×10'},
+  ]},
+  6: { name:'Giorno di Riposo Completo', icon:'😴', tag:'Riposo', duration:'—', level:'—', restDay:true, exercises:[] },
+};
+
+/* ── Mockup Menu per giorno (0=LUN … 6=DOM) ── */
+window._v67MenuDB = {
+  0: {
+    colazione:{ico:'🥣',name:'Porridge proteico al cioccolato',time:5,kcal:420,p:32,c:48,g:8},
+    pranzo:   {ico:'🥗',name:'Power Bowl: riso + pollo + avocado',time:15,kcal:520,p:42,c:48,g:12},
+    cena:     {ico:'🍳',name:'Salmone al forno con verdure',time:20,kcal:420,p:38,c:18,g:18},
+  },
+  1: {
+    colazione:{ico:'🥞',name:'Pancake di albumi e avena',time:10,kcal:310,p:28,c:35,g:5},
+    pranzo:   {ico:'🍱',name:'Pasta proteica al tonno e pomodorini',time:15,kcal:490,p:38,c:52,g:8},
+    cena:     {ico:'🥩',name:'Petto di pollo con patate dolci al forno',time:30,kcal:480,p:44,c:42,g:8},
+  },
+  2: {
+    colazione:{ico:'🫙',name:'Yogurt greco bowl fit',time:3,kcal:290,p:30,c:28,g:5},
+    pranzo:   {ico:'🥣',name:'Buddha Bowl: quinoa + salmone',time:20,kcal:490,p:36,c:40,g:14},
+    cena:     {ico:'🐟',name:'Merluzzo al vapore con quinoa',time:20,kcal:340,p:38,c:30,g:5},
+  },
+  3: {
+    colazione:{ico:'🥑',name:'Uova strapazzate e avocado su toast',time:8,kcal:480,p:28,c:32,g:22},
+    pranzo:   {ico:'🌯',name:'Wrap proteico pollo e hummus',time:10,kcal:380,p:34,c:38,g:9},
+    cena:     {ico:'🦐',name:'Gamberi saltati con zucchine',time:12,kcal:260,p:30,c:8,g:10},
+  },
+  4: {
+    colazione:{ico:'🥤',name:'Smoothie verde proteico',time:4,kcal:280,p:25,c:30,g:4},
+    pranzo:   {ico:'🍜',name:'Poke Bowl proteico',time:15,kcal:540,p:38,c:52,g:14},
+    cena:     {ico:'🥩',name:'Manzo magro con spinaci saltati',time:15,kcal:400,p:40,c:10,g:18},
+  },
+  5: {
+    colazione:{ico:'🌾',name:'Overnight Oats al burro arachidi',time:5,kcal:460,p:26,c:55,g:12},
+    pranzo:   {ico:'🫔',name:'Pasta integrale pollo e pesto leggero',time:18,kcal:510,p:40,c:50,g:12},
+    cena:     {ico:'🍳',name:'Frittata proteica alta al forno',time:20,kcal:290,p:38,c:6,g:12},
+  },
+  6: {
+    colazione:{ico:'🥚',name:'Frittata di albumi e verdure',time:12,kcal:220,p:30,c:8,g:6},
+    pranzo:   {ico:'🥗',name:'Insalata proteica di polpo',time:10,kcal:280,p:32,c:12,g:8},
+    cena:     {ico:'🐟',name:'Burger di tonno e ceci',time:20,kcal:360,p:34,c:32,g:8},
+  },
+};
+
+/* Alternative ricette per swap */
+window._v67SwapAlts = {
+  colazione:[
+    {ico:'🫙',name:'Yogurt bowl con granola e frutti di bosco',time:3,kcal:290,p:24,c:36,g:6},
+    {ico:'🥞',name:'Waffle proteici',time:15,kcal:420,p:34,c:38,g:12},
+    {ico:'🌑',name:'Overnight Oats al cacao',time:5,kcal:440,p:32,c:52,g:10},
+    {ico:'🍫',name:'Pudding di chia al cioccolato',time:5,kcal:260,p:18,c:26,g:10},
+    {ico:'🫐',name:'Muffin proteici avena e mirtilli',time:30,kcal:160,p:10,c:18,g:4},
+  ],
+  pranzo:[
+    {ico:'🍜',name:'Zuppa di legumi misti',time:25,kcal:340,p:20,c:50,g:5},
+    {ico:'🥗',name:'Insalata di polpo e ceci',time:10,kcal:280,p:32,c:12,g:8},
+    {ico:'🌯',name:'Wrap integrale con hummus e verdure',time:10,kcal:380,p:34,c:38,g:9},
+    {ico:'🍝',name:'Pasta integrale con pesto leggero',time:18,kcal:510,p:40,c:50,g:12},
+    {ico:'🥣',name:'Curry di lenticchie e spinaci',time:30,kcal:360,p:22,c:50,g:7},
+  ],
+  cena:[
+    {ico:'🥩',name:'Manzo magro con spinaci',time:15,kcal:400,p:40,c:10,g:18},
+    {ico:'🐟',name:'Burger di tonno e ceci',time:20,kcal:360,p:34,c:32,g:8},
+    {ico:'🍗',name:'Pollo al forno con patate dolci',time:30,kcal:480,p:44,c:42,g:8},
+    {ico:'🦐',name:'Gamberi saltati con zucchine',time:12,kcal:260,p:30,c:8,g:10},
+    {ico:'🐟',name:'Merluzzo al vapore con quinoa',time:20,kcal:340,p:38,c:30,g:5},
+  ],
+};
+
+/* ── Stato V67 ── */
+window._v67State = {
+  selectedDay: (new Date().getDay() + 6) % 7, // default: oggi
+  showBreakfast: true,
+  currentMenu: null, // sarà { colazione, pranzo, cena }
+  confirmed: { colazione:false, pranzo:false, cena:false },
+  swapIdx: { colazione:0, pranzo:0, cena:0 },
+};
+
+/* ── Funzione: aggiorna sezione Workout ── */
+window.v67UpdateWorkoutHub = function(dayIdx) {
+  const day = typeof dayIdx === 'number' ? dayIdx : window._v67State.selectedDay;
+  window._v67State.selectedDay = day;
+
+  const hubBody = document.getElementById('v67-wo-body');
+  const dateEl  = document.getElementById('v67-wo-date');
+  const labelEl = document.querySelector('.v67-wo-hub-label');
+  if (!hubBody) return;
+
+  // Calcola data del giorno selezionato
+  const today = new Date();
+  const todayDow = (today.getDay() + 6) % 7;
+  const diff = day - todayDow;
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + diff);
+  const dateStr = targetDate.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'});
+  if (dateEl) dateEl.textContent = dateStr;
+
+  // Aggiorna label: Oggi / Ieri / Domani / nome giorno
+  if (labelEl) {
+    const dayNames = ['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+    let lbl = '⚡ ' + dayNames[day];
+    if (diff === 0)  lbl = '⚡ Oggi';
+    if (diff === -1) lbl = '⚡ Ieri';
+    if (diff === 1)  lbl = '⚡ Domani';
+    labelEl.textContent = lbl;
+  }
+
+  const wo = window._v67WorkoutDB[day] || { restDay:true, name:'Riposo', exercises:[] };
+
+  if (wo.restDay) {
+    hubBody.innerHTML = `
+      <div class="v67-wo-rest">
+        <div class="v67-wo-rest-ico">${wo.icon || '😴'}</div>
+        <div class="v67-wo-rest-txt">${wo.name}</div>
+        <div class="v67-wo-rest-sub">Recupero attivo consigliato — mobilità leggera</div>
+      </div>`;
+    return;
+  }
+
+  // Fase ciclo (solo per utenti femminili con ciclo attivo)
+  let cycleBadgeHtml = '';
+  try {
+    if (typeof getCycleBadgeHtml === 'function') {
+      const cb = getCycleBadgeHtml();
+      if (cb) cycleBadgeHtml = `<div style="margin-bottom:10px;">${cb}</div>`;
+    }
+  } catch(e) {}
+
+  const exRows = (wo.exercises || []).map(ex =>
+    `<div class="v67-ex-row">
+      <span class="v67-ex-row-ico">${ex.ico}</span>
+      <span class="v67-ex-row-name">${ex.name}</span>
+      <span class="v67-ex-row-sets">${ex.sets}</span>
+    </div>`
+  ).join('');
+
+  hubBody.innerHTML = `
+    ${cycleBadgeHtml}
+    <div class="v67-wo-hub-name">${wo.name}</div>
+    <div class="v67-wo-hub-meta">
+      <span class="v67-wo-hub-meta-pill">⏱️ ${wo.duration}</span>
+      <span class="v67-wo-hub-meta-pill">📊 ${wo.level}</span>
+      <span class="v67-wo-hub-meta-pill">${wo.icon} ${wo.tag}</span>
+    </div>
+    <div class="v67-exs-list">${exRows}</div>
+    <button class="v67-start-btn" onclick="v67StartWorkoutHub()">
+      <span>⚡</span>
+      <span>Inizia Allenamento</span>
+      <span style="margin-left:auto;font-size:16px;">→</span>
+    </button>`;
+};
+
+window.v67StartWorkoutHub = function() {
+  if (typeof startWorkoutFromHome === 'function') {
+    try { startWorkoutFromHome(); return; } catch(e) {}
+  }
+  if (typeof goPage === 'function') goPage('allenamento');
+};
+
+/* ── Funzione: aggiorna menu per il giorno ── */
+window.v67UpdateMenuForDay = function(dayIdx) {
+  const day = typeof dayIdx === 'number' ? dayIdx : window._v67State.selectedDay;
+  const template = window._v67MenuDB[day] || window._v67MenuDB[0];
+
+  // Reset confirmed state when changing day
+  window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+  window._v67State.swapIdx   = { colazione:0, pranzo:0, cena:0 };
+  window._v67State.currentMenu = {
+    colazione: Object.assign({}, template.colazione),
+    pranzo:    Object.assign({}, template.pranzo),
+    cena:      Object.assign({}, template.cena),
+  };
+  v67RenderMenuCards();
+};
+
+/* ── Funzione: renderizza le card dei pasti ── */
+window.v67RenderMenuCards = function(animate) {
+  const wrap = document.getElementById('v67-meal-cards-wrap');
+  if (!wrap) return;
+  const menu = window._v67State.currentMenu;
+  if (!menu) return;
+
+  const svgSwap = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/><path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/></svg>`;
+  const svgOk   = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  const buildCard = (type, label, data) => {
+    const isConfirmed = window._v67State.confirmed[type];
+    const animCls = animate ? ' v67-menu-animate' : '';
+    return `
+    <div class="v66-meal-card${isConfirmed ? ' v67-confirmed' : ''}${animCls}" id="v67-card-${type}" style="animation-delay:${type==='colazione'?'0':type==='pranzo'?'.07':'.14'}s">
+      <div class="v66-meal-type">${label}</div>
+      <div class="v66-meal-row">
+        <div class="v66-meal-thumb"><div class="v66-meal-thumb-img">${data.ico}</div></div>
+        <div class="v66-meal-info">
+          <div class="v66-meal-name">${data.name}</div>
+          <div class="v66-meal-meta">
+            <span>⏱️ ${data.time} min</span>
+            <span class="v66-meal-dot">·</span>
+            <span class="v66-meal-kcal">${data.kcal} kcal</span>
+          </div>
+          <div class="v66-meal-macros">
+            <span class="v66-mmacro v66-mmacro-p">P ${data.p}g</span>
+            <span class="v66-mmacro v66-mmacro-c">C ${data.c}g</span>
+            <span class="v66-mmacro v66-mmacro-g">G ${data.g}g</span>
+          </div>
+        </div>
+        <div class="v66-meal-actions">
+          <button class="v66-meal-btn v66-meal-btn-swap" title="Cambia ricetta" onclick="v67SwapMeal('${type}')">${svgSwap}</button>
+          <button class="v66-meal-btn v66-meal-btn-ok${isConfirmed ? ' v67-ok-active' : ''}" title="Conferma pasto" onclick="v67ConfirmMeal('${type}')">${svgOk}</button>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // Calcola kcal per pranzo/cena senza colazione (redistribuzione macro)
+  const bf = window._v67State.showBreakfast;
+  let pranzoData = Object.assign({}, menu.pranzo);
+  let cenaData   = Object.assign({}, menu.cena);
+  if (!bf) {
+    // Redistribuisci +15% kcal/macros su pranzo e cena
+    const factor = 1.15;
+    ['kcal','p','c','g'].forEach(k => {
+      pranzoData[k] = Math.round(menu.pranzo[k] * factor);
+      cenaData[k]   = Math.round(menu.cena[k]   * factor);
+    });
+  }
+
+  let html = '';
+  if (bf) html += buildCard('colazione', 'COLAZIONE', menu.colazione);
+  html += buildCard('pranzo', 'PRANZO', pranzoData);
+  html += buildCard('cena',   'CENA',   cenaData);
+
+  wrap.innerHTML = html;
+};
+
+/* ── Swap singola ricetta ── */
+window.v67SwapMeal = function(type) {
+  const card = document.getElementById('v67-card-' + type);
+  if (!card) return;
+  card.classList.add('v67-swapping');
+
+  setTimeout(() => {
+    const alts = window._v67SwapAlts[type] || [];
+    const idx  = (window._v67State.swapIdx[type] + 1) % alts.length;
+    window._v67State.swapIdx[type]   = idx;
+    window._v67State.currentMenu[type] = Object.assign({}, alts[idx]);
+    window._v67State.confirmed[type]  = false;
+
+    v67RenderMenuCards();
+    // Applica animazione solo alla card swapped
+    const newCard = document.getElementById('v67-card-' + type);
+    if (newCard) {
+      newCard.classList.remove('v67-swapping');
+      newCard.classList.add('v67-swapped');
+      setTimeout(() => newCard.classList.remove('v67-swapped'), 400);
+    }
+    if (typeof showToast === 'function') showToast('🔄 Ricetta aggiornata!');
+  }, 200);
+};
+
+/* ── Conferma singolo pasto ── */
+window.v67ConfirmMeal = function(type) {
+  const wasConfirmed = window._v67State.confirmed[type];
+  window._v67State.confirmed[type] = !wasConfirmed;
+  v67RenderMenuCards();
+  if (!wasConfirmed) {
+    if (typeof showToast === 'function') showToast('✅ Pasto confermato!');
+    // Vibrazione feedback se supportata
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+};
+
+/* ── Toggle colazione ── */
+window.v67ToggleBreakfast = function() {
+  const tog = document.getElementById('v67-bf-toggle');
+  window._v67State.showBreakfast = !window._v67State.showBreakfast;
+  if (tog) tog.classList.toggle('on', window._v67State.showBreakfast);
+  v67RenderMenuCards(true);
+  const msg = window._v67State.showBreakfast
+    ? '🌅 Colazione aggiunta al menu'
+    : '⚡ Menu senza colazione — kcal redistribuite';
+  if (typeof showToast === 'function') showToast(msg);
+};
+
+/* ── Genera nuovo menu completo ── */
+window.v67GenerateNewMenu = function() {
+  const btn = document.getElementById('v67-gen-menu-btn');
+  if (btn) btn.classList.add('v67-loading');
+  if (typeof showToast === 'function') showToast('🤖 Generazione menu in corso...');
+
+  setTimeout(() => {
+    const day = window._v67State.selectedDay;
+    const base = window._v67MenuDB[day] || window._v67MenuDB[0];
+
+    // Ruota le alternative per ogni tipo
+    const pickAlt = (type, base) => {
+      const alts = window._v67SwapAlts[type] || [];
+      if (!alts.length) return base;
+      const idx = Math.floor(Math.random() * alts.length);
+      return Object.assign({}, alts[idx]);
+    };
+
+    window._v67State.currentMenu = {
+      colazione: pickAlt('colazione', base.colazione),
+      pranzo:    pickAlt('pranzo',    base.pranzo),
+      cena:      pickAlt('cena',      base.cena),
+    };
+    window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+
+    v67RenderMenuCards(true);
+    if (btn) btn.classList.remove('v67-loading');
+    if (typeof showToast === 'function') showToast('✨ Nuovo menu generato!');
+  }, 900);
+};
+
+/* ── Inizializzazione Hub V67 (chiamata da renderHome) ── */
+window.v67InitHub = function() {
+  const todayDow = (new Date().getDay() + 6) % 7;
+  window._v67State.selectedDay = todayDow;
+  v67UpdateWorkoutHub(todayDow);
+  v67UpdateMenuForDay(todayDow);
+  // Sync toggle UI
+  const tog = document.getElementById('v67-bf-toggle');
+  if (tog) tog.classList.toggle('on', window._v67State.showBreakfast);
 };
 
 /* ─────────────────────────────────────────
