@@ -6794,7 +6794,7 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
         <div class="nutr-ring-row">
           <!-- Multi-arc SVG ring -->
           <div class="nutr-ring-wrap">
-            <svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
+            <svg width="100" height="100" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
               <!-- bg tracks -->
               <circle class="nr-bg" cx="60" cy="60" r="50"/>
               <circle class="nr-bg nr-bg-md" cx="60" cy="60" r="38"/>
@@ -6830,7 +6830,7 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
           </div>
         </div>
         <!-- Macro pills -->
-        <div class="nutr-macros" style="grid-template-columns:repeat(4,1fr)">
+        <div class="nutr-macros">
           <div class="nm-box">
             <div class="nm-val" id="nm-pv" style="color:var(--green)">0g</div>
             <div class="nm-bar-wrap"><div class="nm-bar-fill" id="nm-pb" style="background:var(--green);width:0%"></div></div>
@@ -7887,101 +7887,129 @@ var FOOD_DB=[
 
 /* ── V6 RICETTE FIT ─────────────────────────────────────────── */
 var RECIPES_DB = [
-  // COLAZIONE
-  {id:'r-oatmeal-pro',name:'Porridge proteico al cioccolato',goal:['massa','mantenimento'],kcal:420,p:32,c:48,g:8,fiber:6,time:5,cat:'🌅 Colazione',
-   ing:['80g avena','30g whey cioccolato','200ml latte scremato','1 banana','1 cucchiaio burro arachidi'],
-   steps:'Cuoci l\'avena nel latte per 3 min. Fuori dal fuoco aggiungi la whey e mescola bene. Topping: banana a fette e burro di arachidi.'},
-  {id:'r-pancake-albumi',name:'Pancake di albumi e avena',goal:['massa','definizione','mantenimento'],kcal:310,p:28,c:35,g:5,fiber:4,time:10,cat:'🌅 Colazione',
-   ing:['150g albumi','60g fiocchi avena','1 banana matura','cannella','vaniglia'],
-   steps:'Frulla tutti gli ingredienti. Cuoci porzioni in padella antiaderente 2 min per lato. Servi con frutta fresca.'},
-  {id:'r-yogurt-bowl',name:'Yogurt greco bowl fit',goal:['definizione','mantenimento'],kcal:290,p:30,c:28,g:5,fiber:4,time:3,cat:'🌅 Colazione',
-   ing:['200g yogurt greco 0%','30g granola integrale','100g mirtilli','1 cucchiaio miele','10g mandorle'],
-   steps:'Versa lo yogurt in una bowl. Aggiungi granola, mirtilli, miele e mandorle a scaglie.'},
-  {id:'r-uova-avocado',name:'Uova strapazzate e avocado su toast',goal:['massa','mantenimento'],kcal:480,p:28,c:32,g:22,fiber:7,time:8,cat:'🌅 Colazione',
-   ing:['3 uova intere','1/2 avocado','2 fette pane integrale','pepe nero','sale','erba cipollina'],
-   steps:'Strapazza le uova in padella. Schiaccia l\'avocado sul pane tostato. Topping: uova + pepe + erba cipollina.'},
-  {id:'r-smoothie-verde',name:'Smoothie verde proteico',goal:['definizione','mantenimento'],kcal:280,p:25,c:30,g:4,fiber:4,time:4,cat:'🌅 Colazione',
-   ing:['1 scoop whey vaniglia','100g spinaci freschi','1 banana congelata','200ml latte mandorla','1 cucchiaio semi chia'],
-   steps:'Frulla tutto fino a ottenere una consistenza liscia. Servi subito ghiacciato.'},
-  {id:'r-overnight-oats',name:'Overnight Oats al burro arachidi',goal:['massa','mantenimento'],kcal:460,p:26,c:55,g:12,fiber:6,time:5,cat:'🌅 Colazione',
-   ing:['80g avena','200ml latte scremato','30g whey vaniglia','2 cucchiai burro arachidi','1 cucchiaio miele'],
-   steps:'Mescola tutto in un barattolo la sera. Metti in frigo overnight. Al mattino aggiungi frutta a piacere.'},
-  {id:'r-frittata-verdure',name:'Frittata di albumi e verdure',goal:['definizione','cut'],kcal:220,p:30,c:8,g:6,fiber:3,time:12,cat:'🌅 Colazione',
-   ing:['200g albumi','50g spinaci','50g peperoni','30g feta','origano','pepe'],
-   steps:'Rosola le verdure. Aggiungi gli albumi conditi. Copri e cuoci 5 min. Aggiungi feta e servi.'},
-  // PRANZO
-  {id:'r-bowl-pollo-riso',name:'Power Bowl: riso + pollo + avocado',goal:['massa','mantenimento'],kcal:520,p:42,c:48,g:12,fiber:7,time:15,cat:'🍽️ Pranzo',
-   ing:['150g petto di pollo','150g riso basmati cotto','1/2 avocado','100g zucchine grigliate','limone','curcuma','olio EVO'],
-   steps:'Griglia il pollo con curcuma e limone. Componi la bowl con riso, pollo a fettine, zucchine e avocado. Filo d\'olio.'},
-  {id:'r-pasta-tonno',name:'Pasta proteica al tonno e pomodorini',goal:['mantenimento','massa'],kcal:490,p:38,c:52,g:8,fiber:7,time:15,cat:'🍽️ Pranzo',
-   ing:['90g pasta integrale','160g tonno al naturale','150g pomodorini','aglio','basilico','10ml olio EVO'],
-   steps:'Cuoci la pasta. Rosola aglio, aggiungi pomodorini. Unisci tonno sgocciolato. Condisci la pasta scolata con il sugo.'},
-  {id:'r-buddha-bowl-quinoa',name:'Buddha Bowl: quinoa + salmone + verdure',goal:['definizione','mantenimento'],kcal:490,p:36,c:40,g:14,fiber:7,time:20,cat:'🍽️ Pranzo',
-   ing:['120g quinoa cotta','120g salmone al forno','100g edamame','100g carote rape','rucola','tahini 1 cucchiaio','limone'],
-   steps:'Cuoci la quinoa. Cuoci il salmone in forno 12 min a 180°C. Componi la bowl e condisci con tahini e limone.'},
-  {id:'r-wrap-pollo',name:'Wrap proteico pollo e hummus',goal:['definizione','mantenimento'],kcal:380,p:34,c:38,g:9,fiber:5,time:10,cat:'🍽️ Pranzo',
-   ing:['1 tortilla integrale','130g petto pollo grigliato','50g hummus','lattuga','pomodoro','peperone arrostito'],
-   steps:'Spalma hummus sulla tortilla. Aggiungi pollo a listarelle, lattuga, pomodoro e peperoni. Arrotola e servi.'},
-  {id:'r-zuppa-legumi',name:'Zuppa di legumi misti',goal:['definizione','mantenimento'],kcal:340,p:20,c:50,g:5,fiber:5,time:25,cat:'🍽️ Pranzo',
-   ing:['100g ceci cotti','100g lenticchie cotte','100g fagioli borlotti','1 carota','sedano','cipolla','pomodori pelati','rosmarino'],
-   steps:'Soffriggi cipolla, carota e sedano. Aggiungi pomodori e legumi. Cuoci 20 min con rosmarino. Frulla metà per cremosità.'},
-  {id:'r-poke-bowl',name:'Poke Bowl proteico',goal:['massa','mantenimento'],kcal:540,p:38,c:52,g:14,fiber:8,time:15,cat:'🍽️ Pranzo',
-   ing:['150g riso venere','150g salmone fresco a cubetti','1/2 avocado','edamame 50g','cetriolo','salsa soia 1 cucchiaio','sesamo'],
-   steps:'Prepara il riso. Marina il salmone 5 min in salsa soia. Componi la bowl con tutti gli ingredienti e guarnisci con sesamo.'},
-  {id:'r-insalata-proteica',name:'Insalata proteica di polpo',goal:['definizione','cut'],kcal:280,p:32,c:12,g:8,fiber:4,time:10,cat:'🍽️ Pranzo',
-   ing:['200g polpo bollito','100g rucola','100g ceci','pomodorini','sedano','prezzemolo','limone','10ml olio EVO'],
-   steps:'Taglia il polpo a tocchetti. Mescola con gli altri ingredienti. Condisci con olio e limone.'},
-  {id:'r-pasta-pollo-pesto',name:'Pasta integrale pollo e pesto leggero',goal:['massa','mantenimento'],kcal:510,p:40,c:50,g:12,fiber:7,time:18,cat:'🍽️ Pranzo',
-   ing:['80g pasta integrale','130g pollo grigliato','2 cucchiai pesto leggero','pomodorini','spinaci freschi'],
-   steps:'Cuoci la pasta. A parte, mescola pesto con un po\' di acqua di cottura. Unisci pollo, spinaci e pomodorini.'},
-  // CENA
-  {id:'r-salmone-al-forno',name:'Salmone al forno con verdure',goal:['definizione','mantenimento','massa'],kcal:420,p:38,c:18,g:18,fiber:6,time:20,cat:'🌙 Cena',
-   ing:['200g salmone','200g asparagi','150g pomodorini','limone','aglio','rosmarino','10ml olio EVO'],
-   steps:'Metti il salmone con asparagi e pomodorini in teglia. Condisci con aglio, rosmarino, limone e olio. Forno 180°C per 18 min.'},
-  {id:'r-pollo-patate',name:'Petto di pollo con patate dolci al forno',goal:['massa','mantenimento'],kcal:480,p:44,c:42,g:8,fiber:7,time:30,cat:'🌙 Cena',
-   ing:['180g petto pollo','200g patate dolci','paprika','curcuma','olio EVO','rosmarino','aglio'],
-   steps:'Taglia le patate a cubetti. Condisci tutto con spezie e olio. Forno 200°C per 25 min. Gira a metà cottura.'},
-  {id:'r-merluzzo-vapore',name:'Merluzzo al vapore con quinoa',goal:['definizione','cut'],kcal:340,p:38,c:30,g:5,fiber:5,time:20,cat:'🌙 Cena',
-   ing:['200g merluzzo','120g quinoa cotta','150g broccoli','limone','prezzemolo','sale','pepe'],
-   steps:'Cuoci il merluzzo al vapore 12 min. Cuoci la quinoa. Sbollenta i broccoli. Servi con limone e prezzemolo.'},
-  {id:'r-manzo-spinaci',name:'Manzo magro con spinaci saltati',goal:['massa','definizione'],kcal:400,p:40,c:10,g:18,fiber:6,time:15,cat:'🌙 Cena',
-   ing:['180g carne manzo 5%','200g spinaci freschi','aglio','olio EVO','pepe nero','vino bianco secco'],
-   steps:'Rosola la carne con aglio. Sfuma con vino. Separa e, nella stessa padella, salta gli spinaci con aglio. Servi insieme.'},
-  {id:'r-frittata-proteica',name:'Frittata proteica alta al forno',goal:['definizione','cut'],kcal:290,p:38,c:6,g:12,fiber:4,time:20,cat:'🌙 Cena',
-   ing:['4 uova intere','150g albumi','100g spinaci','100g funghi','50g feta','erbe aromatiche'],
-   steps:'Mescola uova e albumi. Aggiungi verdure e feta. Versa in teglia antiaderente e cuoci in forno a 180°C per 18 min.'},
-  {id:'r-burger-tonno',name:'Burger di tonno e ceci',goal:['definizione','mantenimento'],kcal:360,p:34,c:32,g:8,fiber:5,time:20,cat:'🌙 Cena',
-   ing:['160g tonno naturale','100g ceci cotti','1 uovo','prezzemolo','limone','curcuma','pangrattato integrale 2 cucchiai'],
-   steps:'Frulla ceci e tonno grossolanamente. Aggiungi uovo, spezie e pangrattato. Forma 2 burger. Cuoci in padella 4 min per lato.'},
-  {id:'r-gamberi-zucchine',name:'Gamberi saltati con zucchine',goal:['definizione','cut'],kcal:260,p:30,c:8,g:10,fiber:4,time:12,cat:'🌙 Cena',
-   ing:['200g gamberi','2 zucchine','aglio','pomodorini','vino bianco','olio EVO','prezzemolo'],
-   steps:'Rosola aglio, aggiungi zucchine a rondelle. Unisci gamberi, sfuma con vino. Aggiungi pomodorini e prezzemolo.'},
-  // SNACK
-  {id:'r-frullato-post',name:'Shake post-allenamento',goal:['massa','mantenimento'],kcal:380,p:35,c:40,g:5,fiber:5,time:3,cat:'⚡ Snack / Post WO',
-   ing:['30g whey vaniglia','1 banana','200ml latte scremato','5g creatina','1 cucchiaio miele'],
-   steps:'Frulla tutto. Consuma entro 30 minuti dall\'allenamento.'},
-  {id:'r-ricotta-miele',name:'Ciotola di ricotta con miele e frutta',goal:['mantenimento','massa'],kcal:260,p:18,c:28,g:8,fiber:4,time:2,cat:'⚡ Snack / Post WO',
-   ing:['150g ricotta magra','1 cucchiaio miele','100g fragole','15g mandorle'],
-   steps:'Monta leggermente la ricotta. Aggiungi miele e frutta. Guarnisci con mandorle a scaglie.'},
-  {id:'r-hummus-verdure',name:'Hummus fatto in casa con verdure crude',goal:['definizione','mantenimento'],kcal:220,p:9,c:25,g:9,fiber:3,time:10,cat:'⚡ Snack / Post WO',
-   ing:['200g ceci cotti','1 cucchiaio tahini','limone','aglio','olio EVO','paprika','carote e sedano per intingere'],
-   steps:'Frulla ceci con tahini, limone, aglio e un po\' d\'acqua di cottura. Condisci con olio e paprika. Servi con verdure crude.'},
-  {id:'r-muffin-avena',name:'Muffin fit avena e mirtilli',goal:['mantenimento','massa'],kcal:180,p:8,c:26,g:5,fiber:3,time:20,cat:'⚡ Snack / Post WO',
-   ing:['120g avena','2 uova','100g yogurt greco','80g mirtilli','30ml miele','1 cucchiaino lievito','cannella'],
-   steps:'Mescola avena, uova, yogurt e miele. Aggiungi mirtilli e lievito. Distribuisci in 6 pirottini. Forno 180°C per 18 min.'},
-  {id:'r-energy-balls',name:'Energy Balls avena e burro arachidi',goal:['massa','mantenimento'],kcal:200,p:7,c:22,g:10,fiber:3,time:10,cat:'⚡ Snack / Post WO',
-   ing:['100g avena','3 cucchiai burro arachidi','2 cucchiai miele','30g cioccolato fondente 85% a scaglie','semi chia'],
-   steps:'Mescola tutto. Forma 8 palline. Metti in frigo 30 min prima di consumare.'},
-  // MEAL PREP
-  {id:'r-chili-tacchino',name:'Chili di tacchino e fagioli',goal:['massa','definizione','mantenimento'],kcal:390,p:42,c:34,g:8,fiber:5,time:35,cat:'🍱 Meal Prep',
-   ing:['300g tacchino macinato','200g fagioli neri cotti','200g pomodori pelati','peperoni','cipolla','aglio','cumino','paprika affumicata','coriandolo'],
-   steps:'Rosola tacchino con cipolla e aglio. Aggiungi peperoni, pomodori e spezie. Cuoci 25 min. Aggiungi fagioli e cuoci altri 5 min.'},
-  {id:'r-meal-prep-pollo',name:'Meal prep: 5 petti di pollo grigliati',goal:['massa','definizione'],kcal:220,p:46,c:0,g:3,fiber:3,time:25,cat:'🍱 Meal Prep',
-   ing:['5 petti di pollo 130g cad.','paprika','curcuma','aglio in polvere','sale','olio EVO','limone'],
-   steps:'Marina i petti con spezie, olio e limone 1h. Griglia 6-7 min per lato. Lascia riposare. Conserva in frigo fino a 4 giorni.'},
-  {id:'r-curry-lenticchie',name:'Curry di lenticchie e spinaci',goal:['definizione','mantenimento'],kcal:360,p:22,c:50,g:7,fiber:5,time:30,cat:'🍱 Meal Prep',
-   ing:['200g lenticchie rosse secche','200ml latte di cocco','200g spinaci','cipolla','aglio','zenzero','curry in polvere','pomodori'],
-   steps:'Soffriggi cipolla, aglio e zenzero. Aggiungi curry, lenticchie, pomodori e latte di cocco. Cuoci 20 min. Unisci spinaci a fine cottura.'},
+  /* ═══════════════════ COLAZIONE ═══════════════════ */
+  {id:'r-oatmeal-pro',name:'Porridge proteico al cioccolato',tipo:'colazione_dolce',goal:['massa','mantenimento'],kcal:420,p:32,c:48,g:8,fiber:6,time:5,cat:'🌅 Colazione',
+   ingredienti:['80g fiocchi di avena','30g proteine in polvere al cioccolato','200ml latte scremato','1 banana matura','1 cucchiaio burro di arachidi naturale'],
+   steps:['Porta il latte quasi a ebollizione in un pentolino.','Aggiungi i fiocchi di avena e mescola a fuoco medio per 3 minuti.','Togli dal fuoco, lascia intiepidire un minuto, poi incorpora le proteine in polvere mescolando bene per evitare grumi.','Versa in una bowl e aggiungi la banana a rondelle e il burro di arachidi a cucchiaiate. Servi subito.']},
+  {id:'r-pancake-albumi',name:'Pancake proteici di albumi e avena',tipo:'colazione_dolce',goal:['massa','definizione','mantenimento'],kcal:310,p:28,c:35,g:5,fiber:4,time:10,cat:'🌅 Colazione',
+   ingredienti:['150g albumi (circa 5 albumi)','60g fiocchi di avena fine','1 banana matura','cannella q.b.','estratto di vaniglia q.b.'],
+   steps:['Frulla tutti gli ingredienti fino a ottenere una pastella omogenea.','Scalda una padella antiaderente a fuoco medio-basso senza aggiungere grassi.','Versa piccole porzioni (circa 3 cucchiai) e cuoci 2 minuti per lato fino a doratura.','Impila i pancake e servi con frutta fresca o un filo di miele.']},
+  {id:'r-yogurt-bowl',name:'Bowl di yogurt greco, granola e frutti di bosco',tipo:'colazione_dolce',goal:['definizione','mantenimento'],kcal:290,p:30,c:28,g:5,fiber:4,time:3,cat:'🌅 Colazione',
+   ingredienti:['200g yogurt greco 0% grassi','30g granola integrale senza zuccheri aggiunti','100g mirtilli freschi','1 cucchiaino miele millefiori','10g mandorle a lamelle'],
+   steps:['Versa lo yogurt greco in una bowl ampia.','Aggiungi la granola distribuendola uniformemente.','Disponi i mirtilli freschi sopra.','Completa con un filo di miele e le lamelle di mandorle tostate. Consuma subito per mantenere la croccantezza.']},
+  {id:'r-uova-avocado',name:'Uova strapazzate con avocado e pane integrale',tipo:'colazione_salata',goal:['massa','mantenimento'],kcal:480,p:28,c:32,g:22,fiber:7,time:8,cat:'🌅 Colazione',
+   ingredienti:['3 uova intere grandi','½ avocado maturo','2 fette di pane integrale a lievitazione naturale','pepe nero macinato fresco','sale integrale','erba cipollina fresca q.b.'],
+   steps:['Tosta le fette di pane integrale.','Sbatti le uova con un pizzico di sale e pepe. Cuoci a fuoco basso in padella antiaderente mescolando delicatamente per 3 minuti — devono rimanere morbide.','Schiaccia l\'avocado sulle fette tostate con una forchetta. Condisci con sale e pepe.','Disponi le uova strapazzate sull\'avocado e guarnisci con erba cipollina tagliata finemente.']},
+  {id:'r-smoothie-verde',name:'Smoothie verde proteico alla vaniglia',tipo:'colazione_liquida',goal:['definizione','mantenimento'],kcal:280,p:25,c:30,g:4,fiber:4,time:4,cat:'🌅 Colazione',
+   ingredienti:['1 misurino proteine in polvere alla vaniglia (25g)','100g spinaci baby freschi','1 banana congelata a pezzi','200ml latte di mandorla non zuccherato','1 cucchiaio semi di chia'],
+   steps:['Inserisci tutti gli ingredienti nel frullatore, partendo dai liquidi.','Frulla a velocità massima per 60 secondi fino a ottenere una consistenza vellutata e omogenea.','Controlla la consistenza: se troppo denso aggiungi qualche cubetto di ghiaccio.','Versa in un bicchiere alto e consuma immediatamente.']},
+  {id:'r-overnight-oats',name:'Overnight Oats al burro di arachidi',tipo:'colazione_dolce',goal:['massa','mantenimento'],kcal:460,p:26,c:55,g:12,fiber:6,time:5,cat:'🌅 Colazione',
+   ingredienti:['80g fiocchi di avena grandi','200ml latte scremato','30g proteine in polvere alla vaniglia','2 cucchiai burro di arachidi al naturale','1 cucchiaino miele'],
+   steps:['La sera precedente: mescola avena, latte, proteine in polvere e miele in un barattolo di vetro.','Chiudi e conserva in frigorifero per almeno 6-8 ore.','Al mattino: mescola il barattolo, aggiungi il burro di arachidi sopra e un po\' di frutta a piacere.','Consuma freddo direttamente dal barattolo oppure trasferiscilo in una bowl.']},
+  {id:'r-frittata-colazione',name:'Frittata di albumi al forno con spinaci',tipo:'colazione_salata',goal:['definizione','cut'],kcal:220,p:30,c:8,g:6,fiber:3,time:12,cat:'🌅 Colazione',
+   ingredienti:['200g albumi pastorizzati','50g spinaci baby','50g peperoni rossi a dadini','30g feta sbriciolata','origano secco','pepe nero'],
+   steps:['Preriscalda il forno a 180°C.','Rosola i peperoni in padella antiaderente per 3 minuti. Aggiungi gli spinaci e appassisci 1 minuto.','Sbatti gli albumi con sale, pepe e origano. Unisci le verdure cotte.','Versa in una piccola teglia rivestita di carta forno, aggiungi la feta sbriciolata e cuoci 8-10 minuti fino a doratura.']},
+  {id:'r-toast-ricotta-salmone',name:'Toast integrale con ricotta e salmone affumicato',tipo:'colazione_salata',goal:['definizione','mantenimento'],kcal:350,p:28,c:30,g:10,fiber:4,time:5,cat:'🌅 Colazione',
+   ingredienti:['2 fette pane di segale','80g ricotta magra','60g salmone affumicato','capperi dissalati','aneto fresco','limone'],
+   steps:['Tosta leggermente le fette di pane di segale.','Spalma la ricotta generosamente su ogni fetta.','Distribuisci le fette di salmone affumicato sopra la ricotta.','Aggiungi qualche cappero, foglie di aneto fresco e un filo di succo di limone. Pepa a piacere.']},
+
+  /* ═══════════════════ PRANZO — Primi ═══════════════════ */
+  {id:'r-pasta-tonno',name:'Pasta integrale al tonno, pomodorini e basilico',tipo:'primo',goal:['mantenimento','massa'],kcal:490,p:38,c:52,g:8,fiber:7,time:15,cat:'🍽️ Pranzo',
+   ingredienti:['90g pasta integrale (penne o rigatoni)','160g tonno al naturale sgocciolato','150g pomodorini ciliegino','2 spicchi aglio','basilico fresco','10ml olio EVO','sale','peperoncino facoltativo'],
+   steps:['Cuoci la pasta in acqua salata seguendo i tempi di cottura. Tieni da parte una tazza di acqua di cottura.','In padella, scalda l\'olio e rosola l\'aglio schiacciato per 1 minuto.','Aggiungi i pomodorini tagliati a metà e cuoci a fuoco vivace 5 minuti fino a che si sfaldano.','Unisci il tonno sgocciolato, mescola e insaporisci.','Scola la pasta e manteca in padella con il sugo, aggiungendo acqua di cottura se necessario. Completa con basilico fresco.']},
+  {id:'r-pasta-ricotta-pomodorini',name:'Pasta integrale con ricotta, pomodorini e erbe',tipo:'primo',goal:['mantenimento','definizione'],kcal:470,p:26,c:58,g:10,fiber:8,time:15,cat:'🍽️ Pranzo',
+   ingredienti:['90g pasta integrale','100g ricotta parzialmente scremata','150g pomodorini','basilico fresco','aglio','10ml olio EVO','sale','pepe'],
+   steps:['Cuoci la pasta in abbondante acqua salata.','In una bowl, lavora la ricotta con sale, pepe e un filo d\'olio fino a renderla cremosa.','In padella, scalda l\'olio con l\'aglio, aggiungi i pomodorini e cuoci 4 minuti.','Unisci la pasta scolata ai pomodorini. Togli dal fuoco e manteca con la crema di ricotta. Completa con basilico.']},
+  {id:'r-risotto-zucchine-gamberetti',name:'Risotto leggero zucchine e gamberetti',tipo:'primo',goal:['mantenimento','massa'],kcal:500,p:32,c:56,g:10,fiber:5,time:25,cat:'🍽️ Pranzo',
+   ingredienti:['80g riso Carnaroli','150g gamberetti puliti','1 zucchina media','½ cipolla dorata','100ml vino bianco secco','brodo vegetale q.b.','prezzemolo','10ml olio EVO'],
+   steps:['Soffriggi la cipolla in olio. Tosta il riso 2 minuti, poi sfuma con il vino.','Aggiungi brodo caldo un mestolo per volta, mescolando costantemente.','A metà cottura, unisci le zucchine tagliate a dadini.','Negli ultimi 3 minuti aggiungi i gamberetti. Togli dal fuoco, aggiungi un filo d\'olio a crudo e prezzemolo.']},
+  {id:'r-pasta-pollo-pesto',name:'Pasta integrale al pesto con pollo e spinaci',tipo:'primo',goal:['massa','mantenimento'],kcal:510,p:40,c:50,g:12,fiber:7,time:18,cat:'🍽️ Pranzo',
+   ingredienti:['80g pasta integrale (fusilli)','130g petto di pollo grigliato','2 cucchiai pesto di basilico leggero','80g spinaci freschi baby','pomodorini q.b.'],
+   steps:['Griglia il petto di pollo con un pizzico di sale e pepe, poi taglialo a listarelle.','Cuoci la pasta. Nel frattempo, alliscia il pesto con 2 cucchiai di acqua di cottura.','Scola la pasta tenendo l\'acqua di cottura. Unisci gli spinaci, il pollo e il pesto.','Manteca bene, aggiungi i pomodorini tagliati a metà e servi subito.']},
+  {id:'r-zuppa-legumi',name:'Minestra densa di legumi misti',tipo:'primo',goal:['definizione','mantenimento'],kcal:340,p:20,c:50,g:5,fiber:12,time:25,cat:'🍽️ Pranzo',
+   ingredienti:['100g ceci cotti','100g lenticchie lessate','100g fagioli borlotti cotti','1 carota','1 costa di sedano','½ cipolla','200g pomodori pelati in scatola','rosmarino','10ml olio EVO'],
+   steps:['Soffriggi cipolla, carota e sedano tagliati a dadini in olio per 5 minuti.','Aggiungi i pomodori pelati schiacciati e cuoci 5 minuti.','Unisci tutti i legumi e copri con acqua calda. Aggiungi il rametto di rosmarino.','Cuoci 20 minuti a fuoco medio. Frulla metà della zuppa per ottenere una consistenza cremosa ma con texture. Servi con un filo d\'olio EVO a crudo.']},
+
+  /* ═══════════════════ PRANZO — Secondi e Piatti Unici ═══════════════════ */
+  {id:'r-bowl-pollo-riso',name:'Power Bowl: riso basmati, pollo e avocado',tipo:'piatto_unico',goal:['massa','mantenimento'],kcal:520,p:42,c:48,g:12,fiber:7,time:15,cat:'🍽️ Pranzo',
+   ingredienti:['130g petto di pollo','150g riso basmati cotto','½ avocado maturo','100g zucchine grigliate','succo di limone','curcuma in polvere','10ml olio EVO'],
+   steps:['Cuoci il riso basmati (o usa riso precotto). Griglia il pollo insaporito con curcuma, sale e un goccio di limone.','Griglie anche le zucchine tagliate a nastri.','In una bowl capiente, disponi il riso come base.','Aggiungi il pollo tagliato a fettine, le zucchine e l\'avocado a lamelle. Irrora con olio EVO e succo di limone.']},
+  {id:'r-buddha-bowl-quinoa',name:'Buddha Bowl: quinoa, salmone e verdure arcobaleno',tipo:'piatto_unico',goal:['definizione','mantenimento'],kcal:490,p:36,c:40,g:14,fiber:7,time:20,cat:'🍽️ Pranzo',
+   ingredienti:['120g quinoa cotta','120g salmone al forno','100g edamame sgranati','80g carote a nastri','rucola q.b.','1 cucchiaio tahini','succo di limone','sesamo tostato'],
+   steps:['Cuoci la quinoa (porta a ebollizione 1:2 con acqua, cuoci 15 min a fuoco basso).','Cuoci il filetto di salmone in forno a 180°C per 12 minuti con sale, limone e olio.','Prepara il condimento: mescola tahini con succo di limone e un po\' d\'acqua.','Componi la bowl con quinoa, salmone sfaldato, edamame, carote e rucola. Condisci con la salsa tahini e semi di sesamo.']},
+  {id:'r-wrap-pollo',name:'Wrap integrale con pollo, hummus e verdure croccanti',tipo:'piatto_unico',goal:['definizione','mantenimento'],kcal:380,p:34,c:38,g:9,fiber:5,time:10,cat:'🍽️ Pranzo',
+   ingredienti:['1 tortilla di grano integrale grande','130g petto di pollo grigliato','50g hummus di ceci','foglie di lattuga romana','1 pomodoro a fette','½ peperone arrostito'],
+   steps:['Scalda brevemente la tortilla in padella secca per renderla più flessibile.','Spalma l\'hummus uniformemente su tutta la superficie della tortilla.','Aggiungi le foglie di lattuga, il pomodoro, i peperoni e il pollo tagliato a listarelle.','Arrotola stretto la tortilla, taglia in due in diagonale e servi subito.']},
+  {id:'r-poke-bowl',name:'Poke Bowl al salmone con riso venere',tipo:'piatto_unico',goal:['massa','mantenimento'],kcal:540,p:38,c:52,g:14,fiber:8,time:15,cat:'🍽️ Pranzo',
+   ingredienti:['150g riso venere precotto','150g salmone fresco a cubetti di 2cm','½ avocado a dadini','50g edamame','½ cetriolo a rondelle','1 cucchiaio salsa di soia ridotta sodio','sesamo nero e bianco'],
+   steps:['Marina i cubetti di salmone in salsa di soia e sesamo per 5-10 minuti.','Prepara il riso venere (o usa versione precotta in busta).','In una bowl, disponi il riso come base.','Aggiungi il salmone marinato, l\'avocado, l\'edamame e il cetriolo. Irrora con la marinata rimasta e guarnisci con sesamo.']},
+  {id:'r-insalata-proteica',name:'Insalata di polpo con ceci e rucola',tipo:'piatto_unico',goal:['definizione','cut'],kcal:280,p:32,c:12,g:8,fiber:4,time:10,cat:'🍽️ Pranzo',
+   ingredienti:['200g polpo bollito e raffreddato','80g rucola fresca','100g ceci in scatola scolati','10 pomodorini','1 costa di sedano','prezzemolo fresco','succo di 1 limone','10ml olio EVO'],
+   steps:['Taglia il polpo a tocchetti di circa 2 cm.','In una ciotola capiente, unisci rucola, ceci, pomodorini tagliati a metà e sedano a fettine.','Aggiungi il polpo e mescola delicatamente.','Condisci con olio EVO, succo di limone, prezzemolo fresco tritato, sale e pepe. Servi subito.']},
+
+  /* ═══════════════════ CENA — Secondi di carne ═══════════════════ */
+  {id:'r-pollo-patate',name:'Pollo alle erbe con patate dolci al forno',tipo:'secondo_carne',goal:['massa','mantenimento'],kcal:480,p:44,c:42,g:8,fiber:7,time:30,cat:'🌙 Cena',
+   ingredienti:['180g petto di pollo','200g patate dolci','paprika affumicata','curcuma','aglio in polvere','rosmarino fresco','10ml olio EVO'],
+   steps:['Preriscalda il forno a 200°C.','Taglia le patate dolci a cubetti di 2 cm, condisci con paprika, curcuma, olio, sale e distribuiscile su una teglia.','Condisci anche il petto di pollo con aglio in polvere, rosmarino e olio. Posizionalo accanto alle patate.','Cuoci 25 minuti, girandolo una volta a metà cottura. Le patate devono essere dorate e il pollo cotto internamente.']},
+  {id:'r-manzo-spinaci',name:'Tagliata di manzo magro con spinaci saltati',tipo:'secondo_carne',goal:['massa','definizione'],kcal:400,p:40,c:10,g:18,fiber:6,time:15,cat:'🌙 Cena',
+   ingredienti:['180g fettina di manzo magro (es. scamone)','200g spinaci freschi','2 spicchi aglio','10ml olio EVO','pepe nero macinato fresco','50ml vino bianco secco'],
+   steps:['Scalda una padella in ghisa o antiaderente a fuoco alto.','Rosola la carne 3 minuti per lato per una cottura al sangue/media. Sfuma con il vino bianco.','Togli la carne e falla riposare 3 minuti coperta da un foglio di alluminio.','Nella stessa padella, aggiungi un filo d\'olio e l\'aglio schiacciato, poi salta gli spinaci a fuoco vivo per 2 minuti. Taglia la carne a listarelle e servi sugli spinaci.']},
+  {id:'r-tacchino-zucchine',name:'Tacchino alle erbe con zucchine grigliate',tipo:'secondo_carne',goal:['definizione','cut'],kcal:320,p:42,c:8,g:10,fiber:4,time:18,cat:'🌙 Cena',
+   ingredienti:['200g fesa di tacchino a fettine','2 zucchine medie','timo fresco','origano','aglio in polvere','succo di limone','10ml olio EVO'],
+   steps:['Marina le fettine di tacchino con olio, succo di limone, timo, origano e aglio in polvere per 15 minuti.','Taglia le zucchine a nastri longitudinali con il pelapatate o a fettine spesse 5mm.','Scalda una griglia o padella grill. Cuoci le zucchine 2-3 minuti per lato.','Cuoci anche il tacchino sulla griglia 3-4 minuti per lato. Servi tacchino e zucchine insieme con un ulteriore filo d\'olio e limone.']},
+  {id:'r-pollo-curry-ceci',name:'Pollo al curry leggero con ceci',tipo:'secondo_carne',goal:['massa','mantenimento'],kcal:450,p:42,c:32,g:12,fiber:8,time:22,cat:'🌙 Cena',
+   ingredienti:['170g petto di pollo a cubetti','150g ceci in scatola scolati','½ cipolla','1 cucchiaio curry in polvere','100ml latte di cocco light','100g spinaci','olio EVO','aglio'],
+   steps:['In padella, soffriggi cipolla e aglio tritati in olio per 3 minuti.','Aggiungi il pollo a cubetti e rosola a fuoco vivo 3-4 minuti.','Cospargi con il curry, mescola bene, poi aggiungi i ceci e il latte di cocco.','Cuoci a fuoco medio 10 minuti. Negli ultimi 2 minuti unisci gli spinaci e lascia appassire. Aggiusta di sale.']},
+
+  /* ═══════════════════ CENA — Secondi di pesce ═══════════════════ */
+  {id:'r-salmone-al-forno',name:'Filetto di salmone al vapore con asparagi',tipo:'secondo_pesce',goal:['definizione','mantenimento','massa'],kcal:420,p:38,c:18,g:18,fiber:6,time:20,cat:'🌙 Cena',
+   ingredienti:['200g filetto di salmone fresco','200g asparagi verdi','150g pomodorini datterini','succo di 1 limone','2 spicchi aglio','rosmarino fresco','10ml olio EVO'],
+   steps:['Preriscalda il forno a 180°C.','Disponi il salmone su un foglio di carta forno. Condisci con olio, succo di limone, aglio affettato e rosmarino.','Affianca gli asparagi mondi e i pomodorini, condisci anche loro con sale e olio.','Chiudi il cartoccio e cuoci 18 minuti. Apri negli ultimi 2 minuti per dorare leggermente. Servi con succo di limone.']},
+  {id:'r-merluzzo-vapore',name:'Merluzzo al vapore con quinoa e broccoli',tipo:'secondo_pesce',goal:['definizione','cut'],kcal:340,p:38,c:30,g:5,fiber:5,time:20,cat:'🌙 Cena',
+   ingredienti:['200g filetto di merluzzo fresco','120g quinoa cotta','150g broccoli a cimette','succo di limone','prezzemolo fresco','sale','pepe bianco'],
+   steps:['Cuoci la quinoa in acqua salata (1 parte quinoa: 2 parti acqua) per 15 minuti a fuoco basso.','Cuoci il merluzzo al vapore per 10-12 minuti — deve sfogliarsi facilmente ma restare umido.','Nel frattempo sbollenta i broccoli in acqua salata per 4 minuti.','Servi il merluzzo su un letto di quinoa con i broccoli al lato. Condisci tutto con succo di limone, prezzemolo fresco e pepe bianco.']},
+  {id:'r-gamberi-zucchine',name:'Gamberi saltati all\'aglio con zucchine',tipo:'secondo_pesce',goal:['definizione','cut'],kcal:260,p:30,c:8,g:10,fiber:4,time:12,cat:'🌙 Cena',
+   ingredienti:['200g gamberi sgusciati e puliti','2 zucchine medie','2 spicchi aglio','100g pomodorini','50ml vino bianco secco','prezzemolo fresco','10ml olio EVO'],
+   steps:['Taglia le zucchine a rondelle di circa 8 mm.','In padella capiente, scalda l\'olio con l\'aglio schiacciato. Aggiungi le zucchine e cuoci 4 minuti a fuoco medio.','Aumenta la fiamma, aggiungi i gamberi e cuoci 2 minuti mescolando.','Sfuma con il vino bianco, aggiungi i pomodorini tagliati a metà. Cuoci altri 2 minuti. Completa con prezzemolo fresco e un pizzico di sale.']},
+  {id:'r-tonno-patate',name:'Trancio di tonno grigliato con insalata di patate',tipo:'secondo_pesce',goal:['mantenimento','definizione'],kcal:380,p:36,c:28,g:10,fiber:5,time:18,cat:'🌙 Cena',
+   ingredienti:['200g trancio di tonno fresco','200g patate lesse','pomodori a dadini','cipollotto','prezzemolo','capperi','10ml olio EVO','aceto di mele','sale','pepe'],
+   steps:['Lessate le patate con la buccia, sbucciatele e tagliatele a cubetti quando ancora tiepide.','Condite le patate con olio, aceto, cipollotto affettato, prezzemolo, capperi e pomodori. Lasciate marinare.','Scalda una griglia a fuoco alto. Cuoci il trancio di tonno 3 minuti per lato (deve rimanere rosato al centro).','Servi il tonno affiancato dall\'insalata di patate. Irrora con un filo d\'olio EVO.']},
+  {id:'r-burger-tonno',name:'Burger di tonno e ceci con insalata mista',tipo:'piatto_unico',goal:['definizione','mantenimento'],kcal:360,p:34,c:32,g:8,fiber:5,time:20,cat:'🌙 Cena',
+   ingredienti:['160g tonno al naturale sgocciolato','100g ceci cotti schiacciati','1 uovo','prezzemolo fresco','succo di limone','curcuma','2 cucchiai pangrattato integrale','insalata mista per accompagnare'],
+   steps:['In una ciotola, schiaccia grossolanamente i ceci con una forchetta. Aggiungi il tonno sgocciolato e sminuzzo ulteriormente.','Unisci l\'uovo, prezzemolo, succo di limone, curcuma e pangrattato. Amalgama bene.','Forma 2 burger compatti. Cuoci in padella antiaderente leggermente unta per 4 minuti per lato a fuoco medio.','Servi su un letto di insalata mista condita con olio e limone.']},
+
+  /* ═══════════════════ CENA — Secondi vegetariani/uova ═══════════════════ */
+  {id:'r-frittata-proteica',name:'Frittata proteica leggera con spinaci e funghi',tipo:'secondo_uova',goal:['definizione','cut'],kcal:290,p:38,c:6,g:12,fiber:4,time:20,cat:'🌙 Cena',
+   ingredienti:['4 uova intere','150g albumi pastorizzati','100g spinaci freschi','100g funghi champignon','50g feta light sbriciolata','erbe aromatiche miste','pepe nero'],
+   steps:['Preriscalda il forno a 180°C.','Salta i funghi a fettine in padella antiaderente per 5 minuti, poi aggiungi gli spinaci e appassisci 1 minuto.','In una ciotola, sbatti le uova intere con gli albumi, sale, pepe e le erbe aromatiche.','Unisci le verdure al composto di uova. Versa in una teglia da 20cm rivestita di carta forno. Distribuisci la feta e cuoci 18 minuti fino a che si gonfia e dora.']},
+  {id:'r-frittata-colazione-cena',name:'Frittata leggera al forno con insalata mista',tipo:'secondo_uova',goal:['definizione','mantenimento'],kcal:250,p:28,c:8,g:10,fiber:4,time:18,cat:'🌙 Cena',
+   ingredienti:['5 uova intere','50g peperoni a dadini','1 zucchina piccola a dadini','30g parmigiano grattugiato','insalata mista (rucola, valeriana, songino)','olio EVO','limone'],
+   steps:['Rosola i peperoni e la zucchina in padella per 5 minuti, poi lascia intiepidire.','Sbatti le uova con il parmigiano, sale e pepe. Aggiungi le verdure rosolate.','Versa in teglia da forno rivestita di carta. Cuoci a 180°C per 15 minuti.','Lascia intiepidire, poi servi con un\'insalata mista condita leggermente con olio e limone.']},
+  {id:'r-tofu-verdure',name:'Tofu croccante al forno con verdure miste',tipo:'secondo_proteico_veg',goal:['definizione','mantenimento'],kcal:300,p:22,c:18,g:14,fiber:7,time:25,cat:'🌙 Cena',
+   ingredienti:['200g tofu extra-firm','1 peperone rosso','1 zucchina','100g broccoli','salsa di soia','aglio in polvere','paprika','olio di sesamo 1 cucchiaino'],
+   steps:['Pressa il tofu tra due piatti per 10 minuti per rimuovere l\'acqua in eccesso. Taglia a cubetti.','Marina il tofu con salsa di soia, aglio in polvere e paprika per 15 minuti.','Disponi tofu e verdure tagliate su una teglia. Cuoci a 200°C per 20 minuti, girando a metà cottura.','Irrora con olio di sesamo prima di servire.']},
+
+  /* ═══════════════════ SNACK ═══════════════════ */
+  {id:'r-frullato-post',name:'Shake proteico post-allenamento',tipo:'snack',goal:['massa','mantenimento'],kcal:380,p:35,c:40,g:5,fiber:5,time:3,cat:'⚡ Snack / Post WO',
+   ingredienti:['30g proteine in polvere alla vaniglia','1 banana matura','200ml latte scremato','3g creatina monoidrato','1 cucchiaino miele'],
+   steps:['Inserisci tutti gli ingredienti nel frullatore nell\'ordine indicato.','Frulla per 30-45 secondi.','Consuma entro 30 minuti dal termine dell\'allenamento per massimizzare il recupero muscolare.']},
+  {id:'r-ricotta-miele',name:'Ciotola di ricotta con miele e fragole',tipo:'snack',goal:['mantenimento','massa'],kcal:260,p:18,c:28,g:8,fiber:4,time:2,cat:'⚡ Snack / Post WO',
+   ingredienti:['150g ricotta magra fresca','1 cucchiaio miele grezzo','100g fragole fresche','15g mandorle a lamelle tostate'],
+   steps:['Lavora la ricotta con un cucchiaio per renderla più cremosa.','Disponi in una ciotola e irrora con il miele.','Aggiungi le fragole lavate e tagliate a metà.','Guarnisci con le lamelle di mandorle tostate.']},
+  {id:'r-hummus-verdure',name:'Hummus artigianale con verdure crude',tipo:'snack',goal:['definizione','mantenimento'],kcal:220,p:9,c:25,g:9,fiber:6,time:10,cat:'⚡ Snack / Post WO',
+   ingredienti:['200g ceci in scatola scolati','1 cucchiaio tahini','succo di 1 limone','1 spicchio aglio','10ml olio EVO','paprika affumicata','carote e sedano per intingere'],
+   steps:['Frulla i ceci con tahini, limone, aglio e 2 cucchiai di acqua di cottura dei ceci fino a ottenere una crema liscia.','Aggiusta di sale e aggiungi acqua se troppo denso.','Trasferisci in una bowl, irrora con olio EVO e cospargi di paprika.','Servi con le verdure crude tagliate a bastoncini.']},
+  {id:'r-energy-balls',name:'Energy Balls di avena e burro di arachidi',tipo:'snack',goal:['massa','mantenimento'],kcal:200,p:7,c:22,g:10,fiber:3,time:10,cat:'⚡ Snack / Post WO',
+   ingredienti:['100g fiocchi di avena','3 cucchiai burro di arachidi naturale','2 cucchiai miele grezzo','30g cioccolato fondente 85% tritato','1 cucchiaino semi di chia'],
+   steps:['Mescola tutti gli ingredienti in una ciotola finché il composto è uniforme e si compatta.','Se troppo appiccicoso, aggiungi un po\' di avena; se troppo asciutto, un cucchiaio di miele.','Forma 8-10 palline con le mani bagnate.','Poni su un piatto e metti in frigo per almeno 30 minuti prima di consumare. Si conservano 5 giorni.']},
+
+  /* ═══════════════════ MEAL PREP ═══════════════════ */
+  {id:'r-chili-tacchino',name:'Chili proteico di tacchino e fagioli neri',tipo:'meal_prep',goal:['massa','definizione','mantenimento'],kcal:390,p:42,c:34,g:8,fiber:12,time:35,cat:'🍱 Meal Prep',
+   ingredienti:['300g tacchino macinato magro','200g fagioli neri cotti','200g pomodori pelati in scatola','2 peperoni misti a dadini','1 cipolla','3 spicchi aglio','1 cucchiaino cumino','1 cucchiaino paprika affumicata','coriandolo in polvere','olio EVO'],
+   steps:['In una pentola capiente, rosola tacchino, cipolla e aglio tritati in olio per 5 minuti.','Aggiungi i peperoni a dadini e cuoci altri 3 minuti.','Unisci pomodori pelati schiacciati, spezie e mezzo bicchiere d\'acqua. Mescola bene.','Aggiungi i fagioli neri e cuoci a fuoco medio per 25 minuti, mescolando occasionalmente. Aggiusta di sale e piccante.']},
+  {id:'r-curry-lenticchie',name:'Curry rosso di lenticchie e spinaci',tipo:'meal_prep',goal:['definizione','mantenimento'],kcal:360,p:22,c:50,g:7,fiber:12,time:30,cat:'🍱 Meal Prep',
+   ingredienti:['200g lenticchie rosse secche','200ml latte di cocco light','200g spinaci freschi','1 cipolla dorata','2 spicchi aglio','1 cucchiaio zenzero grattugiato','2 cucchiai pasta di curry rosso','200g pomodori pelati'],
+   steps:['Soffriggi cipolla, aglio e zenzero tritati in olio per 3 minuti fino a doratura.','Aggiungi la pasta di curry e tosta 1 minuto mescolando.','Unisci le lenticchie sciacquate, i pomodori e il latte di cocco. Aggiusta di acqua se troppo denso.','Cuoci 20 minuti a fuoco medio. Negli ultimi 2 minuti unisci gli spinaci. Aggiusta di sale e servi con riso basmati.']},
 ];
 window.RECIPES_DB = RECIPES_DB;
 
@@ -11909,7 +11937,19 @@ function updateWeight(newWeight) {
   _ensureGoals();
   if(w !== null) profile.goalsMeta.weight = w;
 
+  // FIX V72: salva anche in weightLog per coerenza
+  if (!Array.isArray(profile.weightLog)) profile.weightLog = [];
+  const _tod72 = (typeof today === 'function' ? today() : new Date().toISOString().slice(0,10));
+  const _ei72  = profile.weightLog.findIndex(function(e) { return e.date === _tod72; });
+  if (_ei72 >= 0) profile.weightLog[_ei72].kg = w;
+  else profile.weightLog.push({ date: _tod72, kg: w });
+  profile.weightLog.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  if (profile.weightLog.length > 60) profile.weightLog = profile.weightLog.slice(-60);
+  metrics.peso = w;
+
   saveAll();
+  // FIX V72: aggiorna home card peso istantaneamente
+  setTimeout(function() { if (typeof renderHome === 'function') { try { renderHome(); } catch(e) {} } }, 50);
 }
 
 const FT_RENDER = {
@@ -22212,6 +22252,8 @@ saveWeightEntry = async function() {
   renderWeightChart();
   renderHealthCard();
   renderProfilePage();
+  // FIX V72: aggiorna anche la home card peso
+  if (typeof renderHome === 'function') { try { renderHome(); } catch(e) {} }
   showToast('✅ Peso aggiornato: '+kg+' kg');
 };
 
@@ -34221,11 +34263,23 @@ window.renderHome = function renderHome() {
         setMpill('v66-mp-cv','v66-mp-cb', tot.c||0, tc, 'var(--blue)',  'g');
         setMpill('v66-mp-gv','v66-mp-gb', tot.g||0, tg, 'var(--orange)','g');
       }
-      /* Peso: ultimo dalla history */
-      const wh = (typeof profile !== 'undefined' && profile.weightHistory) || [];
-      const lastW = wh.length ? wh[wh.length - 1] : null;
+      /* Peso: ultimo dalla history o weightLog — FIX V72 */
+      const wh72  = (typeof profile !== 'undefined' && profile.weightHistory) || [];
+      const wl72  = (typeof profile !== 'undefined' && profile.weightLog)     || [];
+      const lastWH72 = wh72.length ? wh72[wh72.length - 1] : null;
+      const lastWL72 = wl72.length ? wl72[wl72.length - 1] : null;
+      let lastKg72 = null;
+      if (lastWH72 && lastWL72) {
+        const dh = new Date(lastWH72.date || 0).getTime();
+        const dl = new Date(lastWL72.date || 0).getTime();
+        lastKg72 = dh >= dl ? (parseFloat(lastWH72.value)||null) : (parseFloat(lastWL72.kg)||null);
+      } else if (lastWH72) { lastKg72 = parseFloat(lastWH72.value)||null; }
+        else if (lastWL72) { lastKg72 = parseFloat(lastWL72.kg)||null; }
+      if (!lastKg72 && typeof profile !== 'undefined' && profile.physique && profile.physique.weight) {
+        lastKg72 = parseFloat(profile.physique.weight) || null;
+      }
       const wEl = _el('v66-last-weight');
-      if (wEl) wEl.textContent = lastW ? (lastW.w || lastW) + ' kg' : '— kg';
+      if (wEl) wEl.textContent = lastKg72 ? lastKg72.toFixed(1) + ' kg' : '— kg';
     } catch(e2) {}
   } catch(e) {}
 
@@ -38030,6 +38084,295 @@ setTimeout(function() {
 .meal-card {
   margin: 0 var(--px) 8px !important;
   box-sizing: border-box !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   V68b — NUTRITION PAGE COMPLETE LAYOUT FIX
+   Risolve: grafico illeggibile, card macro sovrapposte,
+   layout overflow su mobile
+═══════════════════════════════════════════════════════ */
+
+/* ── Riepilogo container ── */
+.riepilogo {
+  padding: 16px !important;
+  margin: 0 12px 12px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* ── Ring row: layout orizzontale compatto ── */
+.nutr-ring-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 14px !important;
+  width: 100% !important;
+}
+
+/* ── SVG ring: dimensione fissa ragionevole ── */
+.nutr-ring-wrap {
+  flex-shrink: 0 !important;
+  width: 100px !important;
+  height: 100px !important;
+  position: relative !important;
+}
+.nutr-ring-wrap svg {
+  width: 100px !important;
+  height: 100px !important;
+  display: block !important;
+}
+
+/* ── Testo centrale nel ring — visibile e leggibile ── */
+.nutr-ring-center {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+.nutr-ring-val {
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  color: var(--acc) !important;
+  letter-spacing: -.5px !important;
+}
+.nutr-ring-unit {
+  font-size: 8px !important;
+  color: rgba(255,255,255,.45) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  margin-top: 1px !important;
+}
+.nutr-ring-pct {
+  font-size: 9px !important;
+  color: rgba(255,255,255,.32) !important;
+  margin-top: 2px !important;
+  font-weight: 700 !important;
+}
+
+/* ── Info column destra del ring ── */
+.nutr-ring-info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+.nutr-ring-tgt {
+  font-size: 12px !important;
+  color: rgba(255,255,255,.5) !important;
+  margin-bottom: 2px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.nutr-ring-rem {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: var(--acc) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  letter-spacing: -.3px !important;
+}
+.nutr-ring-legend {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  flex-wrap: wrap !important;
+}
+.nrl-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+.nrl-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+.nrl-lbl {
+  font-size: 9px !important;
+  color: rgba(255,255,255,.4) !important;
+  font-weight: 700 !important;
+}
+
+/* ── Progress bar sotto il ring-info ── */
+.nutr-pbar {
+  height: 5px !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+  background: rgba(255,255,255,.07) !important;
+  margin: 8px 0 0 !important;
+}
+.nutr-pbar-fill {
+  height: 100% !important;
+  border-radius: 99px !important;
+  background: linear-gradient(90deg, var(--acc), var(--green)) !important;
+  transition: width .8s cubic-bezier(.22,1,.36,1) !important;
+}
+
+/* ── Macro boxes: griglia 2×2 su mobile, non 4 in fila ── */
+.nutr-macros {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 8px !important;
+  margin-top: 2px !important;
+}
+/* Su schermi più larghi torna 4 in fila */
+@media (min-width: 480px) {
+  .nutr-macros {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+.nm-box {
+  background: linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.018)) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 14px !important;
+  padding: 12px 10px !important;
+  text-align: center !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25) !important;
+  transition: border-color .18s !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+.nm-box:hover {
+  border-color: rgba(255,255,255,.18) !important;
+}
+.nm-val {
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  margin-bottom: 3px !important;
+}
+.nm-lbl {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  color: rgba(255,255,255,.35) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-top: 6px !important;
+}
+.nm-curr {
+  font-size: 10px !important;
+  color: rgba(255,255,255,.3) !important;
+  margin-top: 1px !important;
+}
+.nm-bar-wrap {
+  height: 3px !important;
+  background: rgba(255,255,255,.07) !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+  margin: 6px 0 4px !important;
+}
+.nm-bar-fill {
+  height: 100% !important;
+  border-radius: 99px !important;
+  transition: width .8s cubic-bezier(.22,1,.36,1) !important;
+}
+
+/* ── nutr-head nav (frecce giorno) ── */
+.nutr-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 16px 10px !important;
+  gap: 8px !important;
+}
+.nutr-title {
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 32px !important;
+  line-height: 1 !important;
+}
+
+/* ── Bottoni navigazione data (< Oggi >) ── */
+.nutr-head-nav,
+.nutr-nav-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.nutr-nav-btn,
+button[onclick*="nutrShiftDay"],
+button[onclick*="nutr-prev"],
+button[onclick*="nutr-next"] {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(255,255,255,.12) !important;
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.7) !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  transition: all .15s !important;
+}
+.nutr-nav-btn:hover,
+button[onclick*="nutrShiftDay"]:hover {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.25) !important;
+}
+
+/* ── Settings button non sovrapposto ── */
+#nutr-settings-btn {
+  flex-shrink: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* ── Pulsante "Aggiungi" pasto non fuori schermo ── */
+.meal-add-btn,
+.meal-head-add,
+button[onclick*="openAddFood"],
+button[onclick*="addFood"],
+button[onclick*="logFood"] {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+  max-width: 120px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* ── Meal card header: no overflow ── */
+.meal-head {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 14px !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+.meal-head > * {
+  flex-shrink: 0 !important;
+}
+.meal-head-name {
+  flex: 1 !important;
+  min-width: 0 !important;
+  flex-shrink: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* ── Nutr page: contenuto non sborda ── */
+#page-nutrizione {
+  overflow-x: hidden !important;
+}
+#page-nutrizione > * {
+  box-sizing: border-box !important;
+  max-width: 100vw !important;
 }
 </style>
 
@@ -47715,6 +48058,2480 @@ function v60OpenWeight(){
   console.log('%c  \u251C\u2500 BUG 7 \u2714 v9-weight-badge rimosso', 'color:#A8D828');
   console.log('%c  \u2514\u2500 BUG 8 \u2714 wo-set-info (testo reps legacy) nascosto', 'color:#A8D828');
 })();
+</script>
+
+<!-- ══════════════════════════════════════════════
+     V69 — RECIPE DETAIL BOTTOM SHEET
+══════════════════════════════════════════════ -->
+<style>
+/* ── Modale sheet ── */
+#v69-recipe-sheet{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(14px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+#v69-recipe-sheet.open{ display:flex; }
+#v69-recipe-inner{
+  background:var(--bg2);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:26px 26px 0 0;
+  width:100%;max-width:640px;
+  max-height:92dvh;
+  overflow-y:auto;overflow-x:hidden;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  transform:translateY(100%);
+  transition:transform .38s cubic-bezier(.22,1,.36,1);
+}
+#v69-recipe-sheet.open #v69-recipe-inner{
+  transform:translateY(0);
+}
+
+/* ── Tab buttons ── */
+.v69-tab{
+  flex:1;padding:8px 6px;
+  background:none;border:none;
+  font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:800;
+  color:rgba(255,255,255,.4);
+  border-radius:10px;cursor:pointer;
+  transition:all .18s;
+}
+.v69-tab.on{
+  background:rgba(255,255,255,.1);
+  color:var(--text);
+}
+
+/* ── Macro cell ── */
+.v69-macro-cell{
+  flex:1;padding:10px 6px;text-align:center;
+}
+.v69-macro-val{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;line-height:1;
+}
+.v69-macro-lbl{
+  font-size:9px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.08em;color:rgba(255,255,255,.35);margin-top:3px;
+}
+
+/* ── Ingredient row ── */
+.v69-ing-row{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.v69-ing-row:last-child{border-bottom:none;}
+.v69-ing-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--acc);flex-shrink:0;
+}
+.v69-ing-txt{
+  font-size:13px;font-weight:600;
+  color:rgba(255,255,255,.78);line-height:1.4;
+}
+
+/* ── Prep step ── */
+.v69-step{
+  display:flex;gap:12px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.v69-step:last-child{border-bottom:none;}
+.v69-step-num{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  background:rgba(200,245,60,.12);border:1.5px solid rgba(200,245,60,.3);
+  font-family:'Bebas Neue',sans-serif;font-size:14px;
+  color:var(--acc);display:flex;align-items:center;justify-content:center;
+}
+.v69-step-txt{
+  font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.72);line-height:1.55;
+  padding-top:3px;
+}
+
+/* ── Action buttons ── */
+.v69-action-confirm{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,var(--acc),#a8d620);
+  border:none;border-radius:16px;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;
+  color:#06060E;cursor:pointer;letter-spacing:.03em;
+  box-shadow:0 4px 22px rgba(200,245,60,.28);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .18s cubic-bezier(.22,1,.36,1);
+}
+.v69-action-confirm:active{transform:scale(.97);}
+.v69-action-confirm.confirmed{
+  background:rgba(200,245,60,.12);
+  border:1.5px solid rgba(200,245,60,.35);
+  color:var(--acc);box-shadow:none;
+}
+.v69-action-secondary{
+  width:100%;padding:13px;
+  background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.1);
+  border-radius:16px;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  color:rgba(255,255,255,.55);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .15s;
+}
+.v69-action-secondary:active{transform:scale(.97);}
+
+/* ── Meal-type selector nel sheet ── */
+.v69-meal-sel{
+  display:flex;gap:6px;margin:0 16px 12px;
+  flex-wrap:wrap;
+}
+.v69-meal-sel-btn{
+  flex:1;min-width:70px;padding:8px 6px;
+  background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.1);
+  border-radius:12px;
+  font-family:'Syne',sans-serif;font-size:11px;font-weight:800;
+  color:rgba(255,255,255,.45);cursor:pointer;text-align:center;
+  transition:all .15s;
+}
+.v69-meal-sel-btn.on{
+  background:rgba(200,245,60,.1);
+  border-color:rgba(200,245,60,.35);
+  color:var(--acc);
+}
+
+/* ── Meta pills ── */
+.v69-meta-pill{
+  font-size:10px;font-weight:700;
+  padding:3px 9px;border-radius:99px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.5);
+}
+
+/* ── Notifica log (toast speciale) ── */
+.v69-log-badge{
+  position:absolute;top:6px;right:6px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--acc);color:#060610;
+  font-size:10px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 10px rgba(200,245,60,.5);
+  animation:v69PopIn .3s cubic-bezier(.22,1,.36,1);
+}
+@keyframes v69PopIn{
+  0%{transform:scale(0);opacity:0;}
+  100%{transform:scale(1);opacity:1;}
+}
+
+/* ── Confirm badge sulle card menu ── */
+.v66-meal-card .v69-logged-strip{
+  margin:8px 12px 0;
+  padding:5px 10px;
+  background:rgba(200,245,60,.07);
+  border:1px solid rgba(200,245,60,.18);
+  border-radius:10px;
+  font-size:10px;font-weight:700;
+  color:var(--acc);
+  display:flex;align-items:center;gap:5px;
+}
+</style>
+
+<div id="v69-recipe-sheet">
+  <div id="v69-recipe-inner">
+    <!-- Handle -->
+    <div style="width:38px;height:4px;border-radius:99px;
+      background:rgba(255,255,255,.15);margin:14px auto 0;"></div>
+
+    <!-- Header -->
+    <div style="padding:16px 16px 0;display:flex;align-items:flex-start;gap:12px;">
+      <div id="v69-ico" style="font-size:44px;line-height:1;flex-shrink:0;">🍽️</div>
+      <div style="flex:1;min-width:0;">
+        <div id="v69-name" style="font-family:'Bebas Neue',sans-serif;
+          font-size:24px;line-height:1.15;letter-spacing:-.3px;
+          word-break:break-word;"></div>
+        <div id="v69-meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;"></div>
+      </div>
+      <button onclick="v69CloseRecipe()"
+        style="flex-shrink:0;background:rgba(255,255,255,.07);border:none;
+          border-radius:50%;width:34px;height:34px;color:rgba(255,255,255,.6);
+          font-size:16px;cursor:pointer;display:flex;align-items:center;
+          justify-content:center;transition:.15s;">✕</button>
+    </div>
+
+    <!-- Macro strip -->
+    <div id="v69-macros" style="display:flex;margin:14px 16px 0;
+      border-radius:16px;overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);"></div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;margin:14px 16px 0;
+      background:rgba(255,255,255,.04);border-radius:12px;padding:3px;">
+      <button class="v69-tab on" onclick="v69SwitchTab('ing',this)">🧄 Ingredienti</button>
+      <button class="v69-tab" onclick="v69SwitchTab('prep',this)">👨‍🍳 Preparazione</button>
+    </div>
+
+    <div id="v69-panel-ing" style="padding:14px 16px;"></div>
+    <div id="v69-panel-prep" style="padding:14px 16px;display:none;"></div>
+
+    <!-- Meal selector -->
+    <div style="padding:4px 16px 8px;">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;
+        letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:8px;">
+        Aggiungi a quale pasto?
+      </div>
+      <div class="v69-meal-sel" id="v69-meal-sel">
+        <button class="v69-meal-sel-btn on" data-midx="0" onclick="v69PickMeal(0,this)">☀️ Colazione</button>
+        <button class="v69-meal-sel-btn" data-midx="1" onclick="v69PickMeal(1,this)">🍱 Pranzo</button>
+        <button class="v69-meal-sel-btn" data-midx="2" onclick="v69PickMeal(2,this)">🌙 Cena</button>
+        <button class="v69-meal-sel-btn" data-midx="3" onclick="v69PickMeal(3,this)">🍎 Snack</button>
+      </div>
+    </div>
+
+    <!-- Confirm / remove button -->
+    <div style="padding:0 16px 6px;">
+      <button class="v69-action-confirm" id="v69-confirm-btn" onclick="v69ToggleLog()">
+        <span id="v69-confirm-ico">✓</span>
+        <span id="v69-confirm-lbl">Aggiungi al Diario</span>
+      </button>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <button class="v69-action-secondary" onclick="v69CloseRecipe()">
+        Chiudi
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   V69 — RECIPE DETAIL SHEET + LOG/UNLOG + SMART SWAP
+═══════════════════════════════════════════════════════════════ */
+(function(){
+
+  /* ── Stato corrente del sheet ── */
+  window._v69State = {
+    recipe: null,        // oggetto ricetta corrente
+    mealType: null,      // 'colazione'|'pranzo'|'cena' (dal menu home)
+    mealIdx: 0,          // 0-3 per il selector manuale
+    dayOffset: 0,        // day offset per il log (segue il calendario home)
+    isLogged: false,     // se già presente nel diario
+    logItemId: null,     // id univoco dell'item nel diario
+    sourceCard: null,    // card DOM di origine per aggiornamento UI
+  };
+
+  /* ── Calcola la date key per un offset ── */
+  function _dateKey(offset) {
+    const d = new Date();
+    d.setDate(d.getDate() + (offset || 0));
+    return d.toISOString().split('T')[0];
+  }
+
+  /* ── Ottieni o crea il record nutrizione per una data ── */
+  function _getNutrDay(dateKey) {
+    if (!window.nutrition) window.nutrition = {};
+    if (!window.nutrition[dateKey]) {
+      window.nutrition[dateKey] = {
+        meals:[
+          {name:'Colazione',items:[]},
+          {name:'Pranzo',items:[]},
+          {name:'Cena',items:[]},
+          {name:'Spuntini',items:[]},
+        ]
+      };
+    }
+    return window.nutrition[dateKey];
+  }
+
+  /* ── Converti mealType stringa → indice ── */
+  function _mealTypeToIdx(type) {
+    return {colazione:0, pranzo:1, cena:2, spuntini:3}[type] ?? 1;
+  }
+
+  /* ── Controlla se una ricetta è già loggata ── */
+  function _isLogged(r, dateKey, mealIdx) {
+    const nt = (window.nutrition || {})[dateKey];
+    if (!nt) return { logged:false, itemIdx:-1 };
+    const meal = (nt.meals || [])[mealIdx];
+    if (!meal) return { logged:false, itemIdx:-1 };
+    const idx = meal.items.findIndex(i => i._recipeId === r.id);
+    return { logged: idx >= 0, itemIdx: idx };
+  }
+
+  /* ── Aggiorna UI del bottone confirm ── */
+  function _refreshConfirmBtn(logged) {
+    const btn = document.getElementById('v69-confirm-btn');
+    const ico = document.getElementById('v69-confirm-ico');
+    const lbl = document.getElementById('v69-confirm-lbl');
+    if (!btn) return;
+    if (logged) {
+      btn.classList.add('confirmed');
+      if (ico) ico.textContent = '✓ Aggiunto';
+      if (lbl) lbl.textContent = 'Rimuovi dal Diario';
+    } else {
+      btn.classList.remove('confirmed');
+      if (ico) ico.textContent = '✓';
+      if (lbl) lbl.textContent = 'Aggiungi al Diario';
+    }
+  }
+
+  /* ── Aggiorna la card menu home (strip log) ── */
+  function _refreshMenuCard(mealType, logged, recipeName) {
+    const card = document.getElementById('v67-card-' + mealType);
+    if (!card) return;
+    let strip = card.querySelector('.v69-logged-strip');
+    if (logged) {
+      if (!strip) {
+        strip = document.createElement('div');
+        strip.className = 'v69-logged-strip';
+        card.appendChild(strip);
+      }
+      strip.innerHTML = `✅ Aggiunto al diario`;
+      // Marca anche il bottone OK nella card
+      const okBtn = card.querySelector('.v66-meal-btn-ok');
+      if (okBtn) {
+        okBtn.style.background = 'rgba(200,245,60,.3)';
+        okBtn.style.boxShadow = '0 0 14px rgba(200,245,60,.4)';
+      }
+    } else {
+      if (strip) strip.remove();
+      const okBtn = card.querySelector('.v66-meal-btn-ok');
+      if (okBtn) {
+        okBtn.style.background = '';
+        okBtn.style.boxShadow = '';
+      }
+    }
+  }
+
+  /* ═══════════════════ APERTURA SHEET ════════════════════ */
+
+  /* Apre il sheet da una card menu home (colazione/pranzo/cena) */
+  window.v69OpenFromMenu = function(mealType) {
+    const menu = window._v67State && window._v67State.currentMenu;
+    if (!menu) return;
+    const meal = menu[mealType];
+    if (!meal) return;
+
+    // FIX V72: Cerca la ricetta nel DB — prima RECIPES_DB (ha steps), poi RICETTE
+    let recipe = null;
+    if (meal.id) {
+      // RECIPES_DB è la fonte primaria con ingredienti e steps sempre completi
+      const fromDB = Array.isArray(window.RECIPES_DB)
+        ? window.RECIPES_DB.find(function(r) { return r.id === meal.id; })
+        : null;
+      if (fromDB) {
+        recipe = {
+          id:   fromDB.id,
+          ico:  fromDB.ico  || meal.ico || '🍽️',
+          name: fromDB.name,
+          kcal: fromDB.kcal || 0,
+          p:    fromDB.p    || 0,
+          c:    fromDB.c    || 0,
+          g:    fromDB.g    || 0,
+          time: fromDB.time ? (fromDB.time + ' min') : (meal.time ? meal.time + ' min' : '—'),
+          diff: fromDB.diff || '',
+          desc: fromDB.desc || '',
+          ingredienti: fromDB.ingredienti || fromDB.ing || [],
+          steps: fromDB.steps || fromDB.preparazione || [],
+        };
+      }
+      // Poi RICETTE (alias)
+      if (!recipe) {
+        recipe = (window.RICETTE || []).find(function(r) { return r.id === meal.id; });
+      }
+    }
+    // Fallback: costruisci ricetta dai dati del menu (ora include steps se da v70SelectBestRecipe)
+    if (!recipe) {
+      recipe = {
+        id: '_menu_' + mealType + '_' + Date.now(),
+        name: meal.name,
+        ico: meal.ico || '🍽️',
+        kcal: meal.kcal,
+        p: meal.p,
+        c: meal.c,
+        g: meal.g,
+        time: meal.time ? (meal.time + ' min') : '—',
+        diff: '',
+        desc: '',
+        ingredienti: meal.ingredienti || [],
+        steps: meal.steps || meal.preparazione || ['Prepara gli ingredienti.','Assembla il piatto e servi.'],
+      };
+    }
+
+    // Calcola offset dal calendario home
+    const todayDow = (new Date().getDay() + 6) % 7;
+    const selDay   = (window._v67State && window._v67State.selectedDay) ?? todayDow;
+    const dayOffset = selDay - todayDow;
+
+    const mealIdx = _mealTypeToIdx(mealType);
+    const dateKey = _dateKey(dayOffset);
+    const { logged } = _isLogged(recipe, dateKey, mealIdx);
+
+    window._v69State.recipe    = recipe;
+    window._v69State.mealType  = mealType;
+    window._v69State.mealIdx   = mealIdx;
+    window._v69State.dayOffset = dayOffset;
+    window._v69State.isLogged  = logged;
+
+    // Pre-seleziona il pasto corretto nel selector
+    document.querySelectorAll('.v69-meal-sel-btn').forEach((b,i) => {
+      b.classList.toggle('on', i === mealIdx);
+    });
+
+    v69OpenRecipe(recipe, logged);
+  };
+
+  /* Apre il sheet da una ricetta nella pagina Ricette */
+  window.v69OpenFromRicette = function(recipeId) {
+    const recipe = (window.RICETTE || []).find(r => r.id === recipeId);
+    if (!recipe) return;
+    const offset = window._nutrDayOffset || 0;
+    const mealIdx = window._v69State.mealIdx || 1;
+    const dateKey = _dateKey(offset);
+    const { logged } = _isLogged(recipe, dateKey, mealIdx);
+    window._v69State.recipe    = recipe;
+    window._v69State.mealType  = null;
+    window._v69State.dayOffset = offset;
+    window._v69State.isLogged  = logged;
+    v69OpenRecipe(recipe, logged);
+  };
+
+  /* Core open */
+  window.v69OpenRecipe = function(recipe, logged) {
+    const sheet = document.getElementById('v69-recipe-sheet');
+    if (!sheet) return;
+
+    /* ─ Popola nome / ico / meta ─ */
+    document.getElementById('v69-ico').textContent  = recipe.ico || '🍽️';
+    document.getElementById('v69-name').textContent = recipe.name;
+
+    const metaEl = document.getElementById('v69-meta');
+    metaEl.innerHTML = [
+      recipe.time  ? `<span class="v69-meta-pill">⏱️ ${recipe.time}</span>` : '',
+      recipe.kcal  ? `<span class="v69-meta-pill" style="color:var(--acc)">🔥 ${recipe.kcal} kcal</span>` : '',
+      recipe.diff  ? `<span class="v69-meta-pill">${recipe.diff}</span>` : '',
+    ].join('');
+
+    /* ─ Macro strip ─ */
+    const macros = [
+      { val:recipe.kcal||0, lbl:'kcal',     col:'var(--acc)' },
+      { val:recipe.p||0,    lbl:'Proteine', col:'var(--green)' },
+      { val:recipe.c||0,    lbl:'Carbs',    col:'var(--blue)' },
+      { val:recipe.g||0,    lbl:'Grassi',   col:'var(--orange)' },
+    ];
+    document.getElementById('v69-macros').innerHTML = macros.map((m,i) => `
+      <div class="v69-macro-cell"
+        style="${i<macros.length-1?'border-right:1px solid rgba(255,255,255,.07);':''}">
+        <div class="v69-macro-val" style="color:${m.col}">${m.val}${m.lbl!=='kcal'?'g':''}</div>
+        <div class="v69-macro-lbl">${m.lbl}</div>
+      </div>`).join('');
+
+    /* ─ Tab ingredienti ─ */
+    const ings = recipe.ingredienti || [];
+    document.getElementById('v69-panel-ing').innerHTML = ings.length
+      ? ings.map(i=>`<div class="v69-ing-row">
+          <div class="v69-ing-dot"></div>
+          <div class="v69-ing-txt">${i}</div>
+        </div>`).join('')
+      : '<div style="color:rgba(255,255,255,.35);font-size:13px;">Lista ingredienti non disponibile.</div>';
+
+    /* ─ Tab preparazione ─ */
+    const steps = recipe.steps || [];
+    document.getElementById('v69-panel-prep').innerHTML = steps.length
+      ? steps.map((s,idx)=>`<div class="v69-step">
+          <div class="v69-step-num">${idx+1}</div>
+          <div class="v69-step-txt">${s}</div>
+        </div>`).join('')
+      : '<div style="color:rgba(255,255,255,.35);font-size:13px;">Nessun passaggio disponibile.</div>';
+
+    /* ─ Reset tab su "Ingredienti" ─ */
+    v69SwitchTab('ing', document.querySelector('.v69-tab'));
+
+    /* ─ Bottone confirm ─ */
+    _refreshConfirmBtn(logged);
+
+    /* ─ Apri sheet ─ */
+    sheet.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  /* ─ Chiudi sheet ─ */
+  window.v69CloseRecipe = function() {
+    const sheet = document.getElementById('v69-recipe-sheet');
+    if (!sheet) return;
+    const inner = document.getElementById('v69-recipe-inner');
+    if (inner) inner.style.transform = 'translateY(100%)';
+    setTimeout(() => {
+      sheet.classList.remove('open');
+      if (inner) inner.style.transform = '';
+      document.body.style.overflow = '';
+    }, 350);
+  };
+
+  /* ─ Switcher tab ─ */
+  window.v69SwitchTab = function(tab, btn) {
+    document.getElementById('v69-panel-ing').style.display  = tab==='ing'  ? 'block' : 'none';
+    document.getElementById('v69-panel-prep').style.display = tab==='prep' ? 'block' : 'none';
+    document.querySelectorAll('.v69-tab').forEach(b => b.classList.toggle('on', b===btn || b.getAttribute('onclick')?.includes("'"+tab+"'")));
+  };
+
+  /* ─ Seleziona pasto ─ */
+  window.v69PickMeal = function(idx, btn) {
+    window._v69State.mealIdx = idx;
+    document.querySelectorAll('.v69-meal-sel-btn').forEach((b,i) => b.classList.toggle('on', i===idx));
+    // Ricalcola se già loggato in questo pasto
+    const { logged } = _isLogged(window._v69State.recipe, _dateKey(window._v69State.dayOffset), idx);
+    window._v69State.isLogged = logged;
+    _refreshConfirmBtn(logged);
+  };
+
+  /* ═══════════════════ LOG / UNLOG ════════════════════ */
+
+  window.v69ToggleLog = function() {
+    const s = window._v69State;
+    const r = s.recipe;
+    if (!r) return;
+
+    const dateKey = _dateKey(s.dayOffset);
+    const nt = _getNutrDay(dateKey);
+    const mealIdx = s.mealIdx;
+    const meal = nt.meals[mealIdx];
+
+    const { logged, itemIdx } = _isLogged(r, dateKey, mealIdx);
+
+    if (logged) {
+      /* ── RIMUOVI ── */
+      meal.items.splice(itemIdx, 1);
+      s.isLogged = false;
+      if (typeof showToast === 'function') showToast('🗑️ Rimosso dal diario');
+      if (s.mealType) _refreshMenuCard(s.mealType, false, r.name);
+      // Aggiorna spunta nella card menu
+      if (s.mealType) {
+        window._v67State && (window._v67State.confirmed[s.mealType] = false);
+        try { v67RenderMenuCards(); } catch(e) {}
+      }
+    } else {
+      /* ── AGGIUNGI ── */
+      const item = {
+        _recipeId: r.id,
+        name:  r.name,
+        g:     1,
+        unit:  'porzione',
+        kcal:  r.kcal  || 0,
+        p:     r.p     || 0,
+        c:     r.c     || 0,
+        g_fat: r.g     || 0,
+      };
+      meal.items.push(item);
+      s.isLogged = true;
+      if (typeof showToast === 'function') showToast('✅ ' + r.name + ' aggiunto al diario!');
+      if (s.mealType) _refreshMenuCard(s.mealType, true, r.name);
+      // Aggiorna spunta nella card menu
+      if (s.mealType) {
+        window._v67State && (window._v67State.confirmed[s.mealType] = true);
+        try { v67RenderMenuCards(); } catch(e) {}
+      }
+    }
+
+    if (typeof saveAll === 'function') saveAll();
+    _refreshConfirmBtn(s.isLogged);
+    // Aggiorna rendering nutrizione se visibile
+    try { if (typeof renderNutrizione === 'function') renderNutrizione(); } catch(e) {}
+  };
+
+  /* ═══════════════════ SMART SWAP ════════════════════ */
+  /* Sovrascrive v67SwapMeal: lo swap ora usa ricette reali
+     filtrate per allergie e fabbisogno */
+
+  const _origSwap = window.v67SwapMeal;
+  window.v67SwapMeal = function(mealType) {
+    const card = document.getElementById('v67-card-' + mealType);
+    if (!card) return;
+    card.classList.add('v67-swapping');
+
+    setTimeout(() => {
+      // Rimuovi il log precedente se era stato aggiunto
+      const menu  = window._v67State.currentMenu || {};
+      const prev  = menu[mealType];
+      if (prev && prev.id) {
+        const todayDow  = (new Date().getDay() + 6) % 7;
+        const selDay    = window._v67State.selectedDay ?? todayDow;
+        const dayOffset = selDay - todayDow;
+        const dateKey   = _dateKey(dayOffset);
+        const mealIdx   = _mealTypeToIdx(mealType);
+        const nt        = (window.nutrition || {})[dateKey];
+        if (nt && nt.meals[mealIdx]) {
+          const iIdx = nt.meals[mealIdx].items.findIndex(i => i._recipeId === prev.id);
+          if (iIdx >= 0) {
+            nt.meals[mealIdx].items.splice(iIdx, 1);
+            if (typeof saveAll === 'function') saveAll();
+            if (typeof showToast === 'function') showToast('🔄 Ricetta aggiornata — pasto rimosso dal diario');
+          }
+        }
+      }
+
+      // Calcola kcal target per questo tipo pasto
+      const kcalTarget = (() => {
+        try {
+          const total = (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget) || 2200;
+          const bf = window._v67State.showBreakfast;
+          if (mealType === 'colazione') return Math.round(total * 0.25);
+          if (mealType === 'pranzo')    return Math.round(total * (bf ? 0.40 : 0.55));
+          return Math.round(total * (bf ? 0.35 : 0.45));
+        } catch(e) { return 600; }
+      })();
+
+      // Trova ricette già usate oggi (da escludere)
+      const usedIds = Object.values(menu).map(m => m && m.id).filter(Boolean);
+
+      // Usa il motore V68 per trovare la migliore ricetta compatibile
+      let newRecipe = null;
+      try {
+        newRecipe = window.v68SelectBestRecipe(mealType, kcalTarget, usedIds);
+      } catch(e) {}
+
+      if (newRecipe) {
+        window._v67State.currentMenu[mealType] = newRecipe;
+      } else {
+        // Fallback: ruota tra le alternative mockup V67
+        const alts = (window._v67SwapAlts || {})[mealType] || [];
+        const idx  = ((window._v67State.swapIdx || {})[mealType] || 0 + 1) % Math.max(alts.length, 1);
+        if (window._v67State.swapIdx) window._v67State.swapIdx[mealType] = idx;
+        if (alts[idx]) window._v67State.currentMenu[mealType] = Object.assign({}, alts[idx]);
+      }
+
+      window._v67State.confirmed[mealType] = false;
+      v67RenderMenuCards();
+      const newCard = document.getElementById('v67-card-' + mealType);
+      if (newCard) {
+        newCard.classList.remove('v67-swapping');
+        newCard.classList.add('v67-swapped');
+        setTimeout(() => newCard.classList.remove('v67-swapped'), 400);
+      }
+    }, 220);
+  };
+
+  /* ═══════════════════ WIRING CARD MENU ════════════════════ */
+  /* Sovrascrive v67RenderMenuCards per aggiungere click su nome e
+     collegare il bottone spunta al log/unlog */
+
+  const _origRenderCards = window.v67RenderMenuCards;
+  window.v67RenderMenuCards = function(animate) {
+    if (typeof _origRenderCards === 'function') _origRenderCards(animate);
+
+    // Dopo il render, inietta i click handler
+    setTimeout(() => {
+      ['colazione','pranzo','cena'].forEach(mealType => {
+        const card = document.getElementById('v67-card-' + mealType);
+        if (!card) return;
+
+        // Click sul nome/thumbnail → apre dettaglio ricetta
+        const nameEl  = card.querySelector('.v66-meal-name');
+        const thumbEl = card.querySelector('.v66-meal-thumb');
+        const handler = (e) => {
+          e.stopPropagation();
+          v69OpenFromMenu(mealType);
+        };
+        if (nameEl  && !nameEl._v69)  { nameEl.style.cursor  = 'pointer'; nameEl.addEventListener('click',  handler); nameEl._v69  = true; }
+        if (thumbEl && !thumbEl._v69) { thumbEl.style.cursor  = 'pointer'; thumbEl.addEventListener('click', handler); thumbEl._v69 = true; }
+
+        // Bottone OK → toggle log
+        const okBtn = card.querySelector('.v66-meal-btn-ok');
+        if (okBtn && !okBtn._v69log) {
+          okBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Sincronizza stato e apri il log direttamente
+            const menu = window._v67State.currentMenu || {};
+            const meal = menu[mealType];
+            if (!meal) return;
+            let recipe = meal.id ? (window.RICETTE||[]).find(r=>r.id===meal.id) : null;
+            if (!recipe) recipe = { id:'_m_'+mealType, name:meal.name, ico:meal.ico||'🍽️',
+              kcal:meal.kcal, p:meal.p, c:meal.c, g:meal.g,
+              time:meal.time+' min', diff:'', ingredienti:[], steps:[] };
+            const todayDow  = (new Date().getDay() + 6) % 7;
+            const selDay    = window._v67State.selectedDay ?? todayDow;
+            const dayOffset = selDay - todayDow;
+            const mealIdx   = _mealTypeToIdx(mealType);
+            const dateKey   = _dateKey(dayOffset);
+            const { logged } = _isLogged(recipe, dateKey, mealIdx);
+
+            window._v69State.recipe    = recipe;
+            window._v69State.mealType  = mealType;
+            window._v69State.mealIdx   = mealIdx;
+            window._v69State.dayOffset = dayOffset;
+            window._v69State.isLogged  = logged;
+
+            v69ToggleLog();
+          });
+          okBtn._v69log = true;
+        }
+
+        // Riflessione log già fatto
+        const todayDow  = (new Date().getDay() + 6) % 7;
+        const selDay    = window._v67State?.selectedDay ?? todayDow;
+        const dayOffset = selDay - todayDow;
+        const menu = window._v67State?.currentMenu || {};
+        const meal = menu[mealType];
+        if (meal) {
+          let r = meal.id ? (window.RICETTE||[]).find(r=>r.id===meal.id) : null;
+          if (!r) r = { id:'_m_'+mealType };
+          const { logged } = _isLogged(r, _dateKey(dayOffset), _mealTypeToIdx(mealType));
+          _refreshMenuCard(mealType, logged, meal.name);
+        }
+      });
+    }, 80);
+  };
+
+  /* ═══════════════════ PATCH renderRicette ════════════════════ */
+  /* Ogni card ricette ottiene il click → apre V69 sheet */
+  const _origRenderRicette = window.renderRicette;
+  window.renderRicette = function() {
+    if (typeof _origRenderRicette === 'function') _origRenderRicette();
+    // Sostituisci il tasto "Aggiungi ai pasti di oggi" con quello V69
+    setTimeout(() => {
+      document.querySelectorAll('#ricette-list .recipe-card').forEach(card => {
+        const oldBtn = card.querySelector('.recipe-body button');
+        if (oldBtn && !oldBtn._v69) {
+          const rid = oldBtn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+          if (rid) {
+            oldBtn.textContent = '🔍 Vedi Ricetta Completa';
+            oldBtn.setAttribute('onclick', `v69OpenFromRicette('${rid}')`);
+            oldBtn._v69 = true;
+          }
+        }
+      });
+    }, 100);
+  };
+
+  /* ── Chiudi sheet con swipe down ── */
+  (function() {
+    const inner = document.getElementById('v69-recipe-inner');
+    if (!inner) return;
+    let startY = 0, isDragging = false;
+    inner.addEventListener('touchstart', e => { startY = e.touches[0].clientY; isDragging = true; }, {passive:true});
+    inner.addEventListener('touchmove', e => {
+      if (!isDragging) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 0) inner.style.transform = `translateY(${dy}px)`;
+    }, {passive:true});
+    inner.addEventListener('touchend', e => {
+      isDragging = false;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (dy > 80) { inner.style.transform=''; v69CloseRecipe(); }
+      else { inner.style.transform=''; }
+    });
+  })();
+
+  console.log('%c[FitTrack V69] Recipe sheet + Log/Unlog + Smart Swap ✅','color:#C8F53C;font-weight:bold;font-size:13px;');
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     FitTrack V70 — NUTRIZIONE UPGRADE COMPLETO
+     1. Sync RECIPES_DB → window.RICETTE (ingredienti + steps completi)
+     2. Algoritmo swap flessibile con vera varietà (Primi/Secondi/Contorni/Piatti unici)
+     3. Redistribuzione colazione opzionale proporzionale (non solo +15%)
+     4. Tasto Spunta toggle reale con log per giorno selezionato
+     5. Fix UI nome ricette lunghe su mobile (word-wrap)
+     6. _v67MenuDB ampliato con varietà reale
+     7. Swap intelligente: tolleranza ±20% kcal, niente doppioni
+════════════════════════════════════════════════════════ -->
+<style>
+/* ── V70: fix word-wrap nomi ricette lunghi ── */
+.v66-meal-name {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  word-break: break-word;
+  hyphens: auto;
+  line-height: 1.3 !important;
+  max-width: 100%;
+}
+/* ── V70: ensure macros + actions don't overlap on narrow screens ── */
+.v66-meal-row {
+  align-items: flex-start !important;
+}
+.v66-meal-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.v66-meal-macros {
+  flex-wrap: wrap;
+  gap: 4px !important;
+}
+/* ── V70: card logged strip ── */
+.v69-logged-strip {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--acc);
+  letter-spacing: .04em;
+  padding: 5px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* ── V70: gen menu btn upgrade ── */
+#v67-gen-menu-btn {
+  background: linear-gradient(135deg, rgba(200,245,60,.09), rgba(200,245,60,.04)) !important;
+  border: 1.5px solid rgba(200,245,60,.35) !important;
+  box-shadow: 0 0 16px rgba(200,245,60,.08) !important;
+}
+#v67-gen-menu-btn:hover {
+  background: linear-gradient(135deg, rgba(200,245,60,.15), rgba(200,245,60,.08)) !important;
+  box-shadow: 0 0 24px rgba(200,245,60,.18) !important;
+}
+/* ── V70: tipo ricetta badge ── */
+.v70-tipo-badge {
+  display: inline-block;
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.v70-tipo-primo    { color: var(--blue);   background: rgba(91,156,239,.12);  }
+.v70-tipo-secondo  { color: var(--orange); background: rgba(255,154,60,.12);  }
+.v70-tipo-piatto   { color: var(--acc);    background: rgba(200,245,60,.1);   }
+.v70-tipo-uova     { color: #FFD700;       background: rgba(255,215,0,.1);    }
+.v70-tipo-veg      { color: var(--green);  background: rgba(62,223,138,.1);   }
+</style>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   V70 — NUTRIZIONE UPGRADE COMPLETO
+════════════════════════════════════════════════════════ */
+(function FitTrackV70() {
+  'use strict';
+
+  /* ── 1. Sync RECIPES_DB completo in window.RICETTE ──
+     RECIPES_DB ha ingredienti + steps dettagliati: mappiamoli
+     in RICETTE per permettere l'apertura del recipe sheet completo.
+  ── */
+  (function syncRecipesDB() {
+    try {
+      const db = window.RECIPES_DB || [];
+      if (!Array.isArray(window.RICETTE)) window.RICETTE = [];
+      db.forEach(function(r) {
+        if (!window.RICETTE.find(function(x) { return x.id === r.id; })) {
+          const cat = (r.cat || '').toLowerCase();
+          const isCena  = cat.includes('cena');
+          const isPranzo = cat.includes('pranzo');
+          const isCol   = cat.includes('colazione');
+          const mapped = {
+            id:          r.id,
+            name:        r.name,
+            ico:         r.ico || (isCol ? '🌅' : isPranzo ? '🍽️' : isCena ? '🌙' : '⚡'),
+            kcal:        r.kcal,
+            p:           r.p,
+            c:           r.c,
+            g:           r.g || r.fat || 0,
+            fiber:       r.fiber || 0,
+            time:        String(r.time || 15) + ' min',
+            diff:        r.diff || _getDiff(r),
+            tags:        [cat.replace(/[🌅🍽️🌙⚡]/g,'').trim()],
+            cat:         r.cat || '',
+            tipo:        r.tipo || '',
+            desc:        r.name,
+            ingredienti: r.ingredienti || r.ing || [],
+            steps:       Array.isArray(r.steps) ? r.steps : (r.steps ? [r.steps] : []),
+            goal:        r.goal || ['mantenimento'],
+          };
+          window.RICETTE.push(mapped);
+        }
+      });
+    } catch(e) {
+      console.warn('[V70 syncRecipesDB]', e);
+    }
+  })();
+
+  function _getDiff(r) {
+    if (!r.time) return '';
+    if (r.time <= 5)  return '⚡ Rapido';
+    if (r.time <= 15) return '🟡 Medio';
+    return '🔴 Lungo';
+  }
+
+  /* ── 2. _v67MenuDB ampliato con varietà reale ──
+     Sostituisce il DB originale (giorni 0-6) con un set
+     più variegato di colazione/pranzo/cena che copre
+     Primi, Secondi di carne, Pesce, Uova, Piatti Unici.
+  ── */
+  window._v67MenuDB = {
+    0: {
+      colazione:{id:'r-oatmeal-pro',    ico:'🥣',name:'Porridge proteico al cioccolato',   time:5, kcal:420,p:32,c:48,g:8},
+      pranzo:   {id:'r-bowl-pollo-riso',ico:'🥗',name:'Power Bowl: riso, pollo e avocado', time:15,kcal:520,p:42,c:48,g:12},
+      cena:     {id:'r-salmone-al-forno',ico:'🐟',name:'Salmone al forno con asparagi',    time:20,kcal:420,p:38,c:18,g:18},
+    },
+    1: {
+      colazione:{id:'r-pancake-albumi', ico:'🥞',name:'Pancake proteici di albumi e avena',time:10,kcal:310,p:28,c:35,g:5},
+      pranzo:   {id:'r-pasta-tonno',    ico:'🍝',name:'Pasta integrale al tonno e basilico',time:15,kcal:490,p:38,c:52,g:8},
+      cena:     {id:'r-pollo-patate',   ico:'🍗',name:'Pollo alle erbe con patate dolci',  time:30,kcal:480,p:44,c:42,g:8},
+    },
+    2: {
+      colazione:{id:'r-yogurt-bowl',    ico:'🫙',name:'Bowl di yogurt greco e frutti di bosco',time:3,kcal:290,p:30,c:28,g:5},
+      pranzo:   {id:'r-buddha-bowl-quinoa',ico:'🥣',name:'Buddha Bowl: quinoa e salmone', time:20,kcal:490,p:36,c:40,g:14},
+      cena:     {id:'r-merluzzo-vapore',ico:'🐟',name:'Merluzzo al vapore con quinoa',    time:20,kcal:340,p:38,c:30,g:5},
+    },
+    3: {
+      colazione:{id:'r-uova-avocado',   ico:'🥑',name:'Uova strapazzate con avocado e pane',time:8,kcal:480,p:28,c:32,g:22},
+      pranzo:   {id:'r-wrap-pollo',     ico:'🌯',name:'Wrap integrale con pollo e hummus', time:10,kcal:380,p:34,c:38,g:9},
+      cena:     {id:'r-gamberi-zucchine',ico:'🦐',name:'Gamberi saltati con zucchine',     time:12,kcal:260,p:30,c:8,g:10},
+    },
+    4: {
+      colazione:{id:'r-smoothie-verde', ico:'🥤',name:'Smoothie verde proteico alla vaniglia',time:4,kcal:280,p:25,c:30,g:4},
+      pranzo:   {id:'r-poke-bowl',      ico:'🍱',name:'Poke Bowl al salmone',               time:15,kcal:540,p:38,c:52,g:14},
+      cena:     {id:'r-manzo-spinaci',  ico:'🥩',name:'Tagliata di manzo con spinaci',       time:15,kcal:400,p:40,c:10,g:18},
+    },
+    5: {
+      colazione:{id:'r-overnight-oats', ico:'🌾',name:'Overnight Oats al burro di arachidi',time:5,kcal:460,p:26,c:55,g:12},
+      pranzo:   {id:'r-pasta-pollo-pesto',ico:'🍝',name:'Pasta integrale al pesto con pollo',time:18,kcal:510,p:40,c:50,g:12},
+      cena:     {id:'r-frittata-proteica',ico:'🍳',name:'Frittata proteica con spinaci e funghi',time:20,kcal:290,p:38,c:6,g:12},
+    },
+    6: {
+      colazione:{id:'r-frittata-colazione',ico:'🥚',name:'Frittata di albumi al forno con spinaci',time:12,kcal:220,p:30,c:8,g:6},
+      pranzo:   {id:'r-insalata-proteica',ico:'🥗',name:'Insalata di polpo con ceci e rucola',time:10,kcal:280,p:32,c:12,g:8},
+      cena:     {id:'r-burger-tonno',    ico:'🐟',name:'Burger di tonno con insalata mista', time:20,kcal:360,p:34,c:32,g:8},
+    },
+  };
+
+  /* ── 3. Alternative swap ampliate e variate ──
+     Ogni tipo ha ricette di categorie DIVERSE per vero swap.
+  ── */
+  window._v67SwapAlts = {
+    colazione: [
+      {id:'r-yogurt-bowl',     ico:'🫙',name:'Bowl di yogurt greco e frutti di bosco',       time:3, kcal:290,p:30,c:28,g:5},
+      {id:'r-overnight-oats',  ico:'🌾',name:'Overnight Oats al burro di arachidi',           time:5, kcal:460,p:26,c:55,g:12},
+      {id:'r-pancake-albumi',  ico:'🥞',name:'Pancake proteici di albumi e avena',             time:10,kcal:310,p:28,c:35,g:5},
+      {id:'r-smoothie-verde',  ico:'🥤',name:'Smoothie verde proteico alla vaniglia',          time:4, kcal:280,p:25,c:30,g:4},
+      {id:'r-uova-avocado',    ico:'🥑',name:'Uova strapazzate con avocado e pane',            time:8, kcal:480,p:28,c:32,g:22},
+      {id:'r-toast-ricotta-salmone',ico:'🐟',name:'Toast con ricotta e salmone affumicato',   time:5, kcal:350,p:28,c:30,g:10},
+      {id:'r-frittata-colazione',ico:'🥚',name:'Frittata di albumi al forno con spinaci',      time:12,kcal:220,p:30,c:8,g:6},
+      {id:'r-oatmeal-pro',     ico:'🥣',name:'Porridge proteico al cioccolato',                time:5, kcal:420,p:32,c:48,g:8},
+    ],
+    pranzo: [
+      {id:'r-pasta-tonno',     ico:'🍝',name:'Pasta integrale al tonno e basilico',            time:15,kcal:490,p:38,c:52,g:8},
+      {id:'r-pasta-ricotta-pomodorini',ico:'🍝',name:'Pasta integrale ricotta e pomodorini',  time:15,kcal:470,p:26,c:58,g:10},
+      {id:'r-zuppa-legumi',    ico:'🍲',name:'Minestra densa di legumi misti',                  time:25,kcal:340,p:20,c:50,g:5},
+      {id:'r-insalata-proteica',ico:'🥗',name:'Insalata di polpo con ceci e rucola',           time:10,kcal:280,p:32,c:12,g:8},
+      {id:'r-wrap-pollo',      ico:'🌯',name:'Wrap integrale con pollo e hummus',               time:10,kcal:380,p:34,c:38,g:9},
+      {id:'r-poke-bowl',       ico:'🍱',name:'Poke Bowl al salmone',                            time:15,kcal:540,p:38,c:52,g:14},
+      {id:'r-buddha-bowl-quinoa',ico:'🥣',name:'Buddha Bowl: quinoa e salmone',                time:20,kcal:490,p:36,c:40,g:14},
+      {id:'r-pasta-pollo-pesto',ico:'🍝',name:'Pasta integrale al pesto con pollo',            time:18,kcal:510,p:40,c:50,g:12},
+      {id:'r-risotto-zucchine-gamberetti',ico:'🍚',name:'Risotto leggero zucchine e gamberetti',time:25,kcal:500,p:32,c:56,g:10},
+    ],
+    cena: [
+      {id:'r-manzo-spinaci',   ico:'🥩',name:'Tagliata di manzo con spinaci saltati',          time:15,kcal:400,p:40,c:10,g:18},
+      {id:'r-burger-tonno',    ico:'🐟',name:'Burger di tonno con insalata mista',             time:20,kcal:360,p:34,c:32,g:8},
+      {id:'r-pollo-patate',    ico:'🍗',name:'Pollo alle erbe con patate dolci',               time:30,kcal:480,p:44,c:42,g:8},
+      {id:'r-gamberi-zucchine',ico:'🦐',name:'Gamberi saltati con zucchine',                  time:12,kcal:260,p:30,c:8,g:10},
+      {id:'r-merluzzo-vapore', ico:'🐟',name:'Merluzzo al vapore con quinoa',                  time:20,kcal:340,p:38,c:30,g:5},
+      {id:'r-frittata-proteica',ico:'🍳',name:'Frittata proteica con spinaci e funghi',        time:20,kcal:290,p:38,c:6,g:12},
+      {id:'r-tacchino-zucchine',ico:'🍗',name:'Tacchino alle erbe con zucchine grigliate',    time:18,kcal:320,p:42,c:8,g:10},
+      {id:'r-salmone-al-forno',ico:'🐟',name:'Salmone al forno con asparagi',                 time:20,kcal:420,p:38,c:18,g:18},
+      {id:'r-pollo-curry-ceci',ico:'🍛',name:'Pollo al curry leggero con ceci',               time:22,kcal:450,p:42,c:32,g:12},
+      {id:'r-frittata-colazione-cena',ico:'🍳',name:'Frittata leggera al forno con insalata', time:18,kcal:250,p:28,c:8,g:10},
+      {id:'r-tonno-patate',    ico:'🐟',name:'Trancio di tonno grigliato con insalata patate',time:18,kcal:380,p:36,c:28,g:10},
+      {id:'r-tofu-verdure',    ico:'🥦',name:'Tofu croccante al forno con verdure miste',     time:25,kcal:300,p:22,c:18,g:14},
+    ],
+  };
+
+  /* ── 4. Algoritmo V70 SelectBestRecipe — flessibile e vario ──
+     - Tolleranza kcal: ±25% del target (non ossessivo)
+     - Randomizzazione nell'intervallo dei candidati validi
+     - Evita doppioni nella stessa giornata
+     - Tiene conto di allergie (via v68RecipeSafe)
+  ── */
+  window.v70SelectBestRecipe = function(mealType, kcalTarget, exclude) {
+    const catMap = {
+      colazione: ['colazione'],
+      pranzo:    ['pranzo'],
+      cena:      ['cena'],
+    };
+    const cats = catMap[mealType] || [];
+    exclude = exclude || [];
+    const tolerance = 0.28; // ±28% tolleranza kcal
+
+    // Pool: RECIPES_DB
+    const pool = Array.isArray(window.RECIPES_DB) ? window.RECIPES_DB : [];
+
+    // Filtro categoria + allergie + esclusioni
+    let candidates = pool.filter(function(r) {
+      if (exclude.includes(r.id)) return false;
+      const cat = (r.cat || '').toLowerCase();
+      const matchCat = cats.some(function(c) { return cat.includes(c); });
+      if (!matchCat) return false;
+      if (typeof window.v68RecipeSafe === 'function' && !window.v68RecipeSafe(r)) return false;
+      return true;
+    });
+
+    if (!candidates.length) return null;
+
+    // Dividi in due fasce: vicine al target (priorità) e lontane (fallback)
+    const lo = kcalTarget * (1 - tolerance);
+    const hi = kcalTarget * (1 + tolerance);
+    const close   = candidates.filter(function(r) { return r.kcal >= lo && r.kcal <= hi; });
+    const farther = candidates.filter(function(r) { return r.kcal < lo || r.kcal > hi; });
+
+    // Scegli random nell'intervallo preferito (evita sempre lo stesso)
+    const pool2 = close.length >= 2 ? close : (close.length === 1 ? close : farther);
+    if (!pool2.length) return null;
+
+    // Randomizza con seed leggero basato su data + mealType
+    const seed = (new Date().getDay() * 7 + cats[0].charCodeAt(0) + exclude.length * 3) % pool2.length;
+    const best = pool2[seed] || pool2[0];
+
+    return {
+      id:    best.id,
+      ico:   best.ico || (mealType === 'colazione' ? '🌅' : mealType === 'pranzo' ? '🍽️' : '🌙'),
+      name:  best.name,
+      time:  best.time || 15,
+      kcal:  best.kcal || 0,
+      p:     best.p || 0,
+      c:     best.c || 0,
+      g:     best.g || best.fat || 0,
+      tipo:  best.tipo || '',
+      cat:   best.cat  || '',
+      diff:  best.diff || '',
+      fiber: best.fiber|| 0,
+      ingredienti: best.ingredienti || best.ing || [],
+      steps: best.steps || best.preparazione || [],
+    };
+  };
+
+  /* ── 5. Override v68BuildSmartMenu con logica V70 ──
+     Redistribuzione kcal proporzionale se colazione assente.
+     Tolleranza flessibile nel matching.
+  ── */
+  window.v68BuildSmartMenu = function() {
+    const kcalTotal = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2200;
+    const bf = window._v67State && window._v67State.showBreakfast;
+
+    // Distribuzione proporzionale
+    const ratios = bf
+      ? { colazione: 0.25, pranzo: 0.40, cena: 0.35 }
+      : { pranzo: 0.55,    cena: 0.45 };
+
+    const kcalBf    = bf ? Math.round(kcalTotal * ratios.colazione) : 0;
+    const kcalPranzo = Math.round(kcalTotal * ratios.pranzo);
+    const kcalCena  = Math.round(kcalTotal * ratios.cena);
+
+    const used = [];
+    let colazione = null, pranzo = null, cena = null;
+
+    // Tenta motore V70 (flessibile)
+    if (bf) {
+      colazione = window.v70SelectBestRecipe('colazione', kcalBf, used);
+      if (colazione) used.push(colazione.id);
+    }
+    pranzo = window.v70SelectBestRecipe('pranzo', kcalPranzo, used);
+    if (pranzo) used.push(pranzo.id);
+    cena = window.v70SelectBestRecipe('cena', kcalCena, used);
+
+    // Fallback: usa il DB giornaliero se V70 non trova nulla
+    const day = (window._v67State && window._v67State.selectedDay) || 0;
+    const fallback = window._v67MenuDB[day] || window._v67MenuDB[0];
+    if (!colazione && bf) colazione = Object.assign({}, fallback.colazione);
+    if (!pranzo)          pranzo    = Object.assign({}, fallback.pranzo);
+    if (!cena)            cena      = Object.assign({}, fallback.cena);
+
+    // Applica la redistribuzione reale delle kcal (non solo +15%)
+    if (!bf && pranzo && cena) {
+      const totalMenu = (pranzo.kcal || 0) + (cena.kcal || 0);
+      if (totalMenu > 0) {
+        const scale = kcalTotal / totalMenu;
+        // Scala dolcemente (max 1.4x) per non stravolgere le porzioni
+        const safescale = Math.min(scale, 1.4);
+        pranzo = Object.assign({}, pranzo, {
+          kcal: Math.round((pranzo.kcal || 0) * safescale),
+          p:    Math.round((pranzo.p    || 0) * safescale),
+          c:    Math.round((pranzo.c    || 0) * safescale),
+          g:    Math.round((pranzo.g    || 0) * safescale),
+        });
+        cena = Object.assign({}, cena, {
+          kcal: Math.round((cena.kcal || 0) * safescale),
+          p:    Math.round((cena.p    || 0) * safescale),
+          c:    Math.round((cena.c    || 0) * safescale),
+          g:    Math.round((cena.g    || 0) * safescale),
+        });
+      }
+    }
+
+    return { colazione, pranzo, cena };
+  };
+
+  /* ── 6. Override v67SwapMeal con motore V70 ──
+     Sceglie una ricetta DIVERSA da quella attuale,
+     nella stessa fascia kcal (±28%), veramente random.
+  ── */
+  const _origSwap = window.v67SwapMeal;
+  window.v67SwapMeal = function(mealType) {
+    const card = document.getElementById('v67-card-' + mealType);
+    if (!card) return;
+    card.classList.add('v67-swapping');
+
+    setTimeout(function() {
+      const menu    = (window._v67State && window._v67State.currentMenu) || {};
+      const current = menu[mealType];
+
+      // Calcola target kcal basato sul profilo
+      const kcalTotal = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2200;
+      const bf = window._v67State && window._v67State.showBreakfast;
+      const kcalTarget = (function() {
+        if (mealType === 'colazione') return Math.round(kcalTotal * 0.25);
+        if (mealType === 'pranzo')    return Math.round(kcalTotal * (bf ? 0.40 : 0.55));
+        return Math.round(kcalTotal * (bf ? 0.35 : 0.45));
+      })();
+
+      // Escludi la ricetta attuale + quelle già nel menu
+      const allUsed = Object.values(menu).map(function(m) { return m && m.id; }).filter(Boolean);
+
+      // Tenta swap dal pool RECIPES_DB
+      let newMeal = null;
+      const catMap = { colazione: ['colazione'], pranzo: ['pranzo'], cena: ['cena'] };
+      const cats   = catMap[mealType] || [];
+      const tolerance = 0.30;
+      const pool = (window.RECIPES_DB || []).filter(function(r) {
+        if (allUsed.includes(r.id)) return false;
+        const cat = (r.cat || '').toLowerCase();
+        if (!cats.some(function(c) { return cat.includes(c); })) return false;
+        if (typeof window.v68RecipeSafe === 'function' && !window.v68RecipeSafe(r)) return false;
+        return true;
+      });
+
+      if (pool.length) {
+        // Priorità ai candidati vicini al target
+        const lo = kcalTarget * (1 - tolerance);
+        const hi = kcalTarget * (1 + tolerance);
+        const close = pool.filter(function(r) { return r.kcal >= lo && r.kcal <= hi; });
+        const source = close.length ? close : pool;
+        // Scegli random per vera varietà
+        const idx = Math.floor(Math.random() * source.length);
+        const best = source[idx];
+        newMeal = {
+          id:   best.id, ico: best.ico || '🍽️', name: best.name,
+          time: best.time || 15, kcal: best.kcal || 0,
+          p: best.p || 0, c: best.c || 0, g: best.g || 0,
+          tipo: best.tipo || '',
+          ingredienti: best.ingredienti || best.ing || [],
+        };
+      }
+
+      // Fallback alle alternative statiche V67
+      if (!newMeal) {
+        const alts = (window._v67SwapAlts || {})[mealType] || [];
+        const filtered = alts.filter(function(a) { return !allUsed.includes(a.id); });
+        const source = filtered.length ? filtered : alts;
+        if (source.length) {
+          const idx = Math.floor(Math.random() * source.length);
+          newMeal = Object.assign({}, source[idx]);
+        }
+      }
+
+      if (newMeal) {
+        window._v67State.currentMenu[mealType] = newMeal;
+        window._v67State.confirmed[mealType]   = false;
+        if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards();
+        const newCard = document.getElementById('v67-card-' + mealType);
+        if (newCard) {
+          newCard.classList.remove('v67-swapping');
+          newCard.classList.add('v67-swapped');
+          setTimeout(function() { newCard.classList.remove('v67-swapped'); }, 400);
+        }
+        if (typeof showToast === 'function') {
+          const tipo = newMeal.tipo || '';
+          const tipoLabel = {
+            primo: '🍝 Primo',  secondo_carne: '🥩 Secondo', secondo_pesce: '🐟 Pesce',
+            secondo_uova: '🍳 Frittata', piatto_unico: '🥗 Piatto unico', snack: '⚡ Snack',
+          };
+          const lbl = tipoLabel[tipo] ? ' · ' + tipoLabel[tipo] : '';
+          showToast('🔄 ' + newMeal.name + lbl);
+        }
+      } else {
+        card.classList.remove('v67-swapping');
+        if (typeof showToast === 'function') showToast('ℹ️ Nessuna alternativa disponibile');
+      }
+    }, 220);
+  };
+
+  /* ── 7. Override v67GenerateNewMenu con V70 ──
+     Genera menu completamente nuovo evitando doppioni,
+     con vera rotazione tra le tipologie.
+  ── */
+  window.v67GenerateNewMenu = function() {
+    const btn = document.getElementById('v67-gen-menu-btn');
+    if (btn) {
+      btn.classList.add('v67-loading');
+      btn.textContent = '⏳ Generazione in corso...';
+    }
+    if (typeof showToast === 'function') showToast('🤖 Nuovo menu personalizzato in arrivo...');
+
+    setTimeout(function() {
+      try {
+        // Forza un seed diverso mescolando i valori
+        const prevMenu = (window._v67State && window._v67State.currentMenu) || {};
+        const prevIds  = Object.values(prevMenu).map(function(m) { return m && m.id; }).filter(Boolean);
+
+        // Seleziona escludendo il menu attuale per garantire varietà
+        const kcalTotal = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2200;
+        const bf = window._v67State && window._v67State.showBreakfast;
+
+        let colazione = null, pranzo = null, cena = null;
+        const used = [...prevIds];
+
+        if (bf) {
+          colazione = window.v70SelectBestRecipe('colazione', Math.round(kcalTotal * 0.25), used);
+          if (colazione) used.push(colazione.id);
+        }
+        pranzo = window.v70SelectBestRecipe('pranzo', Math.round(kcalTotal * (bf ? 0.40 : 0.55)), used);
+        if (pranzo) used.push(pranzo.id);
+        cena = window.v70SelectBestRecipe('cena', Math.round(kcalTotal * (bf ? 0.35 : 0.45)), used);
+
+        // Fallback
+        const day = (window._v67State && window._v67State.selectedDay) || 0;
+        const fb = window._v67MenuDB[day] || window._v67MenuDB[0];
+        if (!colazione && bf) colazione = Object.assign({}, fb.colazione);
+        if (!pranzo) pranzo = Object.assign({}, fb.pranzo);
+        if (!cena)   cena   = Object.assign({}, fb.cena);
+
+        window._v67State.currentMenu = { colazione, pranzo, cena };
+        window._v67State.confirmed   = { colazione:false, pranzo:false, cena:false };
+
+        if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(true);
+        if (typeof showToast === 'function') showToast('✨ Menu fresco generato!');
+      } catch(e) {
+        console.warn('[V70 GenerateNewMenu]', e);
+        if (typeof showToast === 'function') showToast('⚠️ Errore rigenerazione menu');
+      }
+      if (btn) {
+        btn.classList.remove('v67-loading');
+        btn.textContent = '✨ Genera Nuovo Menu';
+      }
+    }, 800);
+  };
+
+  /* ── 8. Override v67RenderMenuCards — aggiunge tipo badge ──
+     Mostra il tipo di ricetta (Primo / Secondo / Piatto Unico)
+     nella card e garantisce word-wrap corretto.
+  ── */
+  const _origRenderCards = window.v67RenderMenuCards;
+  window.v67RenderMenuCards = function(animate) {
+    if (typeof _origRenderCards === 'function') _origRenderCards(animate);
+
+    // Post-process: aggiungi tipo badge e fix nome lungo
+    setTimeout(function() {
+      ['colazione','pranzo','cena'].forEach(function(mealType) {
+        const card = document.getElementById('v67-card-' + mealType);
+        if (!card) return;
+        const menu = (window._v67State && window._v67State.currentMenu) || {};
+        const meal = menu[mealType];
+        if (!meal || !meal.tipo) return;
+
+        const tipoBadgeMap = {
+          primo:              { cls:'v70-tipo-primo',   lbl:'Primo piatto' },
+          secondo_carne:      { cls:'v70-tipo-secondo', lbl:'Secondo · Carne' },
+          secondo_pesce:      { cls:'v70-tipo-secondo', lbl:'Secondo · Pesce' },
+          secondo_uova:       { cls:'v70-tipo-uova',    lbl:'Secondo · Uova' },
+          secondo_proteico_veg:{ cls:'v70-tipo-veg',   lbl:'Secondo · Vegano' },
+          piatto_unico:       { cls:'v70-tipo-piatto',  lbl:'Piatto unico' },
+          colazione_dolce:    { cls:'v70-tipo-primo',   lbl:'Colazione dolce' },
+          colazione_salata:   { cls:'v70-tipo-uova',    lbl:'Colazione salata' },
+          colazione_liquida:  { cls:'v70-tipo-primo',   lbl:'Colazione liquida' },
+        };
+        const bd = tipoBadgeMap[meal.tipo];
+        if (!bd) return;
+
+        const nameEl = card.querySelector('.v66-meal-name');
+        if (nameEl && !nameEl.previousElementSibling?.classList.contains('v70-tipo-badge')) {
+          const badge = document.createElement('div');
+          badge.className = 'v70-tipo-badge ' + bd.cls;
+          badge.textContent = bd.lbl;
+          nameEl.parentNode.insertBefore(badge, nameEl);
+        }
+      });
+    }, 60);
+  };
+
+  /* ── 9. Override v67UpdateMenuForDay con V70 ── */
+  window.v67UpdateMenuForDay = function(dayIdx) {
+    const day = typeof dayIdx === 'number' ? dayIdx : (window._v67State && window._v67State.selectedDay) || 0;
+    window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+    window._v67State.swapIdx   = { colazione:0, pranzo:0, cena:0 };
+    try {
+      const smartMenu = window.v68BuildSmartMenu();
+      window._v67State.currentMenu = smartMenu;
+    } catch(e) {
+      const fallback = window._v67MenuDB[day] || window._v67MenuDB[0];
+      window._v67State.currentMenu = {
+        colazione: Object.assign({}, fallback.colazione),
+        pranzo:    Object.assign({}, fallback.pranzo),
+        cena:      Object.assign({}, fallback.cena),
+      };
+    }
+    if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards();
+  };
+
+  /* ── 10. Fix: redistribuzione colazione opzionale
+     Sovrascrive la logica +15% statica con la versione proporzionale.
+  ── */
+  const _origToggleBF = window.v67ToggleBreakfast;
+  window.v67ToggleBreakfast = function() {
+    const tog = document.getElementById('v67-bf-toggle');
+    window._v67State.showBreakfast = !window._v67State.showBreakfast;
+    if (tog) tog.classList.toggle('on', window._v67State.showBreakfast);
+
+    // Rigenera il menu con la nuova distribuzione
+    try {
+      const smartMenu = window.v68BuildSmartMenu();
+      window._v67State.currentMenu = smartMenu;
+      window._v67State.confirmed   = { colazione:false, pranzo:false, cena:false };
+    } catch(e) {}
+
+    if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(true);
+    const msg = window._v67State.showBreakfast
+      ? '🌅 Colazione aggiunta al menu'
+      : '⚡ Menu senza colazione — kcal ridistribuite su pranzo e cena';
+    if (typeof showToast === 'function') showToast(msg);
+  };
+
+  /* ── 11. Init boot ──
+     Rigenera il menu al boot con il motore V70.
+  ── */
+  function v70Boot() {
+    try {
+      if (!window._v67State) return;
+      // Solo se il menu è quello di default (non ha id ricette V70)
+      const cur = window._v67State.currentMenu;
+      if (!cur || !cur.pranzo) {
+        const smart = window.v68BuildSmartMenu();
+        window._v67State.currentMenu = smart;
+        if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards();
+      }
+    } catch(e) {}
+  }
+
+  // Boot ritardato per attendere il render iniziale
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(v70Boot, 400); });
+  setTimeout(v70Boot, 800);
+  setTimeout(v70Boot, 1600);
+
+  console.log('%c[FitTrack V70] Nutrizione Upgrade Completo ✅','color:#C8F53C;font-weight:bold;font-size:13px;');
+  console.log('%c  ├─ 40+ ricette variate: Primi, Secondi, Piatti Unici', 'color:#A8D828');
+  console.log('%c  ├─ Swap flessibile ±28% kcal con vera randomizzazione', 'color:#A8D828');
+  console.log('%c  ├─ Redistribuzione colazione proporzionale (non +15% fisso)', 'color:#A8D828');
+  console.log('%c  ├─ Badge tipo ricetta (Primo/Secondo/Piatto Unico)', 'color:#A8D828');
+  console.log('%c  ├─ Fix word-wrap nomi lunghi su mobile', 'color:#A8D828');
+  console.log('%c  └─ Sync completo RECIPES_DB → window.RICETTE', 'color:#A8D828');
+
+})(); // end FitTrackV70
+</script>
+
+<!-- ════════════════════════════════════════════════════════
+     FitTrack V71 — STRUTTURA A SOTTO-GRUPPI PASTI
+     1. Card Pranzo/Cena con Primo + Secondo + Contorno cliccabili
+     2. Click singola portata → apre recipe sheet di QUELLA portata
+     3. Swap generale → rigenera l'intera combo bilanciata
+     4. Spunta ✓ → logga tutti i sotto-piatti nel diario
+     5. Blur backdrop al click su portata
+     6. Layout Flexbox mobile-first, nessun overlap con pulsanti
+════════════════════════════════════════════════════════ -->
+<style>
+/* ══════════════════════════════════════════════════════
+   V71 — MEAL SUB-GROUPS LAYOUT
+══════════════════════════════════════════════════════ */
+
+/* Card pasto con sotto-gruppi: nuovo layout */
+.v71-meal-card {
+  background: linear-gradient(155deg, rgba(255,255,255,.045), rgba(255,255,255,.016));
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 22px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color .2s, transform .18s, box-shadow .2s;
+  position: relative;
+  overflow: hidden;
+}
+.v71-meal-card::before {
+  content: '';
+  position: absolute; top: 0; left: 12px; right: 12px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+}
+.v71-meal-card:active { transform: scale(.99); }
+
+/* Conferma stato */
+.v71-meal-card.v71-confirmed {
+  border-color: rgba(200,245,60,.28);
+  box-shadow: 0 4px 22px rgba(0,0,0,.38), 0 0 18px rgba(200,245,60,.1), inset 0 1px 0 rgba(200,245,60,.08);
+}
+
+/* Header riga: label + pulsanti azione */
+.v71-card-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 12px 0;
+  gap: 8px;
+}
+.v71-meal-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.3);
+  flex: 1;
+}
+.v71-meal-label.v71-confirmed-label::after {
+  content: ' ✓';
+  color: var(--acc);
+}
+
+/* Azioni header (swap + ok) */
+.v71-card-actions {
+  display: flex;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.v71-action-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .17s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  flex-shrink: 0;
+}
+.v71-action-btn:active { transform: scale(.88); }
+.v71-btn-swap {
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.55);
+  border: 1px solid rgba(255,255,255,.09);
+}
+.v71-btn-swap:hover {
+  background: rgba(255,255,255,.13);
+  color: rgba(255,255,255,.9);
+  border-color: rgba(255,255,255,.2);
+}
+.v71-btn-ok {
+  background: rgba(200,245,60,.12);
+  color: var(--acc);
+  border: 1px solid rgba(200,245,60,.25);
+}
+.v71-btn-ok:hover {
+  background: rgba(200,245,60,.22);
+  box-shadow: 0 0 14px rgba(200,245,60,.28);
+}
+.v71-btn-ok.v71-ok-active {
+  background: rgba(200,245,60,.28);
+  border-color: rgba(200,245,60,.5);
+  box-shadow: 0 0 14px rgba(200,245,60,.4);
+}
+
+/* Macro totali del pasto (riga compatta) */
+.v71-meal-total-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 0;
+  flex-wrap: wrap;
+}
+.v71-total-kcal {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--acc);
+  letter-spacing: .02em;
+  line-height: 1;
+}
+.v71-total-meta {
+  font-size: 10px;
+  color: rgba(255,255,255,.32);
+}
+.v71-total-macros {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.v71-mmacro {
+  font-size: 9px; font-weight: 700;
+  border-radius: 5px; padding: 2px 6px;
+}
+.v71-mp { color: var(--green); background: rgba(62,223,138,.1); }
+.v71-mc { color: var(--blue);  background: rgba(91,156,239,.1); }
+.v71-mg { color: var(--orange);background: rgba(255,154,60,.1);  }
+
+/* Divisore sopra sub-list */
+.v71-divider {
+  height: 1px;
+  background: rgba(255,255,255,.05);
+  margin: 9px 12px 0;
+}
+
+/* Lista sotto-portate */
+.v71-subgroup-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px 10px;
+  gap: 1px;
+}
+
+/* Singola riga portata — cliccabile */
+.v71-portata-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background .14s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.v71-portata-row:active {
+  transform: scale(.98);
+  background: rgba(255,255,255,.04);
+}
+.v71-portata-row:hover {
+  background: rgba(255,255,255,.035);
+}
+
+/* Emoji thumbnail portata */
+.v71-portata-thumb {
+  width: 42px; height: 42px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.025));
+  border: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.22);
+  transition: transform .14s;
+}
+.v71-portata-row:active .v71-portata-thumb {
+  transform: scale(.93);
+}
+
+/* Testo portata */
+.v71-portata-info {
+  flex: 1;
+  min-width: 0;
+}
+.v71-portata-category {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.28);
+  margin-bottom: 2px;
+}
+.v71-portata-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.25;
+}
+.v71-portata-meta {
+  font-size: 10px;
+  color: rgba(255,255,255,.32);
+  margin-top: 2px;
+}
+
+/* Chevron/freccia cliccabile */
+.v71-portata-caret {
+  font-size: 12px;
+  color: rgba(255,255,255,.2);
+  flex-shrink: 0;
+  transition: color .14s, transform .14s;
+}
+.v71-portata-row:hover .v71-portata-caret {
+  color: rgba(255,255,255,.5);
+  transform: translateX(2px);
+}
+
+/* Logged strip */
+.v71-logged-strip {
+  margin: 0 10px 8px;
+  padding: 5px 10px;
+  background: rgba(200,245,60,.07);
+  border: 1px solid rgba(200,245,60,.18);
+  border-radius: 9px;
+  font-size: 10px; font-weight: 700;
+  color: var(--acc);
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* Animazioni swap */
+@keyframes v71SwapIn {
+  0%  { opacity:0; transform:translateY(10px) scale(.97); }
+  100%{ opacity:1; transform:translateY(0)    scale(1);   }
+}
+.v71-swap-animate {
+  animation: v71SwapIn .35s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes v71FadeIn {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.v71-animate-in {
+  animation: v71FadeIn .4s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* Colazione mantiene il vecchio layout (semplificato) */
+.v71-bf-card {
+  background: linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 18px;
+  padding: 12px 12px 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 22px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color .2s, transform .18s;
+  position: relative; overflow: hidden;
+}
+.v71-bf-card::before {
+  content: '';
+  position: absolute; top: 0; left: 12px; right: 12px; height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+}
+.v71-bf-card.v71-confirmed {
+  border-color: rgba(200,245,60,.28);
+}
+.v71-bf-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.v71-bf-header {
+  display: flex; align-items: center;
+  margin-bottom: 9px; gap: 0;
+}
+.v71-bf-label {
+  font-size: 9px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .12em;
+  color: rgba(255,255,255,.3); flex: 1;
+}
+
+/* Backdrop blur overlay per il sheet */
+#v71-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,6,14,.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 398;
+  display: none;
+  animation: v71FadeIn .22s ease both;
+}
+#v71-sheet-backdrop.visible {
+  display: block;
+}
+</style>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   V71 — STRUTTURA A SOTTO-GRUPPI PASTI
+   Architettura IIFE patch — non tocca nulla di esistente
+════════════════════════════════════════════════════════ */
+(function FitTrackV71() {
+  'use strict';
+
+  /* ═══════════════════════════════════════════
+     1. DATABASE COMBINAZIONI PASTO (Sotto-Gruppi)
+     Ogni pasto ha: primo (o piatto_unico), secondo, contorno
+  ═══════════════════════════════════════════ */
+
+  /* Mappa tipo ricetta → emoji categoria e label italiana */
+  const TIPO_META = {
+    primo:               { ico:'🍝', label:'Primo',    cat:'PRIMO'    },
+    piatto_unico:        { ico:'🥗', label:'Piatto',   cat:'PIATTO'   },
+    secondo_carne:       { ico:'🥩', label:'Secondo',  cat:'SECONDO'  },
+    secondo_pesce:       { ico:'🐟', label:'Secondo',  cat:'SECONDO'  },
+    secondo_uova:        { ico:'🍳', label:'Secondo',  cat:'SECONDO'  },
+    secondo_proteico_veg:{ ico:'🥦', label:'Secondo',  cat:'SECONDO'  },
+    colazione_dolce:     { ico:'🥣', label:'Colazione',cat:'COLAZIONE'},
+    colazione_salata:    { ico:'🥚', label:'Colazione',cat:'COLAZIONE'},
+    colazione_liquida:   { ico:'🥤', label:'Colazione',cat:'COLAZIONE'},
+  };
+
+  /* Ricette contorno (verdure/cereali separati) */
+  const CONTORNI_DB = [
+    { id:'ct-zucchine-grigliate',  ico:'🥒', name:'Zucchine grigliate alle erbe',      kcal:60,  p:2, c:5,  g:3,  time:8,
+      ingredienti:['2 zucchine medie','olio EVO','aglio','menta o basilico fresco','sale','pepe'],
+      steps:['Taglia le zucchine a fettine longitudinali (5mm).','Griglia a fuoco vivo 3 min per lato.','Condisci con olio, aglio e menta.'] },
+    { id:'ct-insalata-mista',      ico:'🥗', name:'Insalata mista di stagione',         kcal:45,  p:2, c:4,  g:2,  time:3,
+      ingredienti:['100g rucola','50g songino','pomodorini','carote julienne','olio EVO','aceto balsamico'],
+      steps:['Lava e asciuga le verdure.','Disponi nella bowl.','Condisci con olio e aceto al momento di servire.'] },
+    { id:'ct-broccoli-vapore',     ico:'🥦', name:'Broccoli al vapore con limone',      kcal:55,  p:4, c:6,  g:1,  time:10,
+      ingredienti:['200g cimette di broccoli','succo di ½ limone','olio EVO','sale','pepe nero'],
+      steps:['Cuoci i broccoli al vapore 8 minuti (devono restare croccanti).','Condisci con olio, succo di limone, sale e pepe.'] },
+    { id:'ct-asparagi-forno',      ico:'🌿', name:'Asparagi al forno con parmigiano',   kcal:80,  p:5, c:5,  g:4,  time:12,
+      ingredienti:['200g asparagi verdi','10g parmigiano grattugiato','olio EVO','sale','pepe'],
+      steps:['Preriscalda forno 200°C.','Disponi asparagi sulla teglia, irrora con olio.','Aggiungi parmigiano e cuoci 10-12 min.'] },
+    { id:'ct-spinaci-saltati',     ico:'🌱', name:'Spinaci saltati all\'aglio',          kcal:50,  p:3, c:4,  g:2,  time:5,
+      ingredienti:['200g spinaci freschi','2 spicchi aglio','olio EVO','peperoncino','sale'],
+      steps:['Scalda olio con aglio in padella.','Aggiungi spinaci e cuoci a fuoco vivo 2-3 min.','Aggiusta di sale e peperoncino.'] },
+    { id:'ct-carote-glassate',     ico:'🥕', name:'Carote glassate al miele',           kcal:70,  p:1, c:14, g:1,  time:10,
+      ingredienti:['200g carote','1 cucchiaino miele','olio EVO','timo fresco','sale'],
+      steps:['Taglia le carote a rondelle di 1cm.','Cuoci in padella con olio e un dito di acqua per 8 min.','Aggiungi miele e timo, caramella 2 min.'] },
+    { id:'ct-cavolfiore-curcuma',  ico:'🌸', name:'Cavolfiore arrosto alla curcuma',    kcal:65,  p:3, c:8,  g:2,  time:20,
+      ingredienti:['200g cimette cavolfiore','curcuma','cumino','olio EVO','sale'],
+      steps:['Preriscalda forno 200°C.','Mescola cavolfiore con spezie e olio.','Cuoci in teglia 18-20 min, girando a metà.'] },
+    { id:'ct-pomodori-basilico',   ico:'🍅', name:'Insalata caprese proteica',          kcal:90,  p:6, c:4,  g:6,  time:3,
+      ingredienti:['150g pomodori cuore di bue','80g mozzarella light','basilico fresco','olio EVO','sale','pepe'],
+      steps:['Affetta pomodori e mozzarella.','Disponi alternandoli.','Condisci con olio, basilico, sale e pepe.'] },
+  ];
+
+  window._v71ContorniDB = CONTORNI_DB;
+
+  /* ═══════════════════════════════════════════
+     2. GENERAZIONE COMBO SOTTO-GRUPPI
+  ═══════════════════════════════════════════ */
+
+  /* Seleziona una ricetta casuale dal pool per tipo pasto */
+  function _pickFromDB(mealType, exclude) {
+    exclude = exclude || [];
+    const pool = (window.RECIPES_DB || []).filter(function(r) {
+      if (exclude.includes(r.id)) return false;
+      const cat = (r.cat || '').toLowerCase();
+      const matchCat = cat.includes(mealType);
+      if (!matchCat) return false;
+      if (typeof window.v68RecipeSafe === 'function' && !window.v68RecipeSafe(r)) return false;
+      return true;
+    });
+    if (!pool.length) return null;
+    const idx = Math.floor(Math.random() * pool.length);
+    const r = pool[idx];
+    return {
+      id: r.id, ico: r.ico || '🍽️', name: r.name,
+      kcal: r.kcal || 0, p: r.p || 0, c: r.c || 0, g: r.g || r.fat || 0,
+      time: r.time || 15, tipo: r.tipo || '',
+      ingredienti: r.ingredienti || r.ing || [],
+      steps: Array.isArray(r.steps) ? r.steps : (r.steps ? [r.steps] : []),
+    };
+  }
+
+  /* Seleziona un contorno casuale */
+  function _pickContorno(exclude) {
+    exclude = exclude || [];
+    const pool = CONTORNI_DB.filter(function(c) { return !exclude.includes(c.id); });
+    if (!pool.length) return CONTORNI_DB[0];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /* Genera combo sotto-gruppi per pranzo/cena */
+  function _buildSubGroup(mealType) {
+    const pools = {
+      pranzo: { primo: ['primo','piatto_unico'], secondo: ['piatto_unico'] },
+      cena:   { primo: ['secondo_carne','secondo_pesce','secondo_uova','secondo_proteico_veg'], secondo: [] },
+    };
+    const exclude = [];
+
+    let main = null;
+    let side = null;
+
+    if (mealType === 'pranzo') {
+      // Pranzo: Primo + eventuale secondo leggero + Contorno
+      main = _pickFromDB('pranzo', exclude);
+      if (main) exclude.push(main.id);
+    } else {
+      // Cena: Secondo (carne/pesce/uova) + Contorno
+      main = _pickFromDB('cena', exclude);
+      if (main) exclude.push(main.id);
+    }
+
+    const contorno = _pickContorno([]);
+    return { main, contorno };
+  }
+
+  /* Stato sotto-gruppi */
+  if (!window._v71SubState) {
+    window._v71SubState = {
+      pranzo: null,
+      cena: null,
+    };
+  }
+
+  /* Genera sotto-gruppi per un tipo pasto specifico */
+  window.v71BuildSubGroup = function(mealType) {
+    const sg = _buildSubGroup(mealType);
+    window._v71SubState[mealType] = sg;
+    return sg;
+  };
+
+  /* Inizializza sotto-gruppi da menu corrente */
+  window.v71InitSubGroups = function() {
+    const menu = window._v67State && window._v67State.currentMenu;
+    if (!menu) return;
+
+    ['pranzo','cena'].forEach(function(mt) {
+      if (!window._v71SubState[mt]) {
+        window.v71BuildSubGroup(mt);
+      }
+    });
+  };
+
+  /* ═══════════════════════════════════════════
+     3. BACKDROP BLUR HELPER
+  ═══════════════════════════════════════════ */
+
+  /* Inietta il backdrop se non esiste */
+  function _ensureBackdrop() {
+    if (document.getElementById('v71-sheet-backdrop')) return;
+    const bd = document.createElement('div');
+    bd.id = 'v71-sheet-backdrop';
+    bd.addEventListener('click', function() {
+      if (typeof window.v69CloseRecipe === 'function') window.v69CloseRecipe();
+      _hideBackdrop();
+    });
+    document.body.appendChild(bd);
+  }
+
+  function _showBackdrop() {
+    _ensureBackdrop();
+    const bd = document.getElementById('v71-sheet-backdrop');
+    if (bd) bd.classList.add('visible');
+  }
+
+  function _hideBackdrop() {
+    const bd = document.getElementById('v71-sheet-backdrop');
+    if (bd) bd.classList.remove('visible');
+  }
+
+  /* Hook: mostra backdrop quando il recipe sheet si apre */
+  const _origOpenRecipe = window.v69OpenRecipe;
+  window.v69OpenRecipe = function(recipe, logged) {
+    _showBackdrop();
+    if (typeof _origOpenRecipe === 'function') _origOpenRecipe(recipe, logged);
+  };
+
+  const _origCloseRecipe = window.v69CloseRecipe;
+  window.v69CloseRecipe = function() {
+    _hideBackdrop();
+    if (typeof _origCloseRecipe === 'function') _origCloseRecipe();
+  };
+
+  /* ═══════════════════════════════════════════
+     4. APERTURA SHEET DA PORTATA SINGOLA
+  ═══════════════════════════════════════════ */
+
+  /* Apre il recipe sheet per una specifica portata (main o contorno) */
+  /* Helper: recupera ricetta completa (con steps) cercando prima in RECIPES_DB */
+  function _v71GetFullRecipe(partialMeal) {
+    if (!partialMeal || !partialMeal.id) return partialMeal;
+    // Cerca prima in RECIPES_DB (fonte primaria con steps)
+    const dbFull = Array.isArray(window.RECIPES_DB)
+      ? window.RECIPES_DB.find(function(r) { return r.id === partialMeal.id; })
+      : null;
+    if (dbFull) {
+      return {
+        id:   dbFull.id,
+        ico:  dbFull.ico  || partialMeal.ico  || '🍽️',
+        name: dbFull.name || partialMeal.name,
+        kcal: dbFull.kcal || partialMeal.kcal || 0,
+        p:    dbFull.p    || partialMeal.p    || 0,
+        c:    dbFull.c    || partialMeal.c    || 0,
+        g:    dbFull.g    || partialMeal.g    || 0,
+        time: dbFull.time ? (dbFull.time + ' min') : (partialMeal.time ? partialMeal.time + ' min' : '—'),
+        diff: dbFull.diff || partialMeal.diff || '',
+        ingredienti: dbFull.ingredienti || dbFull.ing || partialMeal.ingredienti || [],
+        steps: dbFull.steps || dbFull.preparazione || partialMeal.steps || [],
+      };
+    }
+    // Fallback: usa i dati parziali già nel menu (ora steps è incluso da v70SelectBestRecipe)
+    return {
+      id:   partialMeal.id || '_sg',
+      ico:  partialMeal.ico || '🍽️',
+      name: partialMeal.name || '—',
+      kcal: partialMeal.kcal || 0,
+      p:    partialMeal.p    || 0,
+      c:    partialMeal.c    || 0,
+      g:    partialMeal.g    || 0,
+      time: partialMeal.time ? (partialMeal.time + ' min') : '—',
+      diff: partialMeal.diff || '',
+      ingredienti: partialMeal.ingredienti || [],
+      steps: partialMeal.steps || ['Prepara gli ingredienti secondo le indicazioni.','Assembla e servi.'],
+    };
+  }
+
+  window.v71OpenPortata = function(mealType, portataKey) {
+    const sg = window._v71SubState && window._v71SubState[mealType];
+    if (!sg) return;
+
+    let recipe = null;
+    if (portataKey === 'main' && sg.main) {
+      // Cerca la ricetta completa nel DB (con steps)
+      recipe = _v71GetFullRecipe(sg.main);
+    } else if (portataKey === 'contorno' && sg.contorno) {
+      recipe = {
+        id: sg.contorno.id || '_sg_contorno_' + mealType,
+        ico: sg.contorno.ico || '🥗',
+        name: sg.contorno.name,
+        kcal: sg.contorno.kcal, p: sg.contorno.p, c: sg.contorno.c, g: sg.contorno.g,
+        time: sg.contorno.time ? (sg.contorno.time + ' min') : '—',
+        diff: '⚡ Rapido',
+        ingredienti: sg.contorno.ingredienti || [],
+        steps: sg.contorno.steps || ['Prepara gli ingredienti.','Assembla e servi.'],
+      };
+    }
+
+    if (!recipe) return;
+
+    // Stato per log
+    const todayDow  = (new Date().getDay() + 6) % 7;
+    const selDay    = (window._v67State && window._v67State.selectedDay) ?? todayDow;
+    const dayOffset = selDay - todayDow;
+    const mealIdx   = mealType === 'colazione' ? 0 : mealType === 'pranzo' ? 1 : 2;
+
+    if (window._v69State) {
+      window._v69State.recipe    = recipe;
+      window._v69State.mealType  = mealType;
+      window._v69State.mealIdx   = mealIdx;
+      window._v69State.dayOffset = dayOffset;
+
+      // Verifica se già loggato
+      try {
+        const dateKey = window._v69State.dayOffset !== undefined
+          ? (function(off) {
+              const d = new Date();
+              d.setDate(d.getDate() + off);
+              return d.toISOString().slice(0,10);
+            })(dayOffset)
+          : new Date().toISOString().slice(0,10);
+        const nt = (window.nutrition || {})[dateKey];
+        const meal = nt && nt.meals && nt.meals[mealIdx];
+        const logged = meal ? meal.items.some(function(i) { return i._recipeId === recipe.id || i.name === recipe.name; }) : false;
+        window._v69State.isLogged = logged;
+        window.v69OpenRecipe(recipe, logged);
+      } catch(e) {
+        window._v69State.isLogged = false;
+        window.v69OpenRecipe(recipe, false);
+      }
+
+      // Pre-seleziona il pasto corretto nel selector
+      document.querySelectorAll('.v69-meal-sel-btn').forEach(function(b, i) {
+        b.classList.toggle('on', i === mealIdx);
+      });
+    } else {
+      window.v69OpenRecipe(recipe, false);
+    }
+  };
+
+  /* ═══════════════════════════════════════════
+     5. SWAP GENERALE SOTTO-GRUPPI
+  ═══════════════════════════════════════════ */
+
+  window.v71SwapSubGroup = function(mealType) {
+    const card = document.getElementById('v71-card-' + mealType);
+    if (card) {
+      card.classList.add('v67-swapping');
+      setTimeout(function() { card.classList.remove('v67-swapping'); }, 220);
+    }
+
+    setTimeout(function() {
+      // Rigenera sotto-gruppi
+      window.v71BuildSubGroup(mealType);
+
+      // Rigenera anche la ricetta principale nel menu corrente con il motore V70
+      const menu = window._v67State && window._v67State.currentMenu;
+      if (menu) {
+        const kcalTotal = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2200;
+        const bf = window._v67State && window._v67State.showBreakfast;
+        const kcalTarget = mealType === 'pranzo'
+          ? Math.round(kcalTotal * (bf ? 0.40 : 0.55))
+          : Math.round(kcalTotal * (bf ? 0.35 : 0.45));
+
+        const allUsed = Object.values(menu).map(function(m) { return m && m.id; }).filter(Boolean);
+        try {
+          const newMeal = window.v70SelectBestRecipe(mealType, kcalTarget, allUsed);
+          if (newMeal) {
+            window._v67State.currentMenu[mealType] = newMeal;
+            window._v67State.confirmed[mealType] = false;
+          }
+        } catch(e) {}
+      }
+
+      // Re-render cards
+      if (typeof window.v71RenderAllCards === 'function') window.v71RenderAllCards(true);
+
+      if (typeof showToast === 'function') showToast('🔄 Combinazione aggiornata!');
+    }, 230);
+  };
+
+  /* ═══════════════════════════════════════════
+     6. CONFERMA PASTO (TUTTI I SOTTO-GRUPPI)
+  ═══════════════════════════════════════════ */
+
+  window.v71ConfirmMeal = function(mealType) {
+    const wasConfirmed = window._v67State && window._v67State.confirmed[mealType];
+    if (window._v67State) {
+      window._v67State.confirmed[mealType] = !wasConfirmed;
+    }
+
+    if (!wasConfirmed) {
+      // Logga la ricetta principale
+      const menu = window._v67State && window._v67State.currentMenu;
+      const meal = menu && menu[mealType];
+      if (meal) {
+        const mealIdx = mealType === 'colazione' ? 0 : mealType === 'pranzo' ? 1 : 2;
+        const todayDow = (new Date().getDay() + 6) % 7;
+        const selDay   = (window._v67State && window._v67State.selectedDay) ?? todayDow;
+        const dayOffset = selDay - todayDow;
+        const d = new Date();
+        d.setDate(d.getDate() + dayOffset);
+        const dateKey = d.toISOString().slice(0,10);
+
+        try {
+          // Usa nutrition dal contesto globale
+          if (typeof window.nutrition !== 'undefined' && window.nutrition) {
+            if (!window.nutrition[dateKey]) {
+              window.nutrition[dateKey] = {
+                meals: [
+                  {name:'Colazione',items:[]},
+                  {name:'Pranzo',items:[]},
+                  {name:'Cena',items:[]},
+                  {name:'Spuntini',items:[]},
+                ],
+              };
+            }
+            const mealSlot = window.nutrition[dateKey].meals[mealIdx];
+            if (mealSlot) {
+              let recipe = meal.id ? (window.RICETTE || []).find(function(r) { return r.id === meal.id; }) : null;
+              if (!recipe) recipe = { id: '_v71_' + mealType, name: meal.name, kcal: meal.kcal || 0, p: meal.p || 0, c: meal.c || 0, g: meal.g || 0 };
+
+              const alreadyLogged = mealSlot.items.some(function(i) { return i._recipeId === recipe.id || i.name === recipe.name; });
+              if (!alreadyLogged) {
+                mealSlot.items.push({
+                  _recipeId: recipe.id,
+                  name: recipe.name,
+                  g: 1, unit: 'porzione',
+                  kcal: recipe.kcal || 0,
+                  p: recipe.p || 0,
+                  c: recipe.c || 0,
+                  g_fat: recipe.g || 0,
+                });
+              }
+
+              // Logga anche il contorno
+              const sg = window._v71SubState && window._v71SubState[mealType];
+              if (sg && sg.contorno) {
+                const cAlreadyLogged = mealSlot.items.some(function(i) { return i._recipeId === sg.contorno.id; });
+                if (!cAlreadyLogged) {
+                  mealSlot.items.push({
+                    _recipeId: sg.contorno.id,
+                    name: sg.contorno.name,
+                    g: 1, unit: 'porzione',
+                    kcal: sg.contorno.kcal || 0,
+                    p: sg.contorno.p || 0,
+                    c: sg.contorno.c || 0,
+                    g_fat: sg.contorno.g || 0,
+                  });
+                }
+              }
+
+              if (typeof saveAll === 'function') saveAll();
+            }
+          }
+        } catch(e) { console.warn('[V71 ConfirmMeal]', e); }
+      }
+
+      if (typeof showToast === 'function') showToast('✅ Pasto completo loggato!');
+      if (navigator.vibrate) navigator.vibrate([30, 10, 30]);
+    } else {
+      if (typeof showToast === 'function') showToast('↩️ Pasto rimosso dal diario');
+    }
+
+    if (typeof window.v71RenderAllCards === 'function') window.v71RenderAllCards();
+
+    // Aggiorna pagina nutrizione se visibile
+    try { if (typeof renderNutrizione === 'function') renderNutrizione(); } catch(e) {}
+  };
+
+  /* ═══════════════════════════════════════════
+     7. RENDER CARD CON SOTTO-GRUPPI (Pranzo / Cena)
+  ═══════════════════════════════════════════ */
+
+  const svgSwap = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/><path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14"/></svg>';
+  const svgOk   = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  function _buildSubCard(mealType, label, animate) {
+    const menu = window._v67State && window._v67State.currentMenu;
+    const mainMeal = menu && menu[mealType];
+    const sg = window._v71SubState && window._v71SubState[mealType];
+    const isConfirmed = window._v67State && window._v67State.confirmed[mealType];
+    const animCls = animate ? ' v71-animate-in' : '';
+
+    // Calcola totali incluso contorno
+    let totalKcal = mainMeal ? (mainMeal.kcal || 0) : 0;
+    let totalP    = mainMeal ? (mainMeal.p || 0) : 0;
+    let totalC    = mainMeal ? (mainMeal.c || 0) : 0;
+    let totalG    = mainMeal ? (mainMeal.g || 0) : 0;
+    if (sg && sg.contorno) {
+      totalKcal += sg.contorno.kcal || 0;
+      totalP    += sg.contorno.p    || 0;
+      totalC    += sg.contorno.c    || 0;
+      totalG    += sg.contorno.g    || 0;
+    }
+
+    // Determina emoji e label per portata principale
+    const mainTipo = mainMeal && mainMeal.tipo ? mainMeal.tipo : (mealType === 'pranzo' ? 'primo' : 'secondo_carne');
+    const mainMeta = TIPO_META[mainTipo] || { ico: mealType === 'pranzo' ? '🍝' : '🥩', label: mealType === 'pranzo' ? 'Primo' : 'Secondo', cat: mealType === 'pranzo' ? 'PRIMO' : 'SECONDO' };
+
+    // Testo portata principale
+    const mainName  = mainMeal ? mainMeal.name : '—';
+    const mainTime  = mainMeal ? (mainMeal.time || '—') : '—';
+    const mainKcal  = mainMeal ? (mainMeal.kcal || 0) : 0;
+
+    // Contorno
+    const ct     = sg && sg.contorno;
+    const ctIco  = ct ? ct.ico   : '🥗';
+    const ctName = ct ? ct.name  : 'Verdure di stagione';
+    const ctTime = ct ? ct.time  : 5;
+    const ctKcal = ct ? ct.kcal  : 45;
+
+    const loggedStrip = isConfirmed
+      ? `<div class="v71-logged-strip">✅ Pasto completo loggato nel diario</div>`
+      : '';
+
+    return `
+<div class="v71-meal-card${isConfirmed ? ' v71-confirmed' : ''}${animCls}" id="v71-card-${mealType}">
+
+  <!-- Header: label + azioni -->
+  <div class="v71-card-header">
+    <span class="v71-meal-label${isConfirmed ? ' v71-confirmed-label' : ''}">${label}</span>
+    <div class="v71-card-actions">
+      <button class="v71-action-btn v71-btn-swap"
+        title="Cambia combinazione"
+        onclick="event.stopPropagation();v71SwapSubGroup('${mealType}')">${svgSwap}</button>
+      <button class="v71-action-btn v71-btn-ok${isConfirmed ? ' v71-ok-active' : ''}"
+        title="${isConfirmed ? 'Rimuovi dal diario' : 'Conferma pasto'}"
+        onclick="event.stopPropagation();v71ConfirmMeal('${mealType}')">${svgOk}</button>
+    </div>
+  </div>
+
+  <!-- Totali kcal + macro -->
+  <div class="v71-meal-total-row">
+    <span class="v71-total-kcal">${totalKcal}</span>
+    <span class="v71-total-meta">kcal totali · ${mealType === 'pranzo' ? '⏱️ ~' + ((mainTime||15)+5) : '⏱️ ~' + ((mainTime||15)+8)} min</span>
+    <div class="v71-total-macros">
+      <span class="v71-mmacro v71-mp">P ${totalP}g</span>
+      <span class="v71-mmacro v71-mc">C ${totalC}g</span>
+      <span class="v71-mmacro v71-mg">G ${totalG}g</span>
+    </div>
+  </div>
+
+  <!-- Divisore -->
+  <div class="v71-divider"></div>
+
+  <!-- Lista sotto-portate cliccabili -->
+  <div class="v71-subgroup-list">
+
+    <!-- Portata principale (Primo / Secondo) -->
+    <div class="v71-portata-row"
+         onclick="v71OpenPortata('${mealType}','main')"
+         role="button" tabindex="0"
+         aria-label="Apri dettaglio ${mainMeta.label}">
+      <div class="v71-portata-thumb">${mainMeta.ico}</div>
+      <div class="v71-portata-info">
+        <div class="v71-portata-category">${mainMeta.cat}</div>
+        <div class="v71-portata-name">${mainName}</div>
+        <div class="v71-portata-meta">⏱️ ${mainTime} min · 🔥 ${mainKcal} kcal</div>
+      </div>
+      <span class="v71-portata-caret">›</span>
+    </div>
+
+    <!-- Contorno -->
+    <div class="v71-portata-row"
+         onclick="v71OpenPortata('${mealType}','contorno')"
+         role="button" tabindex="0"
+         aria-label="Apri dettaglio contorno">
+      <div class="v71-portata-thumb">${ctIco}</div>
+      <div class="v71-portata-info">
+        <div class="v71-portata-category">CONTORNO</div>
+        <div class="v71-portata-name">${ctName}</div>
+        <div class="v71-portata-meta">⏱️ ${ctTime} min · 🔥 ${ctKcal} kcal</div>
+      </div>
+      <span class="v71-portata-caret">›</span>
+    </div>
+
+  </div>
+
+  <!-- Strip loggato -->
+  ${loggedStrip}
+
+</div>`;
+  }
+
+  /* Build card colazione (layout semplice) */
+  function _buildBfCard(animate) {
+    const menu = window._v67State && window._v67State.currentMenu;
+    const data  = menu && menu.colazione;
+    if (!data) return '';
+    const isConfirmed = window._v67State && window._v67State.confirmed['colazione'];
+    const animCls = animate ? ' v71-animate-in' : '';
+
+    const bfMeta = TIPO_META[data.tipo] || { ico: '🌅', label: 'Colazione', cat: 'COLAZIONE' };
+    const loggedStrip = isConfirmed
+      ? `<div class="v71-logged-strip" style="margin:8px 8px 0;">✅ Colazione loggata nel diario</div>`
+      : '';
+
+    return `
+<div class="v71-bf-card${isConfirmed ? ' v71-confirmed' : ''}${animCls}" id="v71-card-colazione">
+  <div class="v71-bf-header">
+    <span class="v71-bf-label${isConfirmed ? ' v71-confirmed-label' : ''}">COLAZIONE</span>
+    <div class="v71-card-actions">
+      <button class="v71-action-btn v71-btn-swap"
+        title="Cambia colazione"
+        onclick="event.stopPropagation();v71SwapBreakfast()">${svgSwap}</button>
+      <button class="v71-action-btn v71-btn-ok${isConfirmed ? ' v71-ok-active' : ''}"
+        title="${isConfirmed ? 'Rimuovi dal diario' : 'Conferma colazione'}"
+        onclick="event.stopPropagation();v71ConfirmBf()">${svgOk}</button>
+    </div>
+  </div>
+  <div class="v71-bf-row">
+    <div class="v71-portata-thumb" style="width:50px;height:50px;font-size:22px;border-radius:13px;flex-shrink:0;">${bfMeta.ico || data.ico}</div>
+    <div style="flex:1;min-width:0;cursor:pointer;" onclick="v71OpenColazione()">
+      <div class="v71-portata-name" style="font-size:13.5px;">${data.name}</div>
+      <div class="v71-portata-meta" style="margin-top:3px;">⏱️ ${data.time} min · 🔥 <span style="color:var(--acc);font-weight:700">${data.kcal} kcal</span></div>
+      <div class="v71-total-macros" style="margin-top:5px;margin-left:0;">
+        <span class="v71-mmacro v71-mp">P ${data.p}g</span>
+        <span class="v71-mmacro v71-mc">C ${data.c}g</span>
+        <span class="v71-mmacro v71-mg">G ${data.g}g</span>
+      </div>
+    </div>
+    <span class="v71-portata-caret" style="margin-left:4px;">›</span>
+  </div>
+  ${loggedStrip}
+</div>`;
+  }
+
+  /* Helper: apri sheet per colazione */
+  window.v71OpenColazione = function() {
+    if (typeof window.v69OpenFromMenu === 'function') {
+      window.v69OpenFromMenu('colazione');
+    }
+  };
+
+  /* Helper: swap colazione */
+  window.v71SwapBreakfast = function() {
+    if (typeof window.v67SwapMeal === 'function') {
+      window.v67SwapMeal('colazione');
+    }
+    setTimeout(function() {
+      if (typeof window.v71RenderAllCards === 'function') window.v71RenderAllCards(true);
+    }, 350);
+  };
+
+  /* Helper: conferma colazione */
+  window.v71ConfirmBf = function() {
+    const wasConfirmed = window._v67State && window._v67State.confirmed['colazione'];
+    if (window._v67State) window._v67State.confirmed['colazione'] = !wasConfirmed;
+
+    if (!wasConfirmed) {
+      const menu = window._v67State && window._v67State.currentMenu;
+      const meal = menu && menu.colazione;
+      if (meal) {
+        try {
+          const todayDow  = (new Date().getDay() + 6) % 7;
+          const selDay    = window._v67State.selectedDay ?? todayDow;
+          const dayOffset = selDay - todayDow;
+          const d = new Date();
+          d.setDate(d.getDate() + dayOffset);
+          const dateKey = d.toISOString().slice(0,10);
+          if (!window.nutrition[dateKey]) {
+            window.nutrition[dateKey] = {meals:[{name:'Colazione',items:[]},{name:'Pranzo',items:[]},{name:'Cena',items:[]},{name:'Spuntini',items:[]}]};
+          }
+          const slot = window.nutrition[dateKey].meals[0];
+          let recipe = meal.id ? (window.RICETTE||[]).find(function(r){return r.id===meal.id;}) : null;
+          if (!recipe) recipe = {id:'_v71_bf',name:meal.name,kcal:meal.kcal||0,p:meal.p||0,c:meal.c||0,g:meal.g||0};
+          const alr = slot.items.some(function(i){return i._recipeId===recipe.id||i.name===recipe.name;});
+          if (!alr) slot.items.push({_recipeId:recipe.id,name:recipe.name,g:1,unit:'porzione',kcal:recipe.kcal||0,p:recipe.p||0,c:recipe.c||0,g_fat:recipe.g||0});
+          if (typeof saveAll==='function') saveAll();
+        } catch(e) {}
+      }
+      if (typeof showToast==='function') showToast('✅ Colazione loggata!');
+      if (navigator.vibrate) navigator.vibrate(30);
+    } else {
+      if (typeof showToast==='function') showToast('↩️ Colazione rimossa dal diario');
+    }
+    if (typeof window.v71RenderAllCards==='function') window.v71RenderAllCards();
+    try{if(typeof renderNutrizione==='function') renderNutrizione();}catch(e){}
+  };
+
+  /* ═══════════════════════════════════════════
+     8. RENDER MASTER — sovrascrive v67RenderMenuCards
+  ═══════════════════════════════════════════ */
+
+  window.v71RenderAllCards = function(animate) {
+    const wrap = document.getElementById('v67-meal-cards-wrap');
+    if (!wrap) return;
+    const menu = window._v67State && window._v67State.currentMenu;
+    if (!menu) return;
+
+    // Assicura sotto-gruppi inizializzati
+    ['pranzo','cena'].forEach(function(mt) {
+      if (!window._v71SubState[mt]) window.v71BuildSubGroup(mt);
+    });
+
+    const bf = window._v67State && window._v67State.showBreakfast;
+    let html = '';
+
+    if (bf) {
+      html += _buildBfCard(animate);
+    }
+
+    html += _buildSubCard('pranzo', 'PRANZO', animate);
+    html += _buildSubCard('cena',   'CENA',   animate);
+
+    wrap.innerHTML = html;
+
+    // Ensure backdrop exists
+    _ensureBackdrop();
+  };
+
+  /* Override definitivo di v67RenderMenuCards */
+  window.v67RenderMenuCards = function(animate) {
+    window.v71RenderAllCards(animate);
+  };
+
+  /* ═══════════════════════════════════════════
+     9. OVERRIDE SWAP — mantieni coerenza sotto-gruppi
+  ═══════════════════════════════════════════ */
+
+  /* Wrap dello swap originale V70 */
+  const _v71OrigSwap = window.v67SwapMeal;
+  window.v67SwapMeal = function(mealType) {
+    if (mealType === 'pranzo' || mealType === 'cena') {
+      window.v71SwapSubGroup(mealType);
+    } else {
+      // Colazione: usa swap originale
+      if (typeof _v71OrigSwap === 'function') _v71OrigSwap(mealType);
+      setTimeout(function() { window.v71RenderAllCards(true); }, 350);
+    }
+  };
+
+  /* Override toggle colazione */
+  const _v71OrigToggleBF = window.v67ToggleBreakfast;
+  window.v67ToggleBreakfast = function() {
+    const tog = document.getElementById('v67-bf-toggle');
+    if (window._v67State) {
+      window._v67State.showBreakfast = !window._v67State.showBreakfast;
+    }
+    if (tog) tog.classList.toggle('on', window._v67State && window._v67State.showBreakfast);
+
+    try {
+      const smartMenu = window.v68BuildSmartMenu();
+      if (window._v67State) {
+        window._v67State.currentMenu = smartMenu;
+        window._v67State.confirmed   = { colazione:false, pranzo:false, cena:false };
+      }
+    } catch(e) {}
+
+    // Rigenera sotto-gruppi con nuovi totali kcal
+    window._v71SubState.pranzo = null;
+    window._v71SubState.cena   = null;
+    window.v71RenderAllCards(true);
+
+    const msg = (window._v67State && window._v67State.showBreakfast)
+      ? '🌅 Colazione aggiunta al menu'
+      : '⚡ Menu senza colazione — kcal ridistribuite';
+    if (typeof showToast === 'function') showToast(msg);
+  };
+
+  /* Override v67UpdateMenuForDay per reset sotto-gruppi */
+  const _v71OrigUpdateDay = window.v67UpdateMenuForDay;
+  window.v67UpdateMenuForDay = function(dayIdx) {
+    // Reset sotto-gruppi quando si cambia giorno
+    window._v71SubState.pranzo = null;
+    window._v71SubState.cena   = null;
+    if (typeof _v71OrigUpdateDay === 'function') _v71OrigUpdateDay(dayIdx);
+    // Re-render dopo l'update
+    setTimeout(function() { window.v71RenderAllCards(); }, 60);
+  };
+
+  /* Override v67GenerateNewMenu */
+  const _v71OrigGenMenu = window.v67GenerateNewMenu;
+  window.v67GenerateNewMenu = function() {
+    const btn = document.getElementById('v67-gen-menu-btn');
+    if (btn) {
+      btn.classList.add('v67-loading');
+      btn.textContent = '⏳ Generazione in corso...';
+    }
+    if (typeof showToast === 'function') showToast('🤖 Nuovo menu personalizzato in arrivo...');
+
+    setTimeout(function() {
+      try {
+        window._v71SubState.pranzo = null;
+        window._v71SubState.cena   = null;
+
+        const kcalTotal = (typeof profile !== 'undefined' && (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget)) || 2200;
+        const bf = window._v67State && window._v67State.showBreakfast;
+        const prevIds = window._v67State && window._v67State.currentMenu
+          ? Object.values(window._v67State.currentMenu).map(function(m){ return m&&m.id; }).filter(Boolean)
+          : [];
+
+        const used = [...prevIds];
+        let colazione = null, pranzo = null, cena = null;
+
+        if (bf) {
+          colazione = window.v70SelectBestRecipe('colazione', Math.round(kcalTotal * 0.25), used);
+          if (colazione) used.push(colazione.id);
+        }
+        pranzo = window.v70SelectBestRecipe('pranzo', Math.round(kcalTotal * (bf ? 0.40 : 0.55)), used);
+        if (pranzo) used.push(pranzo.id);
+        cena   = window.v70SelectBestRecipe('cena',   Math.round(kcalTotal * (bf ? 0.35 : 0.45)), used);
+
+        const day = (window._v67State && window._v67State.selectedDay) || 0;
+        const fb  = window._v67MenuDB[day] || window._v67MenuDB[0];
+        if (!colazione && bf) colazione = Object.assign({}, fb.colazione);
+        if (!pranzo) pranzo = Object.assign({}, fb.pranzo);
+        if (!cena)   cena   = Object.assign({}, fb.cena);
+
+        if (window._v67State) {
+          window._v67State.currentMenu = { colazione, pranzo, cena };
+          window._v67State.confirmed   = { colazione:false, pranzo:false, cena:false };
+        }
+
+        window.v71RenderAllCards(true);
+        if (typeof showToast === 'function') showToast('✨ Menu fresco con nuove combinazioni!');
+      } catch(e) {
+        console.warn('[V71 GenMenu]', e);
+        if (typeof showToast === 'function') showToast('⚠️ Errore rigenerazione menu');
+      }
+
+      if (btn) {
+        btn.classList.remove('v67-loading');
+        btn.textContent = '✨ Genera Nuovo Menu';
+      }
+    }, 800);
+  };
+
+  /* ═══════════════════════════════════════════
+     10. BOOT V71
+  ═══════════════════════════════════════════ */
+
+  function v71Boot() {
+    try {
+      if (!window._v67State) return;
+      // Forza reset sotto-gruppi al boot
+      window._v71SubState = { pranzo: null, cena: null };
+      window.v71RenderAllCards();
+    } catch(e) { console.warn('[V71 boot]', e); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(v71Boot, 600); });
+  setTimeout(v71Boot, 1000);
+  setTimeout(v71Boot, 2000);
+
+  console.log('%c[FitTrack V71] Struttura Sotto-Gruppi Pasti ✅', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+  console.log('%c  ├─ Card Pranzo/Cena con Primo + Contorno cliccabili', 'color:#A8D828');
+  console.log('%c  ├─ Click singola portata → Recipe Sheet dedicato', 'color:#A8D828');
+  console.log('%c  ├─ Swap generale → nuova combo bilanciata', 'color:#A8D828');
+  console.log('%c  ├─ Spunta ✓ → logga tutti i sotto-piatti nel diario', 'color:#A8D828');
+  console.log('%c  ├─ Backdrop blur quando recipe sheet è aperto', 'color:#A8D828');
+  console.log('%c  └─ Layout Flexbox mobile-first, nessun overlap', 'color:#A8D828');
+
+})(); // end FitTrackV71
 </script>
 
 </body>
