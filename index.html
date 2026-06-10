@@ -56473,7 +56473,7 @@ try {
 /* ══════════════════════
    STRUTTURA GRUPPI FILTRO
 ══════════════════════ */
-var FG = [
+var FG = window._v80FG = [
   { id:'goal', lbl:'🎯 Obiettivo', cls:'g-goal', exclusive:true, chips:[
     {id:'massa',        lbl:'💪 Massa'},
     {id:'mantenimento', lbl:'⚖️ Mant.'},
@@ -56511,6 +56511,7 @@ var EXCL = { 'massa':['dimagrimento'], 'dimagrimento':['massa'], 'pre-workout':[
 
 /* Stato filtri attivi */
 var AF = new Set(); // active filters
+window._v80AF = AF; /* esposto globalmente per _ricettaMatchFiltri */
 
 /* ─── Toggle chip ─── */
 window.v80Toggle = function(chipId, groupId) {
@@ -56835,6 +56836,920 @@ if (document.readyState==='loading') {
 }
 
 } catch(e) { try{ console.warn('[V80] Errore:',e); }catch(ee){} }
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     FitTrack V80-BUGFIX
+     FIX 1 — Timer riposo parte SOLO dopo "Salva" RPE, non alla spunta
+     FIX 2 — Ricette scompaiono: ricettaSearch puntava a renderRicette
+              locale (L18952) invece di window.renderRicette (V80 rr)
+     FIX 3 — _ricettaMatchFiltri cercava id="ricetta-search"
+              invece del corretto id="ricette-search"
+     FIX 4 — addRecipeToNutr cercava in RICETTE locale invece di
+              window.RICETTE (perdeva le ricette V80 aggiunte da syncR80)
+════════════════════════════════════════════════════════════ -->
+<script>
+(function _v80Bugfix() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   FIX 1 — TIMER RIPOSO: parte dopo "Salva" RPE, non alla spunta
+   Problema: toggleWoSet chiama startRest() immediatamente alla spunta,
+   PRIMA che il picker RPE venga mostrato. Risultato: timer parte subito
+   ma l'utente non ha ancora impostato/salvato l'RPE.
+   Soluzione: intercettiamo toggleWoSet per BLOCCARE il startRest interno,
+   lasciamo apparire il picker, e lo facciamo partire SOLO quando
+   ftSaveSetRPE viene chiamato.
+══════════════════════════════════════════════════════════ */
+
+/* Flag globale: blocca startRest durante toggleWoSet */
+window._v80BlockRestStart = false;
+
+/* Salva il startRest originale */
+var _origStartRest = window.startRest;
+
+/* Versione intercettata: se il flag è attivo, non fa nulla */
+window.startRest = function startRestV80(sec, nextEx, rpe) {
+  if (window._v80BlockRestStart) {
+    /* Memorizza i parametri per quando ftSaveSetRPE li userà */
+    window._v80PendingRest = { sec: sec, nextEx: nextEx };
+    return;
+  }
+  if (typeof _origStartRest === 'function') {
+    _origStartRest.apply(this, arguments);
+  }
+};
+
+/* Intercetta toggleWoSet: attiva il blocco DURANTE la chiamata */
+var _origToggleWoSet = window.toggleWoSet;
+if (typeof _origToggleWoSet === 'function' && !_origToggleWoSet._v80fix) {
+  window.toggleWoSet = function toggleWoSetV80(ei, si, rs) {
+    window._v80BlockRestStart = true;
+    window._v80PendingRest = null;
+    try {
+      _origToggleWoSet.apply(this, arguments);
+    } finally {
+      window._v80BlockRestStart = false;
+    }
+    /* Non avviamo il timer qui — aspettiamo Salva RPE */
+  };
+  window.toggleWoSet._v80fix = true;
+}
+
+/* Intercetta ftSaveSetRPE: avvia il timer DOPO il salvataggio RPE */
+var _origFtSaveSetRPE = window.ftSaveSetRPE;
+if (typeof _origFtSaveSetRPE === 'function' && !_origFtSaveSetRPE._v80fix) {
+  window.ftSaveSetRPE = function ftSaveSetRPEV80(ei, si) {
+    /* Blocca startRest interno a ftSaveSetRPE (già chiama startRest) */
+    /* NON blocchiamo — ftSaveSetRPE deve chiamare startRest normalmente */
+    /* Ripristina startRest originale temporaneamente */
+    window._v80BlockRestStart = false;
+    _origFtSaveSetRPE.apply(this, arguments);
+  };
+  window.ftSaveSetRPE._v80fix = true;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FIX 2 — RICETTE SCOMPAIONO: ricettaSearch puntava a renderRicette locale
+   Problema: window.ricettaSearch (L18737) chiama renderRicette() — la
+   funzione LOCALE definita a L18952 — non window.renderRicette (V80 rr).
+   Quando l'utente digita nella ricerca, viene usato il vecchio renderer
+   che: 1) non ha i filtri V80, 2) usa ricetteFilter (non AF), 3) sovrascrive
+   #ricette-filters invece di #v80-filters-root, causando render parziale/vuoto.
+   Soluzione: sovrascriviamo window.ricettaSearch per chiamare window.renderRicette.
+══════════════════════════════════════════════════════════ */
+
+var _searchDebounce = null;
+window.ricettaSearch = function ricettaSearchV80() {
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(function() {
+    try {
+      if (typeof window.renderRicette === 'function') {
+        window.renderRicette();
+      }
+    } catch(e) {}
+  }, 220);
+};
+window.ricettaSearch._v80fix = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 3 — ID SBAGLIATO NELLA RICERCA TESTO
+   Problema: _ricettaMatchFiltri cercava getElementById('ricetta-search')
+   ma l'HTML ha id="ricette-search" (con la E).
+   Risultato: ricerca testo sempre silente (nessun risultato filtrato).
+══════════════════════════════════════════════════════════ */
+
+var _origMatch = window._ricettaMatchFiltri;
+window._ricettaMatchFiltri = function _ricettaMatchFiltriV80(r) {
+  /* Ricerca testo con ID corretto */
+  var inp = document.getElementById('ricette-search'); /* E non A */
+  var q = inp ? inp.value.trim().toLowerCase() : '';
+  if (q) {
+    var hay = ((r.name||'') + ' ' + (r.desc||'') + ' ' + (r.ingredienti||[]).join(' ')).toLowerCase();
+    if (hay.indexOf(q) === -1) return false;
+  }
+
+  /* Filtro ingredienti */
+  var ingF = window.ricetteIngFiltri || [];
+  if (ingF.length) {
+    if (!ingF.every(function(id){ return (r.alimenti||[]).indexOf(id) >= 0; })) return false;
+  }
+
+  /* Filtri V80 multi-gruppo (AF set — definito nel blocco V80 principale) */
+  var AF = window._v80AF;
+  if (AF && AF.size > 0) {
+    var FG = window._v80FG || [];
+    var byG = {};
+    AF.forEach(function(fid) {
+      var grp = FG.find(function(g){ return g.chips.some(function(c){ return c.id === fid; }); });
+      if (grp) { if (!byG[grp.id]) byG[grp.id] = []; byG[grp.id].push(fid); }
+    });
+    var tags = r.tags || [];
+    var ok = Object.keys(byG).every(function(gid){
+      return byG[gid].some(function(fid){ return tags.indexOf(fid) >= 0; });
+    });
+    if (!ok) return false;
+  }
+
+  return true;
+};
+
+/* ══════════════════════════════════════════════════════════
+   FIX 4 — addRecipeToNutr usava RICETTE locale invece di window.RICETTE
+   Le ricette V80 aggiunte da syncR80 a window.RICETTE non erano trovate
+   perché addRecipeToNutr cercava nella variabile locale RICETTE (L18952 scope).
+══════════════════════════════════════════════════════════ */
+
+var _origAddRecipe = window.addRecipeToNutr;
+if (!window.addRecipeToNutr || !window.addRecipeToNutr._v80fix) {
+  window.addRecipeToNutr = function addRecipeToNutrV80(id) {
+    /* Cerca in window.RICETTE (include V80) */
+    var allRecipes = window.RICETTE || [];
+    var r = allRecipes.find(function(x){ return x.id === id; });
+    if (!r) { /* Fallback alla funzione originale */
+      if (typeof _origAddRecipe === 'function') _origAddRecipe.apply(this, arguments);
+      return;
+    }
+    /* Replica la logica originale con window.RICETTE */
+    try {
+      var nt = typeof todayNutr === 'function' ? todayNutr() : null;
+      if (!nt) { if (typeof _origAddRecipe === 'function') _origAddRecipe.apply(this, arguments); return; }
+      var mealIdx = 1; /* pranzo default */
+      var meal = nt.meals && nt.meals[mealIdx];
+      if (!meal) { if (typeof _origAddRecipe === 'function') _origAddRecipe.apply(this, arguments); return; }
+      meal.items = meal.items || [];
+      meal.items.push({ name: r.name, kcal: r.kcal||0, p: r.p||0, c: r.c||0, g: r.g||0, id: r.id });
+      if (typeof saveAll === 'function') saveAll();
+      if (typeof renderNutrizione === 'function') renderNutrizione();
+      if (typeof showToast === 'function') showToast('✅ ' + r.name + ' aggiunto a Pranzo');
+    } catch(e) {
+      if (typeof _origAddRecipe === 'function') _origAddRecipe.apply(this, arguments);
+    }
+  };
+  window.addRecipeToNutr._v80fix = true;
+}
+
+/* ══════════════════════════════════════════════════════════
+   ESPORTA AF e FG globalmente per FIX 3
+   (AF e FG sono definiti dentro la closure _v80Main — li esponiamo)
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  /* Cerca le variabili nella closure tramite v80Draw che le usa */
+  /* Alternativa: v80Toggle già modifica window._v80AF se esiste */
+  /* Patch v80Toggle e v80Reset per sincronizzare window._v80AF */
+  var _origV80Toggle = window.v80Toggle;
+  if (typeof _origV80Toggle === 'function' && !_origV80Toggle._afSync) {
+    window.v80Toggle = function(chipId, groupId) {
+      _origV80Toggle.apply(this, arguments);
+      /* Dopo toggle, riesporta lo stato per FIX 3 */
+      if (typeof window.v80Draw === 'function') window.v80Draw();
+    };
+    window.v80Toggle._afSync = true;
+  }
+  var _origV80Reset = window.v80Reset;
+  if (typeof _origV80Reset === 'function' && !_origV80Reset._afSync) {
+    window.v80Reset = function() {
+      _origV80Reset.apply(this, arguments);
+    };
+    window.v80Reset._afSync = true;
+  }
+}, 800);
+
+console.log('%c[V80-BUGFIX] ✅ Fix timer RPE + ricerca + ID search + addRecipeToNutr', 'color:#C8F53C;font-weight:900;background:#06060E;padding:3px 8px');
+
+} catch(e) { try{ console.warn('[V80-BUGFIX] Errore:', e); }catch(ee){} }
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     FitTrack V80-MENUFX — MENU ADATTIVO AL TARGET KCAL
+     
+     Problemi corretti:
+     1. Il menu non raggiungeva il target kcal utente
+        (es. target 2374 → menu dava ~900 kcal totali)
+     2. Nessun buffer snack: le kcal riservate agli spuntini 
+        non venivano considerate, lasciando marge inutilizzata
+     3. Se colazione rimossa, la ridistribuzione non era ottimale
+     4. Ricette selezionate non scaled alle porzioni reali
+     
+     Soluzione:
+     - Riserva snack buffer (8% target = ~190 kcal su 2374)  
+     - Distribuisce il NETTO sui pasti principali
+     - Scala porzioni delle ricette per avvicinarsi al budget
+     - Mostra il totale del menu + kcal rimanenti per snack
+     - Colazione rimossa → ridistribuisce proporzionalmente
+════════════════════════════════════════════════════════════ -->
+<script>
+(function _v80MenuFix() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   COSTANTI DISTRIBUZIONE KCAL
+   snackBuffer: kcal riservate agli spuntini (non gestiti dal menu)
+   Il menu copre il resto in modo bilanciato.
+══════════════════════════════════════════════════════════ */
+var SNACK_RATIO  = 0.08;  // 8% target → spuntini
+var MAX_SCALE    = 1.60;  // scala porzioni max +60% per avvicinarsi al budget
+var MIN_SCALE    = 0.70;  // scala porzioni min -30%
+var KCAL_MARGIN  = 80;    // ±80 kcal di scarto accettabile
+
+/* ── Distribuisce il budget kcal tra i pasti (con/senza colazione) ──*/
+function calcMealBudgets(kcalTarget, hasBreakfast) {
+  var snackBudget  = Math.round(kcalTarget * SNACK_RATIO);
+  var netKcal      = kcalTarget - snackBudget;
+
+  if (hasBreakfast) {
+    return {
+      snack:     snackBudget,
+      colazione: Math.round(netKcal * 0.26),   // 26%
+      pranzo:    Math.round(netKcal * 0.40),   // 40%
+      cena:      Math.round(netKcal * 0.34),   // 34%
+    };
+  } else {
+    return {
+      snack:     snackBudget,
+      colazione: 0,
+      pranzo:    Math.round(netKcal * 0.56),   // 56%
+      cena:      Math.round(netKcal * 0.44),   // 44%
+    };
+  }
+}
+
+/* ── Scala una ricetta per avvicinarsi al budget kcal ── */
+function scaleRecipe(recipe, budget) {
+  if (!recipe || !recipe.kcal || !budget) return recipe;
+  var scale = budget / recipe.kcal;
+  // Clamp tra MIN e MAX
+  scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+  // Non scalare se già entro margine
+  if (Math.abs(recipe.kcal - budget) <= KCAL_MARGIN) return recipe;
+  return Object.assign({}, recipe, {
+    kcal:  Math.round((recipe.kcal  || 0) * scale),
+    p:     Math.round((recipe.p     || 0) * scale),
+    c:     Math.round((recipe.c     || 0) * scale),
+    g:     Math.round((recipe.g     || 0) * scale),
+    fiber: Math.round((recipe.fiber || 0) * scale),
+    _scaled: true,
+    _scale:  Math.round(scale * 100)  // es. 115 = porzione +15%
+  });
+}
+
+/* ── Selector V80: cerca in TUTTO il database (RECIPES_DB + RICETTE + V80_RICETTE) ── */
+function v80SelectBestRecipe(mealType, budget, exclude) {
+  exclude = exclude || [];
+
+  // Costruisci pool combinato
+  var pool = [];
+  if (Array.isArray(window.RECIPES_DB))  pool = pool.concat(window.RECIPES_DB);
+  if (Array.isArray(window.RICETTE)) {
+    window.RICETTE.forEach(function(r) {
+      if (!pool.find(function(p){ return p.id === r.id; })) pool.push(r);
+    });
+  }
+
+  // Tag corrispondenti per ogni slot
+  var tagMap = {
+    colazione: ['colazione'],
+    pranzo:    ['pranzo'],
+    cena:      ['cena']
+  };
+  var validTags = tagMap[mealType] || [];
+
+  // Filtro: categoria + sicurezza allergie + non già usate
+  var candidates = pool.filter(function(r) {
+    if (exclude.indexOf(r.id) >= 0) return false;
+    // check categoria: da tags[] o cat field
+    var tags = (r.tags || []).map(function(t){ return t.toLowerCase(); });
+    var cat  = (r.cat  || '').toLowerCase();
+    var inTags = validTags.some(function(t){ return tags.indexOf(t) >= 0 || cat.indexOf(t) >= 0; });
+    if (!inTags) return false;
+    // sicurezza allergie (se disponibile)
+    if (typeof window.v68RecipeSafe === 'function') {
+      try { if (!window.v68RecipeSafe(r)) return false; } catch(e) {}
+    }
+    return !!(r.kcal && r.kcal > 0);
+  });
+
+  if (!candidates.length) return null;
+
+  // Dividi in fascia vicina (±35%) e lontana
+  var lo = budget * 0.65;
+  var hi = budget * 1.35;
+  var close   = candidates.filter(function(r){ return r.kcal >= lo && r.kcal <= hi; });
+  var farther = candidates.filter(function(r){ return r.kcal < lo  || r.kcal > hi;  });
+
+  // Scegli pool migliore
+  var chooseFrom = close.length > 0 ? close : farther;
+
+  // Seed basato su giorno + tipo pasto + n. esclusi (varietà giornaliera)
+  var d = new Date().getDay();
+  var t = mealType.charCodeAt(0);
+  var seed = (d * 13 + t * 7 + exclude.length * 3) % chooseFrom.length;
+  var best = chooseFrom[seed] || chooseFrom[0];
+
+  // Scala la ricetta per avvicinarsi al budget
+  var result = scaleRecipe({
+    id:          best.id,
+    ico:         best.ico || (mealType === 'colazione' ? '🌅' : mealType === 'pranzo' ? '🍽️' : '🌙'),
+    name:        best.name,
+    time:        best.time || 15,
+    kcal:        best.kcal || 0,
+    p:           best.p    || 0,
+    c:           best.c    || 0,
+    g:           best.g    || best.fat || 0,
+    fiber:       best.fiber || 0,
+    tipo:        best.tipo  || '',
+    cat:         best.cat   || '',
+    diff:        best.diff  || '',
+    ingredienti: best.ingredienti || best.ing || [],
+    steps:       best.steps || best.preparazione || []
+  }, budget);
+
+  return result;
+}
+
+/* ══════════════════════════════════════════════════════════
+   OVERRIDE v68BuildSmartMenu — motore principale
+══════════════════════════════════════════════════════════ */
+window.v68BuildSmartMenu = function v68BuildSmartMenuV80() {
+  var kcalTarget = 2200;
+  try {
+    if (typeof profile !== 'undefined') {
+      kcalTarget = (typeof safeKcal === 'function')
+        ? safeKcal(profile.kcalTarget)
+        : (profile.kcalTarget || 2200);
+    }
+  } catch(e) {}
+  kcalTarget = Math.max(800, kcalTarget || 2200);
+
+  var bf = !!(window._v67State && window._v67State.showBreakfast);
+  var budgets = calcMealBudgets(kcalTarget, bf);
+
+  var used = [];
+  var colazione = null, pranzo = null, cena = null;
+
+  if (bf) {
+    colazione = v80SelectBestRecipe('colazione', budgets.colazione, used);
+    if (colazione) used.push(colazione.id);
+  }
+  pranzo = v80SelectBestRecipe('pranzo', budgets.pranzo, used);
+  if (pranzo) used.push(pranzo.id);
+  cena   = v80SelectBestRecipe('cena',   budgets.cena,   used);
+  if (cena)   used.push(cena.id);
+
+  // Fallback al DB giornaliero se nessuna ricetta trovata
+  var day = (window._v67State && window._v67State.selectedDay) || 0;
+  var fb  = window._v67MenuDB && (window._v67MenuDB[day] || window._v67MenuDB[0]);
+  if (!colazione && bf && fb) colazione = Object.assign({}, fb.colazione);
+  if (!pranzo && fb)          pranzo    = Object.assign({}, fb.pranzo);
+  if (!cena   && fb)          cena      = Object.assign({}, fb.cena);
+
+  // Salva i budget calcolati per uso nella render (badge snack)
+  window._v80MenuBudgets = budgets;
+  window._v80MenuKcalTarget = kcalTarget;
+
+  return { colazione: colazione, pranzo: pranzo, cena: cena };
+};
+
+/* ══════════════════════════════════════════════════════════
+   OVERRIDE v67SwapMeal — usa il nuovo selector
+══════════════════════════════════════════════════════════ */
+window.v67SwapMeal = function v67SwapMealV80(mealType) {
+  var card = document.getElementById('v67-card-' + mealType);
+  if (card) card.classList.add('v67-swapping');
+
+  setTimeout(function() {
+    try {
+      var menu    = (window._v67State && window._v67State.currentMenu) || {};
+      var budgets = window._v80MenuBudgets || calcMealBudgets(
+        window._v80MenuKcalTarget || 2200,
+        !!(window._v67State && window._v67State.showBreakfast)
+      );
+      var budget = budgets[mealType] || 500;
+
+      // Escludi tutto il menu attuale
+      var allUsed = Object.values(menu).map(function(m){ return m && m.id; }).filter(Boolean);
+      var newMeal = v80SelectBestRecipe(mealType, budget, allUsed);
+
+      if (newMeal) {
+        window._v67State.currentMenu[mealType] = newMeal;
+        window._v67State.confirmed[mealType] = false;
+      }
+    } catch(e) {}
+    if (card) card.classList.remove('v67-swapping');
+    if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+  }, 350);
+};
+
+/* ══════════════════════════════════════════════════════════
+   PATCH v67RenderMenuCards — aggiunge badge snack e totale
+══════════════════════════════════════════════════════════ */
+var _origRenderMenuCards = window.v67RenderMenuCards;
+window.v67RenderMenuCards = function v67RenderMenuCardsV80(animate) {
+  // Chiama il renderer originale
+  if (typeof _origRenderMenuCards === 'function') {
+    _origRenderMenuCards.apply(this, arguments);
+  }
+
+  // Inietta badge totale kcal + snack rimanenti
+  setTimeout(function() {
+    try {
+      var budgets    = window._v80MenuBudgets;
+      var kcalTarget = window._v80MenuKcalTarget;
+      if (!budgets || !kcalTarget) return;
+
+      var menu = window._v67State && window._v67State.currentMenu;
+      if (!menu) return;
+
+      var menuKcal = 0;
+      if (menu.colazione) menuKcal += menu.colazione.kcal || 0;
+      if (menu.pranzo)    menuKcal += menu.pranzo.kcal    || 0;
+      if (menu.cena)      menuKcal += menu.cena.kcal      || 0;
+
+      var snackBudget = budgets.snack || 0;
+      var totalWithSnack = menuKcal + snackBudget;
+      var delta = kcalTarget - totalWithSnack;
+      var pct   = Math.round((menuKcal / kcalTarget) * 100);
+
+      // Rimuovi badge precedente
+      var old = document.getElementById('v80-menu-kcal-badge');
+      if (old) old.remove();
+
+      // Trova il contenitore menu
+      var section = document.getElementById('v67-menu-section');
+      if (!section) return;
+
+      var badge = document.createElement('div');
+      badge.id = 'v80-menu-kcal-badge';
+      badge.style.cssText = [
+        'margin:10px 16px 4px',
+        'padding:10px 14px',
+        'background:rgba(200,245,60,.07)',
+        'border:1px solid rgba(200,245,60,.18)',
+        'border-radius:12px',
+        'display:flex',
+        'align-items:center',
+        'justify-content:space-between',
+        'flex-wrap:wrap',
+        'gap:6px'
+      ].join(';');
+
+      var color = Math.abs(delta) <= 100 ? 'var(--acc)' : delta < 0 ? 'var(--orange)' : 'var(--blue)';
+      var msg   = Math.abs(delta) <= 100
+        ? '✅ Menu calibrato al target'
+        : delta < 0
+          ? '⚠️ Supera target di ' + Math.abs(delta) + ' kcal'
+          : '📦 +' + delta + ' kcal disponibili per snack';
+
+      badge.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+          '<div style="font-size:11px;font-weight:800;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;">Menu del giorno</div>' +
+          '<div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--acc);line-height:1;">' + menuKcal + ' kcal</div>' +
+          '<div style="font-size:10px;color:var(--text2);">/ ' + kcalTarget + ' target · ' + pct + '%</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">' +
+          '<div style="font-size:10px;font-weight:700;color:' + color + ';">' + msg + '</div>' +
+          (snackBudget > 0
+            ? '<div style="font-size:10px;color:var(--text2);">🍎 Budget snack: ' + snackBudget + ' kcal</div>'
+            : '') +
+        '</div>';
+
+      // Inserisci dopo l'header del menu
+      var header = section.querySelector('.v66-menu-header, .v67-menu-header, h2, [class*="menu-header"]');
+      if (header) {
+        header.insertAdjacentElement('afterend', badge);
+      } else {
+        section.prepend(badge);
+      }
+    } catch(e) {}
+  }, 120);
+};
+
+/* ══════════════════════════════════════════════════════════
+   INIT — rigenera il menu con la nuova logica
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  try {
+    if (window._v67State && typeof window.v67UpdateMenuForDay === 'function') {
+      window.v67UpdateMenuForDay(window._v67State.selectedDay || 0);
+    }
+  } catch(e) {}
+}, 900);
+
+console.log('%c[V80-MENUFX] ✅ Menu adattivo al target kcal con snack buffer', 'color:#C8F53C;font-weight:900;background:#06060E;padding:3px 8px');
+
+} catch(e) { try{ console.warn('[V80-MENUFX]', e); }catch(ee){} }
+})();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     FitTrack V80-KCALFIX — MENU BUDGET-AWARE
+     
+     Problema radice: _buildSubGroup (v71) sceglieva ricette 
+     CASUALMENTE senza conoscere il budget kcal del pasto.
+     Risultato: pranzo ~587 kcal invece di ~874 su target 2374.
+     
+     Soluzione:
+     - Override di _buildSubGroup con versione budget-aware
+     - La ricetta principale viene scalata per coprire 
+       (budget_pasto - kcal_contorno) → match preciso al target
+     - Il contorno viene scelto proporzionalmente al budget rimanente
+     - Colazione: stessa logica (budget_colazione - contorno se presente)
+     - MAX_SCALE alzato a 2.0 per target alti (3000+ kcal)
+     - Il badge "Menu del giorno" mostra errore ±kcal reale
+════════════════════════════════════════════════════════════ -->
+<style id="v80-kcalfix-css">
+/* Badge totale kcal menu — redesign più visibile */
+#v80-menu-kcal-badge {
+  margin: 8px 16px 0 !important;
+  padding: 11px 14px !important;
+  background: linear-gradient(135deg, rgba(200,245,60,.09), rgba(200,245,60,.04)) !important;
+  border: 1px solid rgba(200,245,60,.22) !important;
+  border-radius: 14px !important;
+}
+.v80-kcal-badge-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  color: var(--acc);
+  line-height: 1;
+  letter-spacing: .02em;
+}
+.v80-kcal-badge-bar {
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border2);
+  margin-top: 8px;
+  overflow: hidden;
+}
+.v80-kcal-badge-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--acc);
+  transition: width .5s ease;
+}
+</style>
+
+<script>
+(function _v80KcalFix() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   UTILITY: scala una ricetta per avvicinarsi a un budget kcal
+══════════════════════════════════════════════════════════ */
+function budgetScale(recipe, budgetKcal, maxScale) {
+  if (!recipe || !recipe.kcal || !budgetKcal) return recipe;
+  maxScale = maxScale || 2.0;
+  var scale = budgetKcal / recipe.kcal;
+  scale = Math.max(0.65, Math.min(maxScale, scale));
+  if (Math.abs(recipe.kcal - budgetKcal) < 60) return recipe; // già ok
+  return Object.assign({}, recipe, {
+    kcal:  Math.round((recipe.kcal  || 0) * scale),
+    p:     Math.round((recipe.p     || 0) * scale),
+    c:     Math.round((recipe.c     || 0) * scale),
+    g:     Math.round((recipe.g     || 0) * scale),
+    fiber: Math.round((recipe.fiber || 0) * scale),
+    _scaled: true,
+    _scalePct: Math.round(scale * 100)
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   UTILITY: seleziona la ricetta del pool PIÙ VICINA al budget
+══════════════════════════════════════════════════════════ */
+function pickClosest(pool, budgetKcal, exclude) {
+  exclude = exclude || [];
+  var avail = pool.filter(function(r) { return exclude.indexOf(r.id) < 0; });
+  if (!avail.length) return null;
+  // Ordina per distanza dal budget
+  avail.sort(function(a, b) {
+    return Math.abs((a.kcal||0) - budgetKcal) - Math.abs((b.kcal||0) - budgetKcal);
+  });
+  // Tra i 3 più vicini, randomizza leggermente (varietà)
+  var top = avail.slice(0, Math.min(3, avail.length));
+  var d   = new Date().getDay();
+  return top[d % top.length] || top[0];
+}
+
+/* ══════════════════════════════════════════════════════════
+   OVERRIDE PRINCIPALE: v68BuildSmartMenu budget-aware completo
+   Calcola i budget per slot, poi delega a buildBudgetMeal
+══════════════════════════════════════════════════════════ */
+window.v68BuildSmartMenu = function v68BuildSmartMenuKcalFix() {
+  /* 1. Target kcal dal profilo */
+  var kcalTarget = 2200;
+  try {
+    if (typeof profile !== 'undefined') {
+      kcalTarget = (typeof safeKcal === 'function')
+        ? safeKcal(profile.kcalTarget)
+        : (profile.kcalTarget || 2200);
+    }
+  } catch(e) {}
+  kcalTarget = Math.max(800, kcalTarget || 2200);
+
+  var bf = !!(window._v67State && window._v67State.showBreakfast);
+
+  /* 2. Riserva snack (8%) e distribuisci il netto */
+  var snackBudget = Math.round(kcalTarget * 0.08);
+  var net         = kcalTarget - snackBudget;
+
+  var bColaz  = bf ? Math.round(net * 0.26) : 0;
+  var bPranzo = Math.round(net * (bf ? 0.40 : 0.55));
+  var bCena   = Math.round(net * (bf ? 0.34 : 0.45));
+
+  /* 3. Costruisci i pasti con budget preciso */
+  var used      = [];
+  var colazione = null, pranzo = null, cena = null;
+
+  if (bf) {
+    colazione = buildBudgetMeal('colazione', bColaz, used);
+    if (colazione) used.push(colazione.id);
+  }
+  pranzo = buildBudgetMeal('pranzo', bPranzo, used);
+  if (pranzo) used.push(pranzo.id);
+  cena   = buildBudgetMeal('cena',   bCena,   used);
+
+  /* 4. Fallback al menu DB se nessuna ricetta trovata */
+  var day = (window._v67State && window._v67State.selectedDay) || 0;
+  var fb  = window._v67MenuDB && (window._v67MenuDB[day] || window._v67MenuDB[0]);
+  if (!colazione && bf && fb) colazione = Object.assign({}, fb.colazione);
+  if (!pranzo && fb)          pranzo    = Object.assign({}, fb.pranzo);
+  if (!cena   && fb)          cena      = Object.assign({}, fb.cena);
+
+  /* 5. Salva budgets per badge e swap */
+  window._v80MenuBudgets    = { colazione: bColaz, pranzo: bPranzo, cena: bCena, snack: snackBudget };
+  window._v80MenuKcalTarget = kcalTarget;
+
+  return { colazione: colazione, pranzo: pranzo, cena: cena };
+};
+
+/* ══════════════════════════════════════════════════════════
+   buildBudgetMeal: costruisce il sotto-gruppo pasto 
+   rispettando il budget kcal con scaling preciso
+══════════════════════════════════════════════════════════ */
+function buildBudgetMeal(mealType, budgetKcal, exclude) {
+  exclude = exclude || [];
+
+  /* Pool unificato RECIPES_DB + RICETTE */
+  var allPool = [];
+  if (Array.isArray(window.RECIPES_DB)) allPool = allPool.concat(window.RECIPES_DB);
+  if (Array.isArray(window.RICETTE)) {
+    window.RICETTE.forEach(function(r) {
+      if (!allPool.find(function(p){ return p.id === r.id; })) allPool.push(r);
+    });
+  }
+
+  /* Pool contorni */
+  var contorniPool = window._v71ContorniDB || [];
+
+  /* Filtri per tipo pasto */
+  var mainTagMap = {
+    colazione: function(r) {
+      var cat  = (r.cat  || '').toLowerCase();
+      var tags = (r.tags || []).join(' ').toLowerCase();
+      return cat.includes('colazione') || tags.includes('colazione');
+    },
+    pranzo: function(r) {
+      var cat  = (r.cat  || '').toLowerCase();
+      var tags = (r.tags || []).join(' ').toLowerCase();
+      return cat.includes('pranzo') || tags.includes('pranzo');
+    },
+    cena: function(r) {
+      var cat  = (r.cat  || '').toLowerCase();
+      var tags = (r.tags || []).join(' ').toLowerCase();
+      return cat.includes('cena') || tags.includes('cena');
+    }
+  };
+
+  var filterFn = mainTagMap[mealType];
+  if (!filterFn) return null;
+
+  /* Candidati principali */
+  var mainPool = allPool.filter(function(r) {
+    if (!r.kcal || r.kcal <= 0) return false;
+    if (exclude.indexOf(r.id) >= 0) return false;
+    if (!filterFn(r)) return false;
+    if (typeof window.v68RecipeSafe === 'function') {
+      try { if (!window.v68RecipeSafe(r)) return false; } catch(e) {}
+    }
+    return true;
+  });
+
+  if (!mainPool.length) return null;
+
+  /* Per pranzo e cena: riserva budget contorno, poi scegli main */
+  var contorno = null;
+  var budgetMain = budgetKcal;
+
+  if (mealType !== 'colazione' && contorniPool.length) {
+    /* Scegli contorno con kcal < 20% del budget */
+    var maxContornoKcal = Math.round(budgetKcal * 0.12); // max 12% del pasto al contorno
+    var contorniOk = contorniPool.filter(function(ct) { return (ct.kcal||0) <= maxContornoKcal; });
+    if (!contorniOk.length) contorniOk = contorniPool;
+    // Scegli il contorno più vicino all'8% del budget
+    var targetContorno = Math.round(budgetKcal * 0.08);
+    contorno = pickClosest(contorniOk, targetContorno, []);
+    if (contorno) budgetMain = budgetKcal - (contorno.kcal || 0);
+  }
+
+  /* Scegli la ricetta principale più vicina al budgetMain */
+  var best = pickClosest(mainPool, budgetMain, exclude);
+  if (!best) return null;
+
+  /* Scala la ricetta per colmare il gap */
+  var scaledMain = budgetScale(best, budgetMain, 2.2);
+
+  /* Costruisci oggetto pasto */
+  var result = {
+    id:   scaledMain.id,
+    ico:  scaledMain.ico || (mealType === 'colazione' ? '🌅' : mealType === 'pranzo' ? '🍽️' : '🌙'),
+    name: scaledMain.name,
+    time: scaledMain.time || 15,
+    kcal: (scaledMain.kcal || 0) + (contorno ? contorno.kcal || 0 : 0),
+    p:    (scaledMain.p    || 0) + (contorno ? contorno.p    || 0 : 0),
+    c:    (scaledMain.c    || 0) + (contorno ? contorno.c    || 0 : 0),
+    g:    (scaledMain.g    || 0) + (contorno ? contorno.g    || 0 : 0),
+    fiber:(scaledMain.fiber|| 0) + (contorno ? contorno.fiber|| 0 : 0),
+    tipo: scaledMain.tipo  || '',
+    cat:  scaledMain.cat   || '',
+    diff: scaledMain.diff  || '',
+    ingredienti: scaledMain.ingredienti || [],
+    steps:       scaledMain.steps       || [],
+    /* Dati subgroup per v71RenderAllCards */
+    _subgroup: {
+      main:     scaledMain,
+      contorno: contorno
+    }
+  };
+
+  return result;
+}
+
+/* ══════════════════════════════════════════════════════════
+   OVERRIDE v71InitSubGroups — usa i dati già calcolati
+   invece di rigenerare random
+══════════════════════════════════════════════════════════ */
+var _origV71Init = window.v71InitSubGroups;
+window.v71InitSubGroups = function v71InitSubGroupsKcalFix() {
+  var menu = window._v67State && window._v67State.currentMenu;
+  if (!menu) { if (typeof _origV71Init === 'function') _origV71Init(); return; }
+
+  if (!window._v71SubState) window._v71SubState = {};
+
+  /* Usa il sotto-gruppo già embeddato nel menu da buildBudgetMeal */
+  ['pranzo','cena'].forEach(function(mt) {
+    var meal = menu[mt];
+    if (meal && meal._subgroup) {
+      window._v71SubState[mt] = meal._subgroup;
+    } else if (typeof _origV71Init === 'function') {
+      /* Fallback originale solo se non abbiamo dati */
+    }
+  });
+};
+
+/* ══════════════════════════════════════════════════════════
+   OVERRIDE v67SwapMeal — budget-aware
+══════════════════════════════════════════════════════════ */
+window.v67SwapMeal = function v67SwapMealKcalFix(mealType) {
+  var card = document.getElementById('v67-card-' + mealType);
+  if (card) card.classList.add('v67-swapping');
+
+  setTimeout(function() {
+    try {
+      var menu    = (window._v67State && window._v67State.currentMenu) || {};
+      var budgets = window._v80MenuBudgets || { pranzo: 800, cena: 650, colazione: 500 };
+      var budget  = budgets[mealType] || 600;
+      var allUsed = Object.values(menu).map(function(m){ return m && m.id; }).filter(Boolean);
+
+      var newMeal = buildBudgetMeal(mealType, budget, allUsed);
+      if (newMeal) {
+        window._v67State.currentMenu[mealType] = newMeal;
+        window._v67State.confirmed[mealType]   = false;
+        if (newMeal._subgroup) window._v71SubState[mealType] = newMeal._subgroup;
+      }
+    } catch(e) { console.warn('[v80-kcalfix swap]', e); }
+
+    if (card) card.classList.remove('v67-swapping');
+    if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+    /* Rigenera badge */
+    setTimeout(injectKcalBadge, 150);
+  }, 350);
+};
+
+/* ══════════════════════════════════════════════════════════
+   BADGE TOTALE KCAL MENU — versione migliorata
+══════════════════════════════════════════════════════════ */
+function injectKcalBadge() {
+  try {
+    var budgets    = window._v80MenuBudgets;
+    var kcalTarget = window._v80MenuKcalTarget;
+    if (!budgets || !kcalTarget) return;
+
+    var menu = window._v67State && window._v67State.currentMenu;
+    if (!menu) return;
+
+    var menuKcal = 0;
+    ['colazione','pranzo','cena'].forEach(function(mt) {
+      if (menu[mt]) menuKcal += menu[mt].kcal || 0;
+    });
+
+    var snack    = budgets.snack || 0;
+    var totalEst = menuKcal + snack;
+    var delta    = kcalTarget - totalEst;
+    var pct      = Math.min(100, Math.round((menuKcal / kcalTarget) * 100));
+
+    var old = document.getElementById('v80-menu-kcal-badge');
+    if (old) old.remove();
+
+    var section = document.getElementById('v67-menu-section');
+    if (!section) return;
+
+    var deltaColor = Math.abs(delta) <= 120 ? 'var(--acc)'
+                   : delta < 0 ? 'var(--orange)' : 'var(--blue)';
+    var deltaMsg  = Math.abs(delta) <= 120
+      ? '✅ Menu calibrato al target'
+      : delta < 0
+        ? '⚠️ ' + Math.abs(delta) + ' kcal sopra il target'
+        : '📦 ' + delta + ' kcal rimanenti per snack';
+
+    var badge = document.createElement('div');
+    badge.id = 'v80-menu-kcal-badge';
+    badge.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">' +
+        '<div>' +
+          '<div style="font-size:9px;font-weight:800;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;">Menu del giorno</div>' +
+          '<div style="display:flex;align-items:baseline;gap:6px;">' +
+            '<span class="v80-kcal-badge-num">' + menuKcal + '</span>' +
+            '<span style="font-size:11px;color:var(--text2);">/ ' + kcalTarget + ' kcal target</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:11px;font-weight:700;color:' + deltaColor + ';margin-bottom:2px;">' + deltaMsg + '</div>' +
+          (snack > 0 ? '<div style="font-size:10px;color:var(--text3);">🍎 Snack: ' + snack + ' kcal</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="v80-kcal-badge-bar" style="margin-top:8px;">' +
+        '<div class="v80-kcal-badge-bar-fill" style="width:' + pct + '%;"></div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:4px;">' +
+        '<span style="font-size:9px;color:var(--text3);">0</span>' +
+        '<span style="font-size:9px;font-weight:700;color:var(--acc);">' + pct + '%</span>' +
+        '<span style="font-size:9px;color:var(--text3);">' + kcalTarget + '</span>' +
+      '</div>';
+
+    var header = section.querySelector('.v66-menu-header, .v67-menu-header, [class*="menu-header"]');
+    if (header) header.insertAdjacentElement('afterend', badge);
+    else        section.prepend(badge);
+  } catch(e) {}
+}
+
+/* ══════════════════════════════════════════════════════════
+   PATCH v67RenderMenuCards — inietta badge dopo render
+══════════════════════════════════════════════════════════ */
+var _origRMC = window.v67RenderMenuCards;
+window.v67RenderMenuCards = function v67RenderMenuCardsKcalFix(animate) {
+  if (typeof _origRMC === 'function') _origRMC.apply(this, arguments);
+  setTimeout(injectKcalBadge, 130);
+};
+window.v67RenderMenuCards._kcalfix = true;
+
+/* ══════════════════════════════════════════════════════════
+   INIT — rigenera il menu con la nuova logica
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  try {
+    if (window._v67State && typeof window.v67UpdateMenuForDay === 'function') {
+      window.v67UpdateMenuForDay(window._v67State.selectedDay || 0);
+    }
+  } catch(e) {}
+}, 600);
+
+console.log('%c[V80-KCALFIX] ✅ Menu budget-aware: ricette scalate al target kcal', 'color:#C8F53C;font-weight:900;background:#06060E;padding:3px 8px');
+
+} catch(e) { try{ console.warn('[V80-KCALFIX]', e); }catch(ee){} }
 })();
 </script>
 
