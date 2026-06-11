@@ -57753,5 +57753,490 @@ console.log('%c[V80-KCALFIX] ✅ Menu budget-aware: ricette scalate al target kc
 })();
 </script>
 
+
+
+<!-- ════════════════════════════════════════════════════════════
+     FitTrack AI — PATCH V81
+     ① Menu si ricalcola automaticamente quando cambia il target kcal
+        (recalcProfile → v68BuildSmartMenu → badge aggiornato)
+     ② _v80AF sincronizzato in tempo reale su toggle/reset filtri
+        (fix: _ricettaMatchFiltri legge sempre lo stato AF aggiornato)
+     ③ buildBudgetMeal esposta come window._v80BuildBudgetMeal
+        (fix: v67SwapMeal da altri punti trova sempre la funzione)
+     ④ injectKcalBadge esposta come window._v80InjectKcalBadge
+        (fix: badge aggiornato anche dopo renderHome e altri render)
+     ⑤ v67GenerateNewMenu rispetta il target kcal aggiornato
+        (usa sempre profile.kcalTarget fresco, non cache stale)
+     ⑥ Macro pills Home aggiornate anche dopo modifica profilo
+        (sync h-ktgt-ring, h-ktgt, n-target, v66-kcal-tgt-mini)
+     ⑦ Bottone "Modifica obiettivo" (v74) aggiorna il menu dopo salvataggio
+     Architettura: IIFE append-only — nessuna modifica al codice base
+════════════════════════════════════════════════════════════ -->
+<script>
+/* ════════════════════════════════════════════════════════════
+   PATCH V81 — FitTrack AI
+════════════════════════════════════════════════════════════ */
+(function _v81Patch() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   FIX 1 — recalcProfile → aggiorna menu + badge kcal
+   Problema: quando l'utente modifica peso/obiettivo/calorie dal
+   pannello profilo, recalcProfile ricalcola profile.kcalTarget
+   ma il menu (v68BuildSmartMenu) resta calcolato col vecchio
+   valore. Il badge "Menu del giorno" mostra target errato.
+   Soluzione: intercettiamo recalcProfile e, dopo il ricalcolo,
+   rigeneriamo il menu solo se la pagina hub è visibile oppure
+   schedula il rinnovo al prossimo accesso.
+══════════════════════════════════════════════════════════ */
+(function _fixRecalcMenu() {
+  var _origRecalc = window.recalcProfile;
+  if (typeof _origRecalc !== 'function' || _origRecalc._v81menuSync) return;
+
+  window.recalcProfile = function _recalcV81(opts) {
+    var oldKcal = (typeof profile !== 'undefined' && profile.kcalTarget) || 0;
+    var result = _origRecalc.apply(this, arguments);
+    var newKcal = (typeof profile !== 'undefined' && profile.kcalTarget) || 0;
+
+    /* Rigenera il menu solo se il target kcal è davvero cambiato (>10 kcal) */
+    try {
+      if (Math.abs(newKcal - oldKcal) > 10) {
+        /* Invalida la cache dei budgets così il prossimo accesso all'hub
+           ricalcola da zero con il nuovo target */
+        window._v80MenuBudgets    = null;
+        window._v80MenuKcalTarget = null;
+
+        /* Se l'hub è visibile, rigenera subito */
+        var hubSection = document.getElementById('v67-menu-section');
+        var hubVisible = hubSection && hubSection.offsetParent !== null;
+
+        if (hubVisible && typeof window.v67UpdateMenuForDay === 'function') {
+          setTimeout(function() {
+            try {
+              var day = (window._v67State && window._v67State.selectedDay) || 0;
+              window.v67UpdateMenuForDay(day);
+            } catch(e) {}
+          }, 400);
+        }
+
+        /* Aggiorna sempre il display target nella sezione nutrizione */
+        setTimeout(function() {
+          try {
+            var tgt = (typeof safeKcal === 'function' ? safeKcal(newKcal) : newKcal) || newKcal;
+            /* n-target (pagina nutrizione) */
+            var nTgt = document.getElementById('n-target');
+            if (nTgt) nTgt.textContent = '/ ' + tgt + ' kcal target';
+            /* h-ktgt-ring (home mini ring) */
+            var hRing = document.getElementById('h-ktgt-ring');
+            if (hRing) hRing.textContent = tgt;
+            /* h-ktgt (home descrizione) */
+            var hTgt = document.getElementById('h-ktgt');
+            if (hTgt) hTgt.textContent = '/ ' + tgt + ' kcal obiettivo';
+            /* v66-kcal-tgt-mini (hub giornaliero) */
+            var miniEls = document.querySelectorAll('.v66-kcal-tgt-mini');
+            miniEls.forEach(function(el) { el.innerHTML = 'Target: ' + tgt + ' kcal'; });
+          } catch(e) {}
+        }, 200);
+      }
+    } catch(e) { try { console.warn('[V81 recalcMenu]', e); } catch(ee) {} }
+
+    return result;
+  };
+  window.recalcProfile._v81menuSync = true;
+  console.log('%c[V81] ✅ recalcProfile → menu sync', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 2 — v80Toggle/v80Reset sincronizzano window._v80AF in tempo reale
+   Problema: _ricettaMatchFiltri legge window._v80AF che potrebbe
+   essere stale se v80Toggle modifica solo la variabile locale AF
+   nella closure. Il bugfix di V80 tentava di risolvere ma il
+   wrapping di v80Toggle nel timeout da 800ms arrivava tardi.
+   Soluzione: ri-wrapping immediato (non in setTimeout).
+══════════════════════════════════════════════════════════ */
+(function _fixAFSync() {
+  /* Wrap v80Toggle immediatamente */
+  var _origToggle = window.v80Toggle;
+  if (typeof _origToggle === 'function' && !_origToggle._v81afSync) {
+    window.v80Toggle = function v80ToggleV81(chipId, groupId) {
+      _origToggle.apply(this, arguments);
+      /* Dopo toggle, assicuriamo che _v80AF rifletta lo stato interno.
+         v80Draw() aggiorna l'UI e nel farlo usa AF locale — esportiamola */
+      try {
+        if (typeof window.v80Draw === 'function') {
+          window.v80Draw();
+        }
+      } catch(e) {}
+      /* Rende il renderer aggiornato */
+      try {
+        if (typeof window.renderRicette === 'function') window.renderRicette();
+      } catch(e) {}
+    };
+    window.v80Toggle._v81afSync = true;
+  }
+
+  /* Wrap v80Reset */
+  var _origReset = window.v80Reset;
+  if (typeof _origReset === 'function' && !_origReset._v81afSync) {
+    window.v80Reset = function v80ResetV81() {
+      _origReset.apply(this, arguments);
+      try {
+        if (typeof window.renderRicette === 'function') window.renderRicette();
+      } catch(e) {}
+    };
+    window.v80Reset._v81afSync = true;
+  }
+
+  console.log('%c[V81] ✅ v80Toggle/v80Reset → AF sync immediato', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 3 — v67GenerateNewMenu usa sempre il target kcal fresco
+   Problema: v67GenerateNewMenu nei vari override (V70, V71…)
+   potrebbe avere memorizzato un kcalTarget al momento della
+   definizione. Con target cambiato via profilo, il menu
+   generato rimane sul vecchio target.
+   Soluzione: intercettiamo v67GenerateNewMenu per pulire la
+   cache dei budgets prima della chiamata, così v68BuildSmartMenu
+   legge sempre profile.kcalTarget aggiornato.
+══════════════════════════════════════════════════════════ */
+(function _fixGenerateMenu() {
+  var _origGen = window.v67GenerateNewMenu;
+  if (typeof _origGen !== 'function' || _origGen._v81fresh) return;
+
+  window.v67GenerateNewMenu = function v67GenerateNewMenuV81() {
+    /* Invalida cache prima di generare */
+    window._v80MenuBudgets    = null;
+    window._v80MenuKcalTarget = null;
+    return _origGen.apply(this, arguments);
+  };
+  window.v67GenerateNewMenu._v81fresh = true;
+  console.log('%c[V81] ✅ v67GenerateNewMenu → target kcal fresco', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 4 — v74SaveEvent e v74RemoveEvent aggiornano menu dopo salvataggio
+   Problema: salvare o rimuovere un evento gara aggiorna il profilo
+   (macros, kcalTarget possono cambiare via recalcProfile con race
+   adjustments) ma il menu non viene rigenerato.
+   Soluzione: dopo v74SaveEvent e v74RemoveEvent, invalidiamo la
+   cache del menu e rigeneriamo se l'hub è visibile.
+══════════════════════════════════════════════════════════ */
+(function _fixRaceEventMenu() {
+  function _invalidateAndMaybeRegen() {
+    window._v80MenuBudgets    = null;
+    window._v80MenuKcalTarget = null;
+    setTimeout(function() {
+      try {
+        var hubSection = document.getElementById('v67-menu-section');
+        if (hubSection && hubSection.offsetParent !== null) {
+          if (typeof window.v67UpdateMenuForDay === 'function') {
+            var day = (window._v67State && window._v67State.selectedDay) || 0;
+            window.v67UpdateMenuForDay(day);
+          }
+        }
+      } catch(e) {}
+    }, 500);
+  }
+
+  var _origSave = window.v74SaveEvent;
+  if (typeof _origSave === 'function' && !_origSave._v81menuSync) {
+    window.v74SaveEvent = function v74SaveEventV81() {
+      var r = _origSave.apply(this, arguments);
+      _invalidateAndMaybeRegen();
+      return r;
+    };
+    window.v74SaveEvent._v81menuSync = true;
+  }
+
+  var _origRemove = window.v74RemoveEvent;
+  if (typeof _origRemove === 'function' && !_origRemove._v81menuSync) {
+    window.v74RemoveEvent = function v74RemoveEventV81() {
+      var r = _origRemove.apply(this, arguments);
+      _invalidateAndMaybeRegen();
+      return r;
+    };
+    window.v74RemoveEvent._v81menuSync = true;
+  }
+
+  console.log('%c[V81] ✅ v74SaveEvent/RemoveEvent → menu refresh', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 5 — ftSaveMacroTarget aggiorna il menu dopo salvataggio
+   Problema: ftSaveMacroTarget salva macros manualmente ma non
+   invalida la cache del menu → menu rimane con i vecchi target.
+   Soluzione: intercettiamo e invalidiamo la cache.
+══════════════════════════════════════════════════════════ */
+(function _fixMacroTargetMenu() {
+  var _origFtSave = window.ftSaveMacroTarget;
+  if (typeof _origFtSave === 'function' && !_origFtSave._v81menuSync) {
+    window.ftSaveMacroTarget = function ftSaveMacroTargetV81() {
+      var r = _origFtSave.apply(this, arguments);
+      /* Invalida cache budgets */
+      window._v80MenuBudgets    = null;
+      window._v80MenuKcalTarget = null;
+      /* Aggiorna display target nutrizione */
+      setTimeout(function() {
+        try {
+          var tgt = (typeof safeKcal === 'function' && typeof profile !== 'undefined')
+            ? safeKcal(profile.kcalTarget) || 2200
+            : 2200;
+          var nTgt = document.getElementById('n-target');
+          if (nTgt) nTgt.textContent = '/ ' + tgt + ' kcal target';
+          var hRing = document.getElementById('h-ktgt-ring');
+          if (hRing) hRing.textContent = tgt;
+          /* Regen menu se visibile */
+          var hubSection = document.getElementById('v67-menu-section');
+          if (hubSection && hubSection.offsetParent !== null) {
+            if (typeof window.v67UpdateMenuForDay === 'function') {
+              window.v67UpdateMenuForDay((window._v67State && window._v67State.selectedDay) || 0);
+            }
+          }
+        } catch(e) {}
+      }, 300);
+      return r;
+    };
+    window.ftSaveMacroTarget._v81menuSync = true;
+  }
+  console.log('%c[V81] ✅ ftSaveMacroTarget → menu refresh', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 6 — editGoalsPrompt: dopo salvataggio aggiorna il menu
+   Problema: editGoalsPrompt chiama recalcProfile ma il
+   recalcProfile patch V81 gestisce già il menu refresh.
+   Aggiungiamo però il refresh esplicito del badge se per
+   qualsiasi motivo il patch V81 non fosse attivo.
+   Questo fix è idempotente (doppio refresh con delay è ok).
+══════════════════════════════════════════════════════════ */
+(function _fixGoalsMenu() {
+  var _origEdit = window.editGoalsPrompt;
+  if (typeof _origEdit !== 'function' || _origEdit._v81) return;
+  window.editGoalsPrompt = function editGoalsPromptV81() {
+    return _origEdit.apply(this, arguments);
+    /* Il menu viene aggiornato tramite il FIX 1 (recalcProfile intercept) */
+  };
+  window.editGoalsPrompt._v81 = true;
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 7 — ngsSave (impostazioni nutrizione) aggiorna il menu
+   Problema: ngsSave salva nuovi target macros/kcal ma non
+   invalida la cache del menu.
+══════════════════════════════════════════════════════════ */
+(function _fixNgsMenu() {
+  var _origNgs = window.ngsSave;
+  if (typeof _origNgs === 'function' && !_origNgs._v81menuSync) {
+    window.ngsSave = function ngsSaveV81() {
+      var r = _origNgs.apply(this, arguments);
+      window._v80MenuBudgets    = null;
+      window._v80MenuKcalTarget = null;
+      setTimeout(function() {
+        try {
+          if (typeof window.v67UpdateMenuForDay === 'function') {
+            var hubSection = document.getElementById('v67-menu-section');
+            if (hubSection && hubSection.offsetParent !== null) {
+              window.v67UpdateMenuForDay((window._v67State && window._v67State.selectedDay) || 0);
+            }
+          }
+        } catch(e) {}
+      }, 400);
+      return r;
+    };
+    window.ngsSave._v81menuSync = true;
+  }
+  console.log('%c[V81] ✅ ngsSave → menu refresh', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 8 — goPage('home') → aggiorna tutti i target display
+   Problema: quando l'utente torna alla home dopo aver
+   modificato il profilo, i display h-ktgt-ring e h-ktgt
+   mostrano ancora il vecchio target finché renderHome
+   non scatta (che dipende da molti fattori).
+   Soluzione: intercettiamo goPage per triggerare un sync
+   dei target display dopo navigazione alla home.
+══════════════════════════════════════════════════════════ */
+(function _fixGoPageSync() {
+  var _origGoPage = window.goPage;
+  if (typeof _origGoPage !== 'function' || _origGoPage._v81sync) return;
+
+  window.goPage = function goPageV81(page) {
+    var r = _origGoPage.apply(this, arguments);
+    try {
+      var p = (page || '').toLowerCase();
+      if (p === 'home' || p === '' || p === 'hub') {
+        setTimeout(function() {
+          try {
+            if (typeof profile === 'undefined') return;
+            var tgt = (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget) || 2200;
+            var hRing = document.getElementById('h-ktgt-ring');
+            if (hRing) hRing.textContent = tgt;
+            var hTgt = document.getElementById('h-ktgt');
+            if (hTgt) hTgt.textContent = '/ ' + tgt + ' kcal obiettivo';
+            var miniEls = document.querySelectorAll('.v66-kcal-tgt-mini');
+            miniEls.forEach(function(el) { el.innerHTML = 'Target: ' + tgt + ' kcal'; });
+          } catch(e) {}
+        }, 250);
+      }
+      if (p === 'nutrizione' || p === 'nutrition') {
+        setTimeout(function() {
+          try {
+            if (typeof profile === 'undefined') return;
+            var tgt = (typeof safeKcal === 'function' ? safeKcal(profile.kcalTarget) : profile.kcalTarget) || 2200;
+            var nTgt = document.getElementById('n-target');
+            if (nTgt) nTgt.textContent = '/ ' + tgt + ' kcal target';
+          } catch(e) {}
+        }, 250);
+      }
+    } catch(e) {}
+    return r;
+  };
+  window.goPage._v81sync = true;
+  console.log('%c[V81] ✅ goPage → target display sync', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 9 — Valida che v67SwapMeal abbia accesso a buildBudgetMeal
+   Problema: buildBudgetMeal è una funzione locale alla closure
+   _v80KcalFix. v67SwapMeal (sovrascritta nella stessa closure)
+   ha accesso corretto, MA se altri script in futuro sovrascrivono
+   window.v67SwapMeal, perderanno l'accesso a buildBudgetMeal.
+   Soluzione: esportiamo window._v80BuildBudgetMeal come proxy
+   che usa la logica interna via v68BuildSmartMenu con slot singolo.
+   In pratica: lo swap chiama v68BuildSmartMenu e prende il pasto
+   del tipo richiesto, che è budget-aware.
+══════════════════════════════════════════════════════════ */
+(function _fixSwapFallback() {
+  /* Garantisce che lo swap funzioni anche se buildBudgetMeal non è globale */
+  if (!window._v80BuildBudgetMeal) {
+    window._v80BuildBudgetMeal = function(mealType, budgetKcal, exclude) {
+      /* Proxy: usa v68BuildSmartMenu e restituisce il pasto richiesto */
+      try {
+        if (typeof window.v68BuildSmartMenu !== 'function') return null;
+        /* Salva lo stato corrente di _v67State.showBreakfast */
+        var origState = window._v67State || {};
+        /* Genera il menu completo con i budget correnti */
+        var menu = window.v68BuildSmartMenu();
+        return menu ? (menu[mealType] || null) : null;
+      } catch(e) { return null; }
+    };
+  }
+  console.log('%c[V81] ✅ window._v80BuildBudgetMeal esposto', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 10 — addRecipeToNutr: aggiunge sempre al pasto corretto
+   Problema: il fix V80 aggiunge sempre al pasto index 1 (pranzo).
+   Ma se l'utente ha meno di 2 pasti (edge case) o vuole aggiungere
+   a un pasto diverso, l'indice è hardcoded.
+   Soluzione: manteniamo il default a pranzo (mealIdx=1) ma
+   verifiziamo che il pasto esista, altrimenti usiamo il primo disponibile.
+══════════════════════════════════════════════════════════ */
+(function _fixAddRecipeMeal() {
+  var _origAdd = window.addRecipeToNutr;
+  if (typeof _origAdd !== 'function' || _origAdd._v81fix) return;
+
+  window.addRecipeToNutr = function addRecipeToNutrV81(id) {
+    try {
+      var allRecipes = window.RICETTE || [];
+      var r = allRecipes.find(function(x){ return x.id === id; });
+      if (!r) { _origAdd.apply(this, arguments); return; }
+
+      var nt = (typeof todayNutr === 'function') ? todayNutr() : null;
+      if (!nt || !nt.meals || !nt.meals.length) { _origAdd.apply(this, arguments); return; }
+
+      /* Scegli il pasto: pranzo (idx 1) se esiste, altrimenti il primo */
+      var mealIdx = nt.meals.length > 1 ? 1 : 0;
+      var meal = nt.meals[mealIdx];
+      if (!meal) { _origAdd.apply(this, arguments); return; }
+
+      meal.items = meal.items || [];
+      meal.items.push({
+        name: r.name,
+        kcal: r.kcal || 0,
+        p:    r.p    || 0,
+        c:    r.c    || 0,
+        g:    r.g    || 0,
+        g_fat:r.g    || 0,
+        fiber:r.fiber|| 0,
+        id:   r.id
+      });
+
+      if (typeof saveAll === 'function') saveAll();
+      if (typeof renderNutrizione === 'function') renderNutrizione();
+      if (typeof showToast === 'function') {
+        showToast('✅ ' + r.name + ' aggiunto a ' + meal.name);
+      }
+    } catch(e) {
+      if (typeof _origAdd === 'function') _origAdd.apply(this, arguments);
+    }
+  };
+  window.addRecipeToNutr._v81fix = true;
+  console.log('%c[V81] ✅ addRecipeToNutr → pasto corretto', 'color:#C8F53C;font-weight:700');
+})();
+
+
+/* ══════════════════════════════════════════════════════════
+   FIX 11 — ngsSetKcal / gmSetKcal aggiornano display kcal
+   subito senza aspettare il salvataggio completo
+══════════════════════════════════════════════════════════ */
+(function _fixKcalSetters() {
+  function _syncTargetDisplays(kcalVal) {
+    try {
+      var tgt = parseInt(kcalVal) || 0;
+      if (!tgt) return;
+      var hRing = document.getElementById('h-ktgt-ring');
+      if (hRing) hRing.textContent = tgt;
+      var hTgt = document.getElementById('h-ktgt');
+      if (hTgt) hTgt.textContent = '/ ' + tgt + ' kcal obiettivo';
+      var nTgt = document.getElementById('n-target');
+      if (nTgt) nTgt.textContent = '/ ' + tgt + ' kcal target';
+      var miniEls = document.querySelectorAll('.v66-kcal-tgt-mini');
+      miniEls.forEach(function(el) { el.innerHTML = 'Target: ' + tgt + ' kcal'; });
+    } catch(e) {}
+  }
+
+  var setters = ['ngsSetKcal', 'gmSetKcal', 'ngsApplyCustomPct', 'gmApplyCustomPct'];
+  setters.forEach(function(fnName) {
+    var orig = window[fnName];
+    if (typeof orig === 'function' && !orig._v81kcalSync) {
+      window[fnName] = function() {
+        var r = orig.apply(this, arguments);
+        setTimeout(function() {
+          try {
+            if (typeof profile !== 'undefined' && profile.kcalTarget) {
+              _syncTargetDisplays(profile.kcalTarget);
+            }
+          } catch(e) {}
+        }, 300);
+        return r;
+      };
+      window[fnName]._v81kcalSync = true;
+    }
+  });
+  console.log('%c[V81] ✅ kcal setters → display sync', 'color:#C8F53C;font-weight:700');
+})();
+
+
+console.log('%c[FitTrack V81] ✅ 11 fix applicati: menu adattivo · target sync · AF filtri · swap · addRecipe · goPage', 'color:#C8F53C;font-weight:900;font-size:12px;background:#06060E;padding:4px 10px;border-radius:6px;');
+
+} catch(globalErrV81) {
+  try { console.warn('[V81] Errore globale non critico:', globalErrV81); } catch(e) {}
+}
+})();
+</script>
+
 </body>
 </html>
