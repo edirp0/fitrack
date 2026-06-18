@@ -6793,72 +6793,98 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
         <div><div class="nutr-title">Nutrizione</div><div style="font-size:11px;color:var(--text2);margin-top:2px" id="nutr-dt"></div></div>
         <button id="nutr-settings-btn" onclick="var _om=document.getElementById('ngs-modal');if(_om)_om.remove();ftNutrSettings();" style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:50%;width:40px;height:40px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0;transition:background .18s, transform .35s cubic-bezier(.34,1.56,.64,1);" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background='var(--bg3)'">⚙️</button>
       </div>
-      <div class="riepilogo">
-        <div class="card-hdr-l" style="margin-bottom:14px">Riepilogo Giornaliero</div>
+      <div class="riepilogo v102-riepilogo">
+        <div class="v102-riep-header">
+          <div class="card-hdr-l">Riepilogo Giornaliero</div>
+          <div class="v102-riep-pct-badge" id="n-bar-pct">0%</div>
+        </div>
+
         <!-- Ring + Info row -->
-        <div class="nutr-ring-row">
-          <!-- Multi-arc SVG ring -->
-          <div class="nutr-ring-wrap">
-            <svg width="100" height="100" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
-              <!-- bg tracks -->
-              <circle class="nr-bg" cx="60" cy="60" r="50"/>
-              <circle class="nr-bg nr-bg-md" cx="60" cy="60" r="38"/>
-              <circle class="nr-bg nr-bg-sm" cx="60" cy="60" r="26"/>
-              <circle class="nr-bg nr-bg-xs" cx="60" cy="60" r="14"/>
-              <!-- kcal arc (outer) -->
-              <circle class="nr-kcal" id="nr-kcal-arc" cx="60" cy="60" r="50"/>
-              <!-- protein arc (middle) -->
-              <circle class="nr-p" id="nr-p-arc" cx="60" cy="60" r="38"/>
-              <!-- carbs arc (inner) -->
-              <circle class="nr-c" id="nr-c-arc" cx="60" cy="60" r="26"/>
-              <!-- fat arc (innermost) -->
-              <circle class="nr-g" id="nr-g-arc" cx="60" cy="60" r="14"/>
+        <div class="v102-ring-row">
+
+          <!-- Multi-arc SVG ring ridisegnato -->
+          <div class="v102-ring-wrap">
+            <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-90deg);display:block;width:100%;height:100%">
+              <!-- Tracce di sfondo -->
+              <circle class="v102-nr-bg" cx="80" cy="80" r="68"/>
+              <circle class="v102-nr-bg v102-nr-bg-p" cx="80" cy="80" r="54"/>
+              <circle class="v102-nr-bg v102-nr-bg-c" cx="80" cy="80" r="40"/>
+              <circle class="v102-nr-bg v102-nr-bg-g" cx="80" cy="80" r="26"/>
+              <!-- Archi colorati -->
+              <circle class="v102-arc-kcal" id="nr-kcal-arc" cx="80" cy="80" r="68"/>
+              <circle class="v102-arc-p"    id="nr-p-arc"    cx="80" cy="80" r="54"/>
+              <circle class="v102-arc-c"    id="nr-c-arc"    cx="80" cy="80" r="40"/>
+              <circle class="v102-arc-g"    id="nr-g-arc"    cx="80" cy="80" r="26"/>
             </svg>
-            <div class="nutr-ring-center">
-              <div class="nutr-ring-val" id="n-eaten">0</div>
-              <div class="nutr-ring-unit">kcal</div>
-              <div class="nutr-ring-pct" id="n-bar-pct">0%</div>
+            <!-- Centro ring: solo kcal consumate, grande e leggibile -->
+            <div class="v102-ring-center">
+              <div class="v102-ring-val" id="n-eaten">0</div>
+              <div class="v102-ring-label">kcal</div>
             </div>
           </div>
-          <!-- Info column -->
-          <div class="nutr-ring-info">
-            <div class="nutr-ring-tgt" id="n-target">/ 0 kcal target</div>
-            <div class="nutr-ring-rem" id="n-rem">— rimanenti</div>
-            <div class="nutr-pbar" style="margin-top:10px;margin-bottom:0"><div class="nutr-pbar-fill" id="n-bar" style="width:0%"></div></div>
-            <!-- Legend dots -->
-            <div class="nutr-ring-legend">
-              <div class="nrl-item"><span class="nrl-dot" style="background:var(--acc)"></span><span class="nrl-lbl">Kcal</span></div>
-              <div class="nrl-item"><span class="nrl-dot" style="background:var(--green)"></span><span class="nrl-lbl">Prot</span></div>
-              <div class="nrl-item"><span class="nrl-dot" style="background:var(--blue)"></span><span class="nrl-lbl">Carbs</span></div>
-              <div class="nrl-item"><span class="nrl-dot" style="background:var(--orange)"></span><span class="nrl-lbl">Grassi</span></div>
+
+          <!-- Colonna destra -->
+          <div class="v102-ring-info">
+            <!-- Target -->
+            <div class="v102-tgt-row" id="n-target">/ 0 kcal target</div>
+            <!-- Rimanenti — prominente -->
+            <div class="v102-rem-val" id="n-rem">—</div>
+            <div class="v102-rem-lbl">kcal rimanenti</div>
+            <!-- Barra progresso -->
+            <div class="v102-pbar">
+              <div class="v102-pbar-fill" id="n-bar" style="width:0%"></div>
+            </div>
+            <!-- Legend con pallino + nome + valore macro -->
+            <div class="v102-legend">
+              <div class="v102-leg-item">
+                <span class="v102-leg-dot" style="background:var(--acc)"></span>
+                <span class="v102-leg-name">Kcal</span>
+              </div>
+              <div class="v102-leg-item">
+                <span class="v102-leg-dot" style="background:var(--green)"></span>
+                <span class="v102-leg-name">Prot</span>
+              </div>
+              <div class="v102-leg-item">
+                <span class="v102-leg-dot" style="background:var(--blue)"></span>
+                <span class="v102-leg-name">Carbs</span>
+              </div>
+              <div class="v102-leg-item">
+                <span class="v102-leg-dot" style="background:var(--orange)"></span>
+                <span class="v102-leg-name">Grassi</span>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Macro pills -->
-        <div class="nutr-macros">
-          <div class="nm-box">
-            <div class="nm-val" id="nm-pv" style="color:var(--green)">0g</div>
-            <div class="nm-bar-wrap"><div class="nm-bar-fill" id="nm-pb" style="background:var(--green);width:0%"></div></div>
-            <div class="nm-lbl">Proteine</div>
-            <div class="nm-curr" id="nm-pc">/ 0g</div>
+
+        <!-- Macro pills: 4 card uniformi -->
+        <div class="v102-macros">
+          <div class="v102-macro-card" style="--mc:var(--green)">
+            <div class="v102-mc-icon">💪</div>
+            <div class="v102-mc-val" id="nm-pv">0g</div>
+            <div class="v102-mc-bar-wrap"><div class="v102-mc-bar" id="nm-pb" style="background:var(--green)"></div></div>
+            <div class="v102-mc-lbl">Proteine</div>
+            <div class="v102-mc-target" id="nm-pc">/ 0g</div>
           </div>
-          <div class="nm-box">
-            <div class="nm-val" id="nm-cv" style="color:var(--blue)">0g</div>
-            <div class="nm-bar-wrap"><div class="nm-bar-fill" id="nm-cb" style="background:var(--blue);width:0%"></div></div>
-            <div class="nm-lbl">Carbs</div>
-            <div class="nm-curr" id="nm-cc">/ 0g</div>
+          <div class="v102-macro-card" style="--mc:var(--blue)">
+            <div class="v102-mc-icon">⚡</div>
+            <div class="v102-mc-val" id="nm-cv">0g</div>
+            <div class="v102-mc-bar-wrap"><div class="v102-mc-bar" id="nm-cb" style="background:var(--blue)"></div></div>
+            <div class="v102-mc-lbl">Carbs</div>
+            <div class="v102-mc-target" id="nm-cc">/ 0g</div>
           </div>
-          <div class="nm-box">
-            <div class="nm-val" id="nm-gv" style="color:var(--orange)">0g</div>
-            <div class="nm-bar-wrap"><div class="nm-bar-fill" id="nm-gb" style="background:var(--orange);width:0%"></div></div>
-            <div class="nm-lbl">Grassi</div>
-            <div class="nm-curr" id="nm-gc">/ 0g</div>
+          <div class="v102-macro-card" style="--mc:var(--orange)">
+            <div class="v102-mc-icon">🥑</div>
+            <div class="v102-mc-val" id="nm-gv">0g</div>
+            <div class="v102-mc-bar-wrap"><div class="v102-mc-bar" id="nm-gb" style="background:var(--orange)"></div></div>
+            <div class="v102-mc-lbl">Grassi</div>
+            <div class="v102-mc-target" id="nm-gc">/ 0g</div>
           </div>
-          <div class="nm-box">
-            <div class="nm-val" id="nm-fv" style="color:var(--teal)">0g</div>
-            <div class="nm-bar-wrap"><div class="nm-bar-fill" id="nm-fb" style="background:var(--teal);width:0%"></div></div>
-            <div class="nm-lbl">Fibre</div>
-            <div class="nm-curr" id="nm-fc">/ 0g</div>
+          <div class="v102-macro-card" style="--mc:var(--teal)">
+            <div class="v102-mc-icon">🌾</div>
+            <div class="v102-mc-val" id="nm-fv">0g</div>
+            <div class="v102-mc-bar-wrap"><div class="v102-mc-bar" id="nm-fb" style="background:var(--teal)"></div></div>
+            <div class="v102-mc-lbl">Fibre</div>
+            <div class="v102-mc-target" id="nm-fc">/ 0g</div>
           </div>
         </div>
       </div>
@@ -7377,25 +7403,70 @@ if (typeof getRecommendedPreset === 'undefined') window.getRecommendedPreset = f
   <div id="wo-exs"></div>
 
   <!-- ═══════════════════════════════════════════════════
-       SEZIONE FINE ALLENAMENTO — inserita dopo tutti gli esercizi
+       SEZIONE FINE ALLENAMENTO — v101 redesign
   ═══════════════════════════════════════════════════ -->
   <div id="wo-fine-section">
 
-    <!-- Stato: in corso (sempre visibile) -->
-    <div id="wo-fine-in-progress" class="wo-fine-inprog">
-      <div class="wo-fine-inprog-txt">⚡ Completa le serie o termina ora</div>
-      <button class="wo-fine-btn-secondary" onclick="finishWorkout()">
-        Termina ora
+    <!-- Stato: in corso -->
+    <div id="wo-fine-in-progress" class="wof-inprog">
+      <div class="wof-inprog-left">
+        <div class="wof-inprog-icon">⚡</div>
+        <div>
+          <div class="wof-inprog-title">Ancora qualche serie!</div>
+          <div class="wof-inprog-sub">Completa il programma o termina</div>
+        </div>
+      </div>
+      <button class="wof-btn-stop" onclick="finishWorkout()">
+        Termina
       </button>
     </div>
 
     <!-- Stato: tutte le serie completate -->
-    <div id="wo-fine-complete" class="wo-fine-complete" style="display:none">
-      <div class="wo-fine-complete-badge">✅ TUTTE LE SERIE COMPLETATE!</div>
-      <div class="wo-fine-complete-sub">Ottimo lavoro! Registra la sessione.</div>
-      <button class="wo-fine-btn-main" onclick="finishWorkout()">
-        🏆 FINE ALLENAMENTO
+    <div id="wo-fine-complete" class="wof-complete" style="display:none">
+
+      <!-- Confetti decorativi -->
+      <div class="wof-confetti" aria-hidden="true">
+        <span class="wof-c wof-c1">🏆</span>
+        <span class="wof-c wof-c2">⚡</span>
+        <span class="wof-c wof-c3">💪</span>
+        <span class="wof-c wof-c4">🔥</span>
+        <span class="wof-c wof-c5">⚡</span>
+      </div>
+
+      <!-- Badge completamento -->
+      <div class="wof-badge">
+        <div class="wof-badge-icon">✅</div>
+        <div class="wof-badge-text">SESSIONE COMPLETATA</div>
+      </div>
+
+      <!-- Sottotitolo motivazionale (ruota) -->
+      <div class="wof-motivation" id="wof-motivation">Ottimo lavoro! Stai costruendo il meglio di te.</div>
+
+      <!-- Stats rapide sessione -->
+      <div class="wof-stats-row">
+        <div class="wof-stat-pill">
+          <span class="wof-stat-ico">🎯</span>
+          <span class="wof-stat-val" id="wof-stat-sets">—</span>
+          <span class="wof-stat-lbl">serie</span>
+        </div>
+        <div class="wof-stat-pill">
+          <span class="wof-stat-ico">⏱️</span>
+          <span class="wof-stat-val" id="wof-stat-time">—</span>
+          <span class="wof-stat-lbl">durata</span>
+        </div>
+        <div class="wof-stat-pill">
+          <span class="wof-stat-ico">🔥</span>
+          <span class="wof-stat-val" id="wof-stat-vol">—</span>
+          <span class="wof-stat-lbl">kg tot.</span>
+        </div>
+      </div>
+
+      <!-- CTA principale -->
+      <button class="wof-btn-main" onclick="finishWorkout()">
+        <span class="wof-btn-icon">🏆</span>
+        <span class="wof-btn-text">SALVA E CHIUDI</span>
       </button>
+
     </div>
 
   </div>
@@ -45712,113 +45783,7 @@ body.light-theme .v97-dessert-row .v71-portata-thumb { background: rgba(200,120,
      • Aggiornato da renderWoExs ad ogni toggle serie
      • Fix padding-bottom wo-ovl per non tagliare il pulsante
 ═══════════════════════════════════════════════════════════ -->
-<style id="v98-fine-styles">
-
-/* ── Sezione Fine allenamento ── */
-#wo-fine-section {
-  margin: 20px 0 0;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-}
-
-/* ── In progress: testo + bottone secondario ── */
-.wo-fine-inprog {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, rgba(200,245,60,.06), rgba(100,200,40,.03));
-  border: 1.5px solid rgba(200,245,60,.22);
-  border-radius: var(--r-lg);
-  margin-bottom: 8px;
-}
-.wo-fine-inprog-txt {
-  font-size: 12px;
-  color: var(--text2);
-  flex: 1;
-  font-weight: 600;
-}
-.wo-fine-btn-secondary {
-  flex-shrink: 0;
-  padding: 10px 18px;
-  background: rgba(200,245,60,.10);
-  border: 1.5px solid rgba(200,245,60,.40);
-  border-radius: 99px;
-  color: var(--acc);
-  font-family: 'Syne', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: .04em;
-  transition: background .2s, transform .15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.wo-fine-btn-secondary:active {
-  background: rgba(200,245,60,.20);
-  transform: scale(.97);
-}
-
-/* ── Completato: banner verde + grande pulsante ── */
-.wo-fine-complete {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 16px 24px;
-  background: linear-gradient(135deg, rgba(200,245,60,.08), rgba(100,200,40,.04));
-  border: 1.5px solid rgba(200,245,60,.35);
-  border-radius: var(--r-lg);
-  animation: v98FineIn .4s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes v98FineIn {
-  from { opacity: 0; transform: translateY(16px) scale(.97); }
-  to   { opacity: 1; transform: none; }
-}
-.wo-fine-complete-badge {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px;
-  color: var(--acc);
-  letter-spacing: .06em;
-  text-align: center;
-}
-.wo-fine-complete-sub {
-  font-size: 13px;
-  color: var(--text2);
-  text-align: center;
-}
-.wo-fine-btn-main {
-  width: 100%;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, var(--acc), #a8d620);
-  border: none;
-  border-radius: var(--r-lg);
-  color: #080810;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: .1em;
-  cursor: pointer;
-  box-shadow: 0 4px 24px rgba(200,245,60,.28);
-  transition: transform .15s, box-shadow .15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.wo-fine-btn-main:active {
-  transform: scale(.97);
-  box-shadow: 0 2px 12px rgba(200,245,60,.18);
-}
-
-/* ── Light theme ── */
-body.light-theme .wo-fine-inprog { background: rgba(100,160,0,.06); border-color: rgba(100,160,0,.3); }
-body.light-theme .wo-fine-btn-secondary { background: rgba(100,160,0,.10); border-color: rgba(100,160,0,.45); color: #4a7a00; }
-body.light-theme .wo-fine-complete { background: rgba(160,200,0,.08); border-color: rgba(160,200,0,.4); }
-body.light-theme .wo-fine-complete-badge { color: #5a8a00; }
-body.light-theme .wo-fine-btn-main { color: #fff; }
-
-/* ── Assicura che wo-ovl abbia abbastanza padding in fondo ── */
-#wo-ovl {
-  padding-bottom: calc(32px + env(safe-area-inset-bottom, 16px)) !important;
-}
-</style>
+<!-- v98-fine-styles rimosso: vedi v101-fine-styles -->
 
 <script>
 (function _v98FinePatch() {
@@ -46617,39 +46582,1305 @@ setTimeout(function() {
   stroke-linecap: round;
 }
 
-/* ── pulsante Fine più visibile nel dark e light theme ── */
-.wo-fine-inprog {
-  border-width: 1.5px !important;
+/* wo-fine: vedi v101-fine-styles */
+</style>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V101
+     ① Redesign completo sezione Fine Allenamento
+        Dark: sfondo scuro con accent verde brillante, confetti,
+              stats rapide (serie/durata/volume), frasi motivazionali
+        Light: stesso layout, colori verdi più scuri, alta leggibilità
+     ② 50 nuove ricette (colazioni, secondi, bowl, meal prep, smoothie)
+     ③ Fix: wof-stat aggiornati automaticamente al completamento
+═══════════════════════════════════════════════════════════════ -->
+
+<style id="v101-fine-styles">
+
+/* ═══════════════════════════════════════════════════
+   SEZIONE IN CORSO — wof-inprog
+═══════════════════════════════════════════════════ */
+.wof-inprog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 20px 0 0;
+  padding: 16px 18px;
+  background: linear-gradient(135deg,
+    rgba(200,245,60,.07) 0%,
+    rgba(91,156,239,.05) 100%);
+  border: 1.5px solid rgba(200,245,60,.28);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
 }
-.wo-fine-btn-secondary {
-  font-size: 13px !important;
-  padding: 11px 20px !important;
-  min-width: 130px;
+.wof-inprog::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, rgba(200,245,60,.6), transparent);
+  animation: wofSweep 2.5s ease-in-out infinite;
 }
-.wo-fine-btn-main {
-  font-size: 24px !important;
-  letter-spacing: .12em !important;
-  padding: 20px !important;
-  border-radius: 18px !important;
+@keyframes wofSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.wof-inprog-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.wof-inprog-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(200,245,60,.5));
+}
+.wof-inprog-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: .02em;
+}
+.wof-inprog-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 1px;
 }
 
-/* Light theme: Fine button scuro con testo bianco */
-body.light-theme .wo-fine-btn-main {
-  background: linear-gradient(135deg, #5a9900, #4a8000) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 20px rgba(80,140,0,.30) !important;
+/* Pulsante "Termina" — outline accent */
+.wof-btn-stop {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  background: rgba(200,245,60,.08);
+  border: 1.5px solid rgba(200,245,60,.45);
+  border-radius: 99px;
+  color: var(--acc);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .18s, transform .12s, box-shadow .18s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
-body.light-theme .wo-fine-complete {
-  background: rgba(80,140,0,.07) !important;
-  border-color: rgba(80,140,0,.35) !important;
+.wof-btn-stop:hover  { background: rgba(200,245,60,.14); }
+.wof-btn-stop:active {
+  background: rgba(200,245,60,.22);
+  transform: scale(.96);
 }
-body.light-theme .wo-fine-complete-badge {
-  color: #3d7000 !important;
+
+/* ═══════════════════════════════════════════════════
+   SEZIONE COMPLETATA — wof-complete
+═══════════════════════════════════════════════════ */
+.wof-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 0;
+  padding: 24px 20px 28px;
+  background:
+    linear-gradient(160deg,
+      rgba(200,245,60,.11) 0%,
+      rgba(91,156,239,.06) 60%,
+      rgba(200,245,60,.05) 100%);
+  border: 1.5px solid rgba(200,245,60,.40);
+  border-radius: 22px;
+  position: relative;
+  overflow: hidden;
+  animation: wofCompleteIn .5s cubic-bezier(.22,1,.36,1) both;
 }
-body.light-theme .wo-fine-complete-sub {
-  color: #555 !important;
+/* Bagliore superiore */
+.wof-complete::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 10%; right: 10%;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent, var(--acc), #a8d620, var(--acc), transparent);
+  border-radius: 99px;
+  box-shadow: 0 0 16px rgba(200,245,60,.7);
 }
+@keyframes wofCompleteIn {
+  from { opacity: 0; transform: translateY(20px) scale(.95); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Confetti emoji */
+.wof-confetti {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wof-c {
+  position: absolute;
+  font-size: 20px;
+  opacity: 0;
+  animation: wofFall 3.5s ease-in forwards;
+}
+.wof-c1 { left: 10%; animation-delay: .1s; font-size: 24px; }
+.wof-c2 { left: 25%; animation-delay: .4s; font-size: 18px; }
+.wof-c3 { left: 50%; animation-delay: .2s; font-size: 22px; }
+.wof-c4 { left: 72%; animation-delay: .55s; font-size: 20px; }
+.wof-c5 { left: 88%; animation-delay: .3s; font-size: 16px; }
+@keyframes wofFall {
+  0%   { opacity: 0; top: -10%; transform: rotate(0deg) scale(.5); }
+  15%  { opacity: 1; }
+  80%  { opacity: .6; }
+  100% { opacity: 0; top: 90%; transform: rotate(360deg) scale(1); }
+}
+
+/* Badge */
+.wof-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+.wof-badge-icon {
+  font-size: 48px;
+  filter: drop-shadow(0 0 14px rgba(200,245,60,.7));
+  animation: wofPulse 2s ease-in-out infinite;
+}
+@keyframes wofPulse {
+  0%,100% { filter: drop-shadow(0 0 10px rgba(200,245,60,.5)); transform: scale(1); }
+  50%     { filter: drop-shadow(0 0 22px rgba(200,245,60,.9)); transform: scale(1.06); }
+}
+.wof-badge-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  color: var(--acc);
+  letter-spacing: .14em;
+  text-shadow: 0 0 20px rgba(200,245,60,.4);
+}
+
+/* Frase motivazionale */
+.wof-motivation {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 280px;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+}
+
+/* Stats row */
+.wof-stats-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+.wof-stat-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(200,245,60,.20);
+  border-radius: 14px;
+  backdrop-filter: blur(4px);
+}
+.wof-stat-ico  { font-size: 16px; }
+.wof-stat-val  {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--acc);
+  line-height: 1;
+}
+.wof-stat-lbl  {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Pulsante SALVA E CHIUDI */
+.wof-btn-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--acc) 0%, #a8d620 50%, var(--acc) 100%);
+  background-size: 200% auto;
+  border: none;
+  border-radius: 18px;
+  color: #06060E;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: .14em;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    0 4px 24px rgba(200,245,60,.35),
+    0 0 0 0 rgba(200,245,60,.0);
+  transition: transform .15s, box-shadow .15s, background-position .4s;
+  -webkit-tap-highlight-color: transparent;
+  animation: wofBtnGlow 3s ease-in-out infinite;
+}
+@keyframes wofBtnGlow {
+  0%,100% { box-shadow: 0 4px 24px rgba(200,245,60,.35), 0 0 0 0 rgba(200,245,60,.0); }
+  50%     { box-shadow: 0 4px 32px rgba(200,245,60,.55), 0 0 0 6px rgba(200,245,60,.06); }
+}
+.wof-btn-main:hover  { background-position: right center; }
+.wof-btn-main:active {
+  transform: scale(.97);
+  box-shadow: 0 2px 12px rgba(200,245,60,.25);
+}
+.wof-btn-icon { font-size: 22px; }
+.wof-btn-text { line-height: 1; }
+
+/* ── Padding bottom wo-ovl ── */
+#wo-ovl {
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 16px)) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   LIGHT THEME
+═══════════════════════════════════════════════════ */
+body.light-theme .wof-inprog {
+  background: linear-gradient(135deg, rgba(80,140,0,.06), rgba(60,120,200,.04));
+  border-color: rgba(80,140,0,.30);
+}
+body.light-theme .wof-inprog::before {
+  background: linear-gradient(90deg, transparent, rgba(80,140,0,.5), transparent);
+}
+body.light-theme .wof-inprog-icon { filter: none; }
+body.light-theme .wof-inprog-title { color: var(--text); }
+body.light-theme .wof-inprog-sub   { color: var(--text2); }
+body.light-theme .wof-btn-stop {
+  background: rgba(80,140,0,.08);
+  border-color: rgba(80,140,0,.45);
+  color: #3d7200;
+}
+body.light-theme .wof-btn-stop:active { background: rgba(80,140,0,.18); }
+
+body.light-theme .wof-complete {
+  background: linear-gradient(160deg,
+    rgba(80,140,0,.08) 0%,
+    rgba(60,120,200,.04) 60%,
+    rgba(80,140,0,.05) 100%);
+  border-color: rgba(80,140,0,.35);
+}
+body.light-theme .wof-complete::before {
+  background: linear-gradient(90deg, transparent, #5a9900, #7ab800, #5a9900, transparent);
+  box-shadow: 0 0 12px rgba(80,140,0,.5);
+}
+body.light-theme .wof-badge-text {
+  color: #3d7000;
+  text-shadow: none;
+}
+body.light-theme .wof-badge-icon {
+  filter: drop-shadow(0 0 10px rgba(80,140,0,.4));
+}
+@keyframes wofPulseLight {
+  0%,100% { filter: drop-shadow(0 0 8px rgba(80,140,0,.3)); transform: scale(1); }
+  50%     { filter: drop-shadow(0 0 18px rgba(80,140,0,.6)); transform: scale(1.06); }
+}
+body.light-theme .wof-badge-icon { animation: wofPulseLight 2s ease-in-out infinite; }
+body.light-theme .wof-motivation  { color: #555; }
+body.light-theme .wof-stat-pill {
+  background: rgba(80,140,0,.05);
+  border-color: rgba(80,140,0,.18);
+}
+body.light-theme .wof-stat-val  { color: #3d7200; }
+body.light-theme .wof-stat-lbl  { color: #888; }
+body.light-theme .wof-btn-main  {
+  background: linear-gradient(135deg, #5a9900 0%, #3d7000 50%, #5a9900 100%);
+  background-size: 200% auto;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(80,140,0,.35);
+  animation: wofBtnGlowLight 3s ease-in-out infinite;
+}
+@keyframes wofBtnGlowLight {
+  0%,100% { box-shadow: 0 4px 20px rgba(80,140,0,.3); }
+  50%     { box-shadow: 0 4px 28px rgba(80,140,0,.5), 0 0 0 5px rgba(80,140,0,.06); }
+}
+
 </style>
+
+<script>
+(function _v101FinePatch() {
+'use strict';
+try {
+
+/* Frasi motivazionali rotanti */
+var MOTIVAZIONI = [
+  'Ottimo lavoro! Stai costruendo il meglio di te. 💪',
+  'Ogni serie completata è un passo verso il tuo obiettivo. 🎯',
+  'La costanza batte il talento. Continua così! 🔥',
+  'Il corpo raggiunge ciò che la mente crede. Bravo! ⚡',
+  'Non fermarti mai — il progresso è il tuo premio. 🏆',
+  'Hai dato tutto oggi. Domani darai di più. 💥',
+  'La disciplina è il ponte tra gli obiettivi e i risultati. 🌟',
+  'Ogni goccia di sudore conta. Sei sulla strada giusta. 💦',
+  'Il tuo io futuro ti ringrazierà. Ottima sessione! 🙌',
+  'Forza non è solo muscoli — è anche presentarsi ogni giorno. ⭐',
+];
+
+function _pickMotivazione() {
+  return MOTIVAZIONI[Math.floor(Math.random() * MOTIVAZIONI.length)];
+}
+
+/* Aggiorna le stats quick nella sezione completata */
+function _updateWofStats() {
+  try {
+    // Serie completate
+    var sets = window.woSets || {};
+    var doneSets = Object.keys(sets).filter(function(k){ return sets[k]; }).length;
+    var sEl = document.getElementById('wof-stat-sets');
+    if (sEl) sEl.textContent = doneSets;
+
+    // Durata (dal timer)
+    var timeEl = document.getElementById('wo-time');
+    var statTimeEl = document.getElementById('wof-stat-time');
+    if (timeEl && statTimeEl) statTimeEl.textContent = timeEl.textContent || '—';
+
+    // Volume totale (kg × reps per ogni serie completata)
+    var weights = window.woWeights || {};
+    var exs = window.woDayData && window.woDayData.exercises || [];
+    var totalVol = 0;
+    exs.forEach(function(ex, ei) {
+      var sets2 = parseInt(ex.s, 10) || 3;
+      var reps  = parseInt(ex.r, 10) || 10;
+      for (var si = 0; si < sets2; si++) {
+        var key  = ei + '_' + si;
+        var wkey = 'wo_w_' + ei + '_' + si;
+        if (sets[key]) {
+          var kg = parseFloat(weights[wkey]) || 0;
+          totalVol += kg * reps;
+        }
+      }
+    });
+    var volEl = document.getElementById('wof-stat-vol');
+    if (volEl) volEl.textContent = totalVol > 0 ? Math.round(totalVol) : '—';
+
+    // Frase motivazionale
+    var motEl = document.getElementById('wof-motivation');
+    if (motEl) motEl.textContent = _pickMotivazione();
+  } catch(e) {}
+}
+
+/* Aggiorna il pulsante Fine (in-progress vs complete) + stats */
+function _updateFinSection() {
+  try {
+    var exs = window.woDayData && window.woDayData.exercises || [];
+    var totalSets = exs.reduce(function(a, ex){ return a + (parseInt(ex.s,10)||3); }, 0);
+    var sets = window.woSets || {};
+    var doneSets = Object.keys(sets).filter(function(k){ return sets[k]; }).length;
+    var allDone = totalSets > 0 && doneSets >= totalSets;
+
+    var inProg   = document.getElementById('wo-fine-in-progress');
+    var complete = document.getElementById('wo-fine-complete');
+    if (!inProg || !complete) return;
+
+    if (allDone) {
+      if (inProg.style.display !== 'none') {
+        inProg.style.display = 'none';
+        complete.style.display = 'flex';
+        _updateWofStats();
+        /* Scroll al pulsante */
+        setTimeout(function() {
+          var s = document.getElementById('wo-fine-section');
+          if (s) s.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 300);
+      }
+    } else {
+      inProg.style.display = 'flex';
+      complete.style.display = 'none';
+    }
+
+    /* Aggiorna anche progress ring e counter */
+    if (typeof window._v100UpdateWoPct === 'function') window._v100UpdateWoPct();
+  } catch(e) {}
+}
+window._v101UpdateFin = _updateFinSection;
+
+/* Hook toggleWoSet */
+function _hookToggle() {
+  var _orig = window.toggleWoSet;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.toggleWoSet = function _v101Toggle(ei, si, rs) {
+    var r = _orig.apply(this, arguments);
+    setTimeout(_updateFinSection, 60);
+    return r;
+  };
+  window.toggleWoSet._v101 = true;
+  return true;
+}
+
+/* Hook renderWoExs */
+function _hookRender() {
+  var _orig = window.renderWoExs;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.renderWoExs = function _v101Render() {
+    var r = _orig.apply(this, arguments);
+    setTimeout(_updateFinSection, 120);
+    return r;
+  };
+  window.renderWoExs._v101 = true;
+  return true;
+}
+
+/* Hook startWorkout */
+function _hookStart() {
+  var _orig = window.startWorkout;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.startWorkout = function _v101Start() {
+    var r = _orig.apply(this, arguments);
+    setTimeout(function() { _hookToggle(); _hookRender(); _updateFinSection(); }, 600);
+    return r;
+  };
+  window.startWorkout._v101 = true;
+  return true;
+}
+
+function _install() {
+  _hookToggle();
+  _hookRender();
+  _hookStart();
+}
+_install();
+setTimeout(_install, 400);
+setTimeout(_install, 900);
+
+/* Init motivazione */
+setTimeout(function() {
+  var motEl = document.getElementById('wof-motivation');
+  if (motEl) motEl.textContent = _pickMotivazione();
+}, 500);
+
+} catch(e) {}
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   PATCH V101 — 50 NUOVE RICETTE
+   • 12 colazioni proteiche (variazioni e nuovi formati)
+   • 10 bowl e piatti unici
+   • 8 secondi di carne e pesce
+   • 8 zuppe e vellutate
+   • 7 meal prep / batch cooking
+   • 5 smoothie proteici
+════════════════════════════════════════════════════════════ */
+(function _v101AddRecipes() {
+'use strict';
+try {
+
+var NR101 = [
+
+/* ════ COLAZIONI PROTEICHE ════ */
+{ id:'r101-col1', name:'Overnight oats proteici al cacao',ico:'🍫',
+  tags:['colazione','massa','rapido','high-protein','meal-prep'], time:'5 min', kcal:380, p:28, c:48, g:8, fiber:7, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['avena','latte','proteine whey','cacao','banana'],
+  desc:'Prepara la sera, mangia la mattina. Proteine complete senza cottura.',
+  ingredienti:['70g fiocchi d\'avena','250ml latte scremato','25g whey al cacao','1 cucchiaino miele','½ banana a rondelle','5g cacao amaro'],
+  steps:['Mescola avena, latte, whey e cacao in un barattolo.','Aggiungi il miele e mescola bene.','Chiudi e refrigera tutta la notte.','Al mattino aggiungi la banana e consuma freddo.'] },
+
+{ id:'r101-col2', name:'Scrambled eggs alla mediterranea',ico:'🍳',
+  tags:['colazione','mantenimento','rapido','high-protein','mediterraneo'], time:'8 min', kcal:330, p:26, c:12, g:18, fiber:2, diff:'Facile',
+  tipo:'colazione_salata', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['uova','pomodorini','olive','origano','feta'],
+  desc:'Uova strapazzate stile greco. Colazione proteica e antiossidante.',
+  ingredienti:['3 uova intere','80g pomodorini','30g feta sbriciolata','10 olive nere','Origano secco','5ml olio EVO','Sale, pepe'],
+  steps:['Scalda olio in padella, aggiungi i pomodorini tagliati a metà, cuoci 2 min.','Aggiungi le olive e un pizzico di origano.','Sbatti le uova e versale in padella, mescola delicatamente a fuoco basso.','Togli dal fuoco ancora morbide, aggiungi feta e servi.'] },
+
+{ id:'r101-col3', name:'Porridge avena con mela e cannella',ico:'🍎',
+  tags:['colazione','mantenimento','rapido','veg'], time:'5 min', kcal:310, p:12, c:52, g:6, fiber:8, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['avena','latte','mela','cannella','noci'],
+  desc:'Colazione classica e saziante. Fibre, omega-3 e carboidrati lenti.',
+  ingredienti:['70g fiocchi d\'avena','250ml latte','1 mela grattugiata','1 cucchiaino cannella','15g noci tritate','1 cucchiaino miele'],
+  steps:['Cuoci l\'avena nel latte a fuoco medio 3-4 min mescolando.','Aggiungi la mela grattugiata e la cannella, mescola.','Versa in ciotola, cospargi le noci e irrora con miele.','Servi caldo.'] },
+
+{ id:'r101-col4', name:'Waffle proteici banana-avena',ico:'🧇',
+  tags:['colazione','massa','high-protein'], time:'15 min', kcal:420, p:30, c:48, g:10, fiber:5, diff:'Facile',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['avena','uova','banana','whey','lievito'],
+  desc:'Waffle ad alto contenuto proteico. Perfetti per la mattina pre-workout.',
+  ingredienti:['60g fiocchi d\'avena macinati','2 uova','1 banana matura','20g whey alla vaniglia','½ cucchiaino lievito','Cannella'],
+  steps:['Frulla insieme tutti gli ingredienti fino a batter liscio.','Scalda la piastra per waffle e spruzza un po\' d\'olio spray.','Versa il composto e cuoci 4-5 min.','Servi con yogurt greco e frutti di bosco.'] },
+
+{ id:'r101-col5', name:'Bowl skyr con granola proteica',ico:'🥣',
+  tags:['colazione','definizione','rapido','high-protein'], time:'3 min', kcal:340, p:24, c:42, g:7, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['skyr','granola','frutti di bosco','miele'],
+  desc:'Colazione proteica islandese. Skyr = il latticino più proteico in natura.',
+  ingredienti:['200g skyr naturale','30g granola low-sugar','80g frutti di bosco misti','1 cucchiaino miele','Semi di chia 5g'],
+  steps:['Versa lo skyr in una ciotola.','Aggiungi granola, frutti di bosco e semi di chia.','Irrora con miele e consuma subito.','Per variare aggiungi burro di mandorle (10g).'] },
+
+{ id:'r101-col6', name:'Frittata al forno con verdure e formaggio',ico:'🥚',
+  tags:['colazione','mantenimento','meal-prep','high-protein'], time:'25 min', kcal:290, p:24, c:8, g:18, fiber:3, diff:'Facile',
+  tipo:'colazione_salata', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['uova','zucchine','peperoni','parmigiano','latte'],
+  desc:'Frittata da forno: preparala domenica, mangiala tutta la settimana.',
+  ingredienti:['4 uova intere','2 albumi','1 zucchina','½ peperone rosso','30g parmigiano','50ml latte','Sale, pepe, erbe aromatiche'],
+  steps:['Preriscalda forno a 180°C. Taglia le verdure a dadini piccoli.','Sbatti uova, albumi e latte. Aggiungi verdure, parmigiano, sale e pepe.','Versa in teglia foderata con carta forno.','Cuoci 20-22 min. Lascia raffreddare e taglia in porzioni.'] },
+
+{ id:'r101-col7', name:'Smoothie bowl tropical proteico',ico:'🥭',
+  tags:['colazione','definizione','rapido','high-protein','smoothie'], time:'5 min', kcal:350, p:26, c:44, g:6, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['mango','ananas','whey','latte di cocco','banana'],
+  desc:'Colazione estiva fresca e proteica. Frutta tropicale e proteine del siero.',
+  ingredienti:['100g mango surgelato','80g ananas','25g whey alla vaniglia','100ml latte di cocco light','½ banana','Topping: cocco grattugiato, kiwi, semi di chia'],
+  steps:['Frulla mango, ananas, banana, whey e latte di cocco fino a crema densa.','Versa in ciotola (deve essere spessa, non liquida).','Aggiungi i topping: cocco, kiwi a fette, semi di chia.','Consuma subito con cucchiaio.'] },
+
+{ id:'r101-col8', name:'Pane di segale con burro di mandorle e banana',ico:'🍞',
+  tags:['colazione','massa','rapido'], time:'3 min', kcal:380, p:14, c:52, g:14, fiber:6, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['pane segale','burro di mandorle','banana','miele'],
+  desc:'Colazione nordica. Grassi buoni, carboidrati complessi, sazietà lunga.',
+  ingredienti:['2 fette pane di segale','20g burro di mandorle naturale','1 banana a rondelle','1 cucchiaino miele','Cannella'],
+  steps:['Tosta il pane.','Spalma il burro di mandorle su entrambe le fette.','Aggiungi le rondelle di banana.','Irrora con miele e cannella.'] },
+
+{ id:'r101-col9', name:'Toast proteico tonno e avocado',ico:'🐟',
+  tags:['colazione','definizione','rapido','high-protein','low-carb'], time:'7 min', kcal:360, p:32, c:24, g:14, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_salata', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['pane integrale','tonno','avocado','limone'],
+  desc:'Toast proteico salato. Perfetto per chi non ama il dolce a colazione.',
+  ingredienti:['2 fette pane integrale','130g tonno al naturale','½ avocado','Succo di limone','Sale, pepe','Peperoncino in scaglie','Rucola 20g'],
+  steps:['Tosta il pane.','Schiaccia l\'avocado con succo di limone e sale.','Scola il tonno e condiscilo con pepe.','Assembla: avocado, tonno, rucola, peperoncino.'] },
+
+{ id:'r101-col10', name:'Mug cake proteico alla vaniglia',ico:'☕',
+  tags:['colazione','massa','rapido','high-protein'], time:'5 min', kcal:310, p:28, c:32, g:7, fiber:3, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['whey','uovo','avena','latte','vaniglia'],
+  desc:'Torta in tazza al microonde. Colazione calda e proteica in 5 minuti.',
+  ingredienti:['25g whey alla vaniglia','1 uovo','30g avena macinata','50ml latte','½ cucchiaino lievito','Gocce cioccolato fondente 10g'],
+  steps:['Mescola whey, avena, lievito in una tazza grande.','Aggiungi uovo e latte, mescola bene fino a composto liscio.','Aggiungi le gocce di cioccolato.','Cuoci al microonde 90-120 secondi a potenza massima. Lascia riposare 1 minuto.'] },
+
+{ id:'r101-col11', name:'Crepes proteiche con ricotta e mirtilli',ico:'🫐',
+  tags:['colazione','mantenimento','high-protein'], time:'15 min', kcal:370, p:28, c:36, g:10, fiber:3, diff:'Facile',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['uova','farina avena','latte','ricotta','mirtilli'],
+  desc:'Crepes leggere e proteiche. Ripieno di ricotta fresca e mirtilli.',
+  ingredienti:['2 uova','40g farina d\'avena','100ml latte','Per il ripieno: 100g ricotta, 80g mirtilli, 1 cucchiaino miele'],
+  steps:['Sbatti uova, farina e latte fino a batter liscio. Lascia riposare 5 min.','Cuoci crepes sottili in padella antiaderente calda (1-2 min per lato).','Mescola ricotta con miele.','Farcisci le crepes con ricotta e mirtilli, ripiega e servi.'] },
+
+{ id:'r101-col12', name:'Granola homemade proteica',ico:'🌰',
+  tags:['colazione','mantenimento','meal-prep','high-protein'], time:'25 min', kcal:320, p:14, c:38, g:12, fiber:6, diff:'Facile',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['avena','noci','mandorle','miele','albume','cannella'],
+  desc:'Granola fatta in casa: senza zuccheri industriali, ricca di proteine.',
+  ingredienti:['150g fiocchi d\'avena','40g mix noci e mandorle','2 albumi','2 cucchiai miele','1 cucchiaino cannella','Semi di zucca 20g','Uvetta 20g'],
+  steps:['Preriscalda forno 160°C.','Mescola avena, frutta secca, semi con albumi, miele e cannella.','Stendi su placca con carta forno in strato uniforme.','Cuoci 20-22 min mescolando a metà. Lascia raffreddare prima di aggiungere uvetta.'] },
+
+/* ════ BOWL E PIATTI UNICI ════ */
+{ id:'r101-bowl1', name:'Bowl riso integrale salmone e edamame',ico:'🐟',
+  tags:['pranzo','definizione','high-protein','meal-prep','pesce'], time:'15 min', kcal:480, p:38, c:46, g:12, fiber:6, diff:'Facile',
+  tipo:'piatto_unico', goal:['definizione','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['riso integrale','salmone','edamame','avocado','sesamo'],
+  desc:'Bowl ispirata al poke hawaiano con salmone fresco e riso integrale.',
+  ingredienti:['80g riso integrale cotto','150g salmone fresco a cubetti','80g edamame sgusciati','½ avocado','1 cucchiaio salsa di soia','Succo di lime','Semi di sesamo','Cipollotto'],
+  steps:['Prepara il riso e lascia raffreddare.','Marina il salmone in salsa di soia e lime 5 min.','Assembla la bowl: riso, salmone, edamame, avocado.','Guarnisci con sesamo e cipollotto.'] },
+
+{ id:'r101-bowl2', name:'Bowl di lenticchie, riso basmati e curry',ico:'🍛',
+  tags:['pranzo','mantenimento','veg','vegan','meal-prep'], time:'20 min', kcal:420, p:22, c:62, g:7, fiber:14, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['lenticchie rosse','riso basmati','curry','cipolla','latte cocco'],
+  desc:'Dahl express veloce. Proteine vegetali e carboidrati lenti per sazietà lunga.',
+  ingredienti:['80g riso basmati','100g lenticchie rosse','½ cipolla','1 cucchiaino curry in polvere','100ml latte di cocco light','1 spicchio aglio','Sale'],
+  steps:['Cuoci il riso separatamente.','Soffriggi cipolla e aglio, aggiungi curry 1 min.','Aggiungi lenticchie e 300ml acqua. Cuoci 12 min.','Aggiungi latte di cocco, cuoci altri 3 min. Servi sul riso.'] },
+
+{ id:'r101-bowl3', name:'Burrito bowl pollo e fagioli neri',ico:'🫘',
+  tags:['pranzo','mantenimento','high-protein','meal-prep'], time:'20 min', kcal:500, p:40, c:52, g:10, fiber:12, diff:'Facile',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['pollo','fagioli neri','riso','mais','avocado'],
+  desc:'Burrito bowl senza tortilla. Più proteine, meno carboidrati.',
+  ingredienti:['180g petto di pollo a striscioline','100g fagioli neri cotti','80g riso integrale cotto','50g mais','½ avocado','Salsa di pomodoro piccante','Coriandolo','Lime'],
+  steps:['Griglia il pollo con paprika, cumino, sale.','Assembla la bowl: riso come base.','Aggiungi pollo, fagioli, mais, avocado.','Condisci con salsa, coriandolo e lime.'] },
+
+{ id:'r101-bowl4', name:'Bowl di quinoa, pollo arrostito e pesto',ico:'🌿',
+  tags:['pranzo','mantenimento','high-protein','mediterraneo'], time:'25 min', kcal:470, p:36, c:42, g:14, fiber:5, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['quinoa','pollo','basilico','pinoli','parmigiano'],
+  desc:'Bowl completa con proteine nobili e cereale antico. Pesto homemade.',
+  ingredienti:['80g quinoa','180g petto di pollo','Pesto (30g basilico, 10g pinoli, 15g parmigiano, 10ml olio)','Pomodorini 80g','Rucola 30g'],
+  steps:['Cuoci la quinoa 15 min in acqua salata.','Griglia il pollo e affettalo.','Prepara il pesto frullando gli ingredienti.','Assembla: quinoa, pollo, pesto, pomodorini, rucola.'] },
+
+{ id:'r101-bowl5', name:'Noodle bowl di soba con tofu e miso',ico:'🍜',
+  tags:['cena','definizione','veg','vegan'], time:'15 min', kcal:360, p:20, c:48, g:8, fiber:4, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['soba','tofu','miso','edamame','zenzero'],
+  desc:'Noodle giapponesi di grano saraceno. Leggeri, proteici, anti-infiammatori.',
+  ingredienti:['80g soba (noodles di grano saraceno)','150g tofu compatto','1 cucchiaio miso bianco','80g edamame','1cm zenzero fresco','1 spicchio aglio','Salsa di soia 15ml','Sesamo'],
+  steps:['Cuoci i soba 5 min, scola e raffredda.','Cuoci il tofu a cubetti in padella fino a doratura.','Sciogli il miso in 200ml acqua calda con soia e zenzero.','Assembla: soba, tofu, edamame, brodo miso. Sesamo sopra.'] },
+
+{ id:'r101-bowl6', name:'Rice bowl manzo teriyaki e broccoli',ico:'🥩',
+  tags:['cena','massa','high-protein'], time:'20 min', kcal:520, p:38, c:54, g:14, fiber:5, diff:'Media',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🌙 Cena',
+  alimenti:['manzo','riso','broccoli','salsa teriyaki','sesamo'],
+  desc:'Bowl ispirata alla cucina giapponese. Proteine nobili con glassa dolce-salata.',
+  ingredienti:['160g controfiletto di manzo a striscioline','80g riso jasmine','100g broccoli a cimette','2 cucchiai salsa teriyaki','1 cucchiaino sesamo','Cipollotto'],
+  steps:['Cuoci il riso.','Sbollenta i broccoli 3 min.','Rosola il manzo a fuoco alto 3-4 min, aggiungi salsa teriyaki a fine cottura.','Assembla: riso, manzo, broccoli. Sesamo e cipollotto sopra.'] },
+
+{ id:'r101-bowl7', name:'Buddha bowl invernale con zucca e tahini',ico:'🎃',
+  tags:['pranzo','mantenimento','veg','vegan','meal-prep'], time:'35 min', kcal:430, p:16, c:58, g:15, fiber:11, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['zucca','ceci','farro','tahini','melograno'],
+  desc:'Bowl autunnale e invernale. Zucca arrosto, farro e salsa tahini al limone.',
+  ingredienti:['80g farro perlato','200g zucca a cubetti','100g ceci cotti','30g melograno','Spinaci baby 40g','Salsa: 2 cucchiai tahini, succo di limone, aglio, acqua'],
+  steps:['Cuoci il farro 25 min. Arrosta la zucca in forno 200°C 20 min.','Prepara la salsa tahini con limone, aglio e acqua tiepida.','Assembla: farro, zucca, ceci, spinaci, melograno.','Versa la salsa tahini sopra.'] },
+
+{ id:'r101-bowl8', name:'Gyudon (bowl di manzo e cipolla in salsa)',ico:'🍲',
+  tags:['cena','massa','high-protein'], time:'20 min', kcal:490, p:34, c:52, g:14, fiber:2, diff:'Facile',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🌙 Cena',
+  alimenti:['manzo','cipolla','riso','mirin','salsa di soia'],
+  desc:'Classico giapponese street food. Veloce, proteico e appagante.',
+  ingredienti:['160g manzo macinato o a fettine','1 cipolla media','80g riso','2 cucchiai mirin','2 cucchiai salsa di soia','1 cucchiaino zucchero di canna','Zenzero in polvere'],
+  steps:['Cuoci il riso.','Fai appassire la cipolla in olio 5 min.','Aggiungi il manzo e cuoci 4 min.','Aggiungi mirin, soia e zucchero. Cuoci 3 min a fuoco vivo. Servi sul riso.'] },
+
+/* ════ SECONDI ════ */
+{ id:'r101-sec1', name:'Pollo al limone e timo con verdure al vapore',ico:'🍋',
+  tags:['cena','definizione','high-protein','rapido','low-carb'], time:'15 min', kcal:280, p:42, c:6, g:9, fiber:3, diff:'Facilissimo',
+  tipo:'secondo_carne', goal:['definizione','cut'], cat:'🌙 Cena',
+  alimenti:['pollo','limone','timo','zucchine','carote'],
+  desc:'Cena iperproteica classica. Marinatura rapida che trasforma il petto.',
+  ingredienti:['200g petto di pollo','Succo di 1 limone','Timo fresco','1 zucchina','1 carota','5ml olio EVO','Sale, aglio in polvere'],
+  steps:['Marina il pollo in limone, timo, aglio e olio per 10 min.','Scalda padella o griglia, cuoci il pollo 5-6 min per lato.','Cuoci le verdure al vapore 8 min.','Servi il pollo affettato con le verdure e un filo di limone.'] },
+
+{ id:'r101-sec2', name:'Merluzzo al pomodoro fresco e capperi',ico:'🐟',
+  tags:['cena','definizione','pesce','mediterraneo','rapido'], time:'18 min', kcal:250, p:36, c:10, g:6, fiber:3, diff:'Facile',
+  tipo:'secondo_pesce', goal:['definizione','mantenimento'], cat:'🌙 Cena',
+  alimenti:['merluzzo','pomodorini','capperi','olive','aglio'],
+  desc:'Pesce bianco con sugo mediterraneo. Pochi grassi, tante proteine.',
+  ingredienti:['200g filetto di merluzzo','150g pomodorini','Capperi 20g','Olive verdi 20g','2 spicchi aglio','Prezzemolo','10ml olio EVO'],
+  steps:['In padella: soffriggi aglio in olio, aggiungi pomodorini e cuoci 5 min.','Aggiungi capperi, olive e un cucchiaio d\'acqua.','Immergi il merluzzo nel sugo, copri con coperchio.','Cuoci 10-12 min a fuoco medio. Prezzemolo abbondante a fine cottura.'] },
+
+{ id:'r101-sec3', name:'Spiedini di tacchino e peperoni alla griglia',ico:'🥙',
+  tags:['cena','definizione','high-protein','rapido','mediterraneo'], time:'20 min', kcal:290, p:40, c:10, g:8, fiber:3, diff:'Facile',
+  tipo:'secondo_carne', goal:['definizione','mantenimento'], cat:'🌙 Cena',
+  alimenti:['tacchino','peperoni','zucchine','aglio','origano'],
+  desc:'Spiedini estivi leggeri. Alternare proteine e verdure riduce l\'indice glicemico.',
+  ingredienti:['200g petto di tacchino a cubetti','1 peperone rosso','1 zucchina','Succo di limone','Origano','Aglio in polvere','10ml olio EVO'],
+  steps:['Taglia tacchino e verdure a cubetti simili.','Marina in olio, limone, origano e aglio 15 min.','Infilza alternando tacchino e verdure sugli spiedini.','Griglia 6-8 min girando regolarmente.'] },
+
+{ id:'r101-sec4', name:'Salmone in crosta di pistacchi',ico:'🐠',
+  tags:['cena','mantenimento','pesce','high-protein'], time:'20 min', kcal:400, p:38, c:6, g:24, fiber:2, diff:'Facile',
+  tipo:'secondo_pesce', goal:['mantenimento','massa'], cat:'🌙 Cena',
+  alimenti:['salmone','pistacchi','prezzemolo','limone','olio evo'],
+  desc:'Salmone con crosta croccante di pistacchi. Elegante e ricchissimo di omega-3.',
+  ingredienti:['180g filetto di salmone','30g pistacchi tritati grossolanamente','Prezzemolo tritato','Scorza di limone','5ml olio EVO','Senape 1 cucchiaino','Sale'],
+  steps:['Preriscalda forno 200°C.','Spalma la senape sul salmone.','Mescola pistacchi, prezzemolo e scorza di limone. Premi sulla superficie del salmone.','Cuoci in forno 15 min finché la crosta è dorata.'] },
+
+{ id:'r101-sec5', name:'Polpette di pollo e spinaci in salsa di pomodoro',ico:'🧆',
+  tags:['cena','mantenimento','high-protein','meal-prep'], time:'25 min', kcal:350, p:38, c:18, g:12, fiber:5, diff:'Facile',
+  tipo:'secondo_carne', goal:['mantenimento','massa'], cat:'🌙 Cena',
+  alimenti:['pollo macinato','spinaci','uovo','parmigiano','passata'],
+  desc:'Polpette light di pollo con verdure. Cena completa con salsa di pomodoro.',
+  ingredienti:['250g pollo macinato','80g spinaci cotti e strizzati','1 uovo','20g parmigiano','Aglio, prezzemolo','Per il sugo: 250g passata, aglio, basilico','10ml olio EVO'],
+  steps:['Mescola pollo macinato, spinaci tritati, uovo, parmigiano, aglio e prezzemolo.','Forma 8-10 polpette.','Rosola le polpette in olio 3 min per lato.','Aggiungi la passata e cuoci a fuoco basso con coperchio 15 min.'] },
+
+/* ════ ZUPPE E VELLUTATE ════ */
+{ id:'r101-zup1', name:'Vellutata di zucca e lenticchie rosse',ico:'🎃',
+  tags:['cena','mantenimento','veg','vegan','meal-prep'], time:'30 min', kcal:280, p:14, c:44, g:4, fiber:10, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['zucca','lenticchie rosse','brodo vegetale','curcuma','zenzero'],
+  desc:'Vellutata invernale ricca di beta-carotene e proteine vegetali.',
+  ingredienti:['400g zucca a cubetti','100g lenticchie rosse','600ml brodo vegetale','1 cipolla','1 cucchiaino curcuma','1cm zenzero','5ml olio EVO'],
+  steps:['Soffriggi cipolla in olio, aggiungi curcuma e zenzero 1 min.','Aggiungi zucca e lenticchie, copri con brodo.','Cuoci 20 min a fuoco medio finché tutto è morbido.','Frulla fino a vellutata liscia. Aggiusta di sale.'] },
+
+{ id:'r101-zup2', name:'Minestrone proteico con ceci e pasta integrale',ico:'🥣',
+  tags:['cena','mantenimento','veg','meal-prep','mediterraneo'], time:'35 min', kcal:380, p:18, c:58, g:7, fiber:15, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['ceci','pasta integrale','carote','zucchine','pomodori','sedano'],
+  desc:'Minestrone italiano classico arricchito di ceci. Un pasto completo.',
+  ingredienti:['100g ceci cotti','50g pasta integrale piccola','1 carota','1 zucchina','1 pomodoro','1 gambo sedano','1 cipolla','Rosmarino','800ml brodo vegetale','10ml olio EVO'],
+  steps:['Soffriggi cipolla e sedano in olio 3 min.','Aggiungi carota, zucchina e pomodoro a cubetti. Cuoci 5 min.','Aggiungi ceci, brodo e rosmarino. Cuoci 15 min.','Aggiungi la pasta e cuoci altri 10 min. Olio EVO a crudo.'] },
+
+{ id:'r101-zup3', name:'Zuppa di miso con tofu e alghe wakame',ico:'🍵',
+  tags:['cena','definizione','veg','vegan','rapido','low-carb'], time:'10 min', kcal:160, p:14, c:8, g:6, fiber:2, diff:'Facilissimo',
+  tipo:'piatto_unico', goal:['definizione','cut'], cat:'🌙 Cena',
+  alimenti:['miso','tofu','alghe wakame','cipollotto','dashi'],
+  desc:'Zuppa giapponese tradizionale. Leggerissima, probiotica e saziante.',
+  ingredienti:['150g tofu morbido a cubetti','2 cucchiai miso bianco','5g alghe wakame secche','2 cipollotti','500ml acqua calda (non bollente)'],
+  steps:['Porta l\'acqua a 70°C (non bollire o il miso perde i probiotici).','Sciogli il miso nell\'acqua mescolando bene.','Aggiungi il tofu, le alghe reidratate e cuoci 3 min.','Servi con cipollotto a rondelle.'] },
+
+{ id:'r101-zup4', name:'Gazpacho andaluso con gamberetti',ico:'🥤',
+  tags:['pranzo','definizione','pesce','rapido','low-carb','mediterraneo'], time:'10 min', kcal:190, p:18, c:14, g:5, fiber:4, diff:'Facilissimo',
+  tipo:'piatto_unico', goal:['definizione','cut'], cat:'🍽️ Pranzo',
+  alimenti:['pomodori','peperoni','cetriolo','aglio','gamberetti'],
+  desc:'Zuppa fredda spagnola. Rinfrescante, ricca di antiossidanti e proteine.',
+  ingredienti:['400g pomodori maturi','½ peperone rosso','½ cetriolo','1 spicchio aglio','10ml olio EVO','Aceto di vino rosso','100g gamberetti cotti','Sale'],
+  steps:['Frulla pomodori, peperone, cetriolo, aglio, olio e aceto.','Aggiusta di sale e refrigera almeno 30 min.','Versa in ciotola e aggiungi i gamberetti sopra.','Servi molto freddo con un filo d\'olio.'] },
+
+{ id:'r101-zup5', name:'Ribollita toscana con cavolo nero',ico:'🥬',
+  tags:['cena','mantenimento','veg','vegan','meal-prep','mediterraneo'], time:'40 min', kcal:320, p:14, c:48, g:6, fiber:14, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['cannellini','cavolo nero','pane integrale','pomodori','carote'],
+  desc:'Zuppa toscana povera. Ricchissima di fibre e proteine vegetali.',
+  ingredienti:['200g cannellini cotti','150g cavolo nero','1 fetta pane integrale raffermo','1 pomodoro','1 carota','1 cipolla','2 spicchi aglio','Rosmarino','10ml olio EVO'],
+  steps:['Soffriggi aglio, cipolla e rosmarino. Aggiungi carota e pomodoro.','Aggiungi i fagioli (metà interi, metà schiacciati), 500ml acqua.','Cuoci 15 min, aggiungi cavolo nero a strisce.','Cuoci altri 15 min. Aggiungi pane a pezzi, cuoci 5 min. Olio a crudo.'] },
+
+/* ════ MEAL PREP / BATCH COOKING ════ */
+{ id:'r101-mp1', name:'Pollo al forno con spezie 4 porzioni',ico:'🍗',
+  tags:['mantenimento','meal-prep','high-protein','batch'], time:'35 min', kcal:240, p:42, c:2, g:7, fiber:1, diff:'Facilissimo',
+  tipo:'secondo_carne', goal:['definizione','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['pollo','paprika','curcuma','aglio','limone'],
+  desc:'Base proteica per tutta la settimana. Una cottura, 4-5 pasti. ',
+  ingredienti:['800g petti di pollo','2 cucchiaini paprika affumicata','1 cucchiaino curcuma','2 spicchi aglio grattugiati','Succo di 1 limone','15ml olio EVO','Sale, pepe'],
+  steps:['Mescola le spezie con olio, aglio e limone.','Marina il pollo nella marinatura 30 min (o tutta la notte).','Preriscalda forno 200°C. Disponi su placca.','Cuoci 25-28 min. Lascia raffreddare completamente prima di conservare in frigo.'] },
+
+{ id:'r101-mp2', name:'Riso integrale cotto in brodo 4 porzioni',ico:'🌾',
+  tags:['mantenimento','meal-prep','veg','vegan','batch'], time:'40 min', kcal:150, p:4, c:32, g:1, fiber:2, diff:'Facilissimo',
+  tipo:'meal_prep', goal:['mantenimento','massa'], cat:'🍽️ Pranzo',
+  alimenti:['riso integrale','brodo vegetale'],
+  desc:'Base carbo da usare in bowl, insalate o come contorno per 4-5 giorni.',
+  ingredienti:['400g riso integrale','800ml brodo vegetale','Sale','1 foglia d\'alloro'],
+  steps:['Risciacqua il riso sotto acqua fredda.','Porta il brodo a ebollizione, aggiungi riso e alloro.','Abbassa il fuoco, cuoci 35 min con coperchio.','Sgrana con una forchetta, lascia raffreddare completamente prima di conservare.'] },
+
+{ id:'r101-mp3', name:'Frittate di uova in vasocottura (6 pz)',ico:'🥚',
+  tags:['colazione','definizione','meal-prep','high-protein','batch'], time:'25 min', kcal:120, p:12, c:2, g:7, fiber:1, diff:'Facile',
+  tipo:'secondo_uova', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['uova','albumi','spinaci','peperoni','feta'],
+  desc:'Egg muffin da batch cooking. 6 porzioni in 25 minuti, si conservano 5 giorni.',
+  ingredienti:['4 uova intere','4 albumi','80g spinaci baby','½ peperone rosso a dadini','40g feta sbriciolata','Sale, pepe, erbe aromatiche'],
+  steps:['Preriscalda forno 180°C. Ungi 6 stampini da muffin.','Sbatti uova e albumi con sale, pepe e erbe.','Distribuisci spinaci, peperone e feta negli stampini.','Versa il composto di uova. Cuoci 18-20 min. Lascia raffreddare prima di conservare.'] },
+
+{ id:'r101-mp4', name:'Legumi misti in salsa di pomodoro (4 porz)',ico:'🫘',
+  tags:['cena','mantenimento','veg','vegan','meal-prep','batch'], time:'25 min', kcal:280, p:16, c:42, g:4, fiber:14, diff:'Facile',
+  tipo:'secondo_proteico_veg', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['ceci','lenticchie','fagioli borlotti','passata','rosmarino'],
+  desc:'Mix di legumi in salsa mediterranea. Proteine vegetali complete e fibre.',
+  ingredienti:['150g ceci cotti','150g lenticchie verdi cotte','150g fagioli borlotti cotti','400g passata','2 spicchi aglio','Rosmarino','10ml olio EVO','Sale'],
+  steps:['Soffriggi aglio e rosmarino in olio.','Aggiungi la passata, cuoci 5 min.','Aggiungi tutti i legumi e 100ml acqua.','Cuoci 15 min a fuoco basso. Lascia raffreddare prima di conservare.'] },
+
+/* ════ SMOOTHIE PROTEICI ════ */
+{ id:'r101-smo1', name:'Smoothie verde proteico',ico:'💚',
+  tags:['colazione','definizione','rapido','high-protein','smoothie'], time:'3 min', kcal:280, p:26, c:30, g:5, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['spinaci','banana','whey','mandorle','latte'],
+  desc:'Il green smoothie proteico perfetto. Spinaci non si sentono, ti giuro.',
+  ingredienti:['100g spinaci baby','1 banana surgelata','25g whey alla vaniglia','200ml latte scremato','10g mandorle','1 cucchiaino miele'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla ad alta velocità 60 secondi.','Versa in bicchiere alto e consuma subito.','Variante: aggiungi 1 cucchiaio di burro di arachidi per più calorie.'] },
+
+{ id:'r101-smo2', name:'Smoothie ai frutti rossi post-workout',ico:'🍓',
+  tags:['post-workout','mantenimento','rapido','high-protein','smoothie'], time:'3 min', kcal:310, p:28, c:38, g:4, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['massa','mantenimento'], cat:'⚡ Snack / Post WO',
+  alimenti:['frutti rossi','whey','yogurt greco','banana','latte'],
+  desc:'Recovery drink naturale. Antiossidanti dai frutti rossi + proteine veloci dal whey.',
+  ingredienti:['150g mix frutti rossi surgelati','25g whey alla fragola','100g yogurt greco','150ml latte','½ banana','1 cucchiaino miele'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60 secondi.','Consuma entro 30 min dall\'allenamento.','Per più carboidrati aggiungi 1 cucchiaio di avena.'] },
+
+{ id:'r101-smo3', name:'Smoothie al cioccolato e burro di arachidi',ico:'🥜',
+  tags:['colazione','massa','rapido','high-protein','smoothie'], time:'3 min', kcal:420, p:32, c:40, g:16, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['banana','whey cacao','burro arachidi','latte','avena'],
+  desc:'Smoothie ipercalorico per la massa. Sembra un milkshake, fa crescere i muscoli.',
+  ingredienti:['1 banana grande surgelata','25g whey al cacao','20g burro di arachidi naturale','250ml latte intero','30g fiocchi d\'avena','Ghiaccio'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 90 secondi.','Servi subito in bicchierone.','Per ridurre calorie usa latte scremato e togli l\'avena.'] },
+
+{ id:'r101-smo4', name:'Smoothie mango e curcuma anti-infiammatorio',ico:'🌟',
+  tags:['colazione','mantenimento','rapido','smoothie','recovery'], time:'3 min', kcal:260, p:18, c:36, g:4, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['mango','curcuma','zenzero','whey','latte cocco'],
+  desc:'Smoothie dorato anti-infiammatorio. Curcuma e zenzero accelerano il recupero.',
+  ingredienti:['150g mango surgelato','25g whey alla vaniglia','150ml latte di cocco light','½ cucchiaino curcuma','½cm zenzero fresco','Pepe nero (attiva curcuma)','Ghiaccio'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60 secondi.','Il pepe nero è essenziale per attivare la curcumina!','Consuma entro 10 min dalla preparazione.'] },
+
+{ id:'r101-smo5', name:'Smoothie alle pere e cannella autunnale',ico:'🍐',
+  tags:['colazione','mantenimento','rapido','smoothie','high-protein'], time:'3 min', kcal:290, p:22, c:38, g:5, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['pere','cannella','whey','yogurt','avena'],
+  desc:'Smoothie autunnale vellutato. Pere mature + cannella + proteine = perfetto.',
+  ingredienti:['2 pere mature sbucciate','25g whey alla vaniglia','100g yogurt greco','150ml latte','1 cucchiaino cannella','20g avena'],
+  steps:['Taglia le pere a cubetti.','Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60-90 secondi.','Servi con un pizzico di cannella in superficie.'] },
+
+];
+
+/* ── Iniezione in RICETTE e RECIPES_DB ── */
+if (!Array.isArray(window.RICETTE))    window.RICETTE    = [];
+if (!Array.isArray(window.RECIPES_DB)) window.RECIPES_DB = [];
+
+var existingIds = {};
+window.RICETTE.forEach(function(r)    { if (r && r.id) existingIds[r.id] = true; });
+window.RECIPES_DB.forEach(function(r) { if (r && r.id) existingIds[r.id] = true; });
+
+var added = 0;
+NR101.forEach(function(r) {
+  if (!r || !r.id || existingIds[r.id]) return;
+  existingIds[r.id] = true;
+
+  window.RICETTE.push({
+    id: r.id, name: r.name, ico: r.ico || '🍽️',
+    tags: r.tags || [], time: r.time || '15 min',
+    kcal: r.kcal, p: r.p, c: r.c, g: r.g,
+    diff: r.diff || 'Facile', desc: r.desc || '',
+    alimenti: r.alimenti || [],
+    ingredienti: r.ingredienti || [],
+    steps: r.steps || []
+  });
+
+  window.RECIPES_DB.push({
+    id: r.id, name: r.name,
+    tipo: r.tipo || 'piatto_unico',
+    goal: r.goal || ['mantenimento'],
+    kcal: r.kcal, p: r.p, c: r.c, g: r.g,
+    fiber: r.fiber || 3,
+    time: typeof r.time === 'string' ? parseInt(r.time) : (r.time || 15),
+    cat: r.cat || '🍳 Ricette',
+    ingredienti: r.ingredienti || [],
+    steps: r.steps || []
+  });
+  added++;
+});
+
+try {
+  if (localStorage.getItem('ft_dev_mode')) {
+    console.info('[V101] +' + added + ' ricette | tot RICETTE: ' + window.RICETTE.length);
+  }
+} catch(e) {}
+
+} catch(e) {}
+})();
+</script>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V102 — Riepilogo Giornaliero: redesign completo
+     • Ring SVG 160px viewBox, raggi più ampi e stroke più sottili
+     • Nessuna sovrapposizione testo: kcal centrato nel ring (solo quello)
+     • Rimanenti e target nella colonna destra, ben spaziati
+     • 4 macro card uniformi con icona + barra colorata
+     • Badge % in alto a destra del header
+     • Compatibile con entrambi i temi (dark / light)
+═══════════════════════════════════════════════════════════════ -->
+
+<style id="v102-riep-styles">
+
+/* ── Container riepilogo ── */
+.v102-riepilogo {
+  padding: 18px 16px !important;
+  margin: 0 12px 14px !important;
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 20px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* ── Header row ── */
+.v102-riep-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.v102-riep-header .card-hdr-l {
+  margin-bottom: 0 !important;
+}
+.v102-riep-pct-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--acc);
+  background: rgba(200,245,60,.10);
+  border: 1px solid rgba(200,245,60,.28);
+  border-radius: 99px;
+  padding: 3px 12px;
+  min-width: 48px;
+  text-align: center;
+  transition: color .3s, background .3s;
+}
+
+/* ── Ring + Info layout ── */
+.v102-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+/* ── SVG ring wrapper: quadrato fisso ── */
+.v102-ring-wrap {
+  flex-shrink: 0;
+  width: 148px;
+  height: 148px;
+  position: relative;
+}
+
+/* ── Archi di sfondo (grigio) ── */
+.v102-nr-bg {
+  fill: none;
+  stroke: var(--bg4);
+  stroke-width: 8;
+}
+.v102-nr-bg-p { stroke-width: 8; }
+.v102-nr-bg-c { stroke-width: 8; }
+.v102-nr-bg-g { stroke-width: 8; }
+
+/* ── Archi colorati ── */
+/* Kcal — verde accent (outer) — r=68 → circ≈427 */
+.v102-arc-kcal {
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 427;
+  stroke-dashoffset: 427;
+  transition: stroke-dashoffset 1s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 4px rgba(200,245,60,.45));
+}
+/* Proteine — verde (mid-outer) — r=54 → circ≈339 */
+.v102-arc-p {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 339;
+  stroke-dashoffset: 339;
+  transition: stroke-dashoffset 1s .07s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(50,200,120,.4));
+}
+/* Carbs — blu (mid-inner) — r=40 → circ≈251 */
+.v102-arc-c {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251;
+  stroke-dashoffset: 251;
+  transition: stroke-dashoffset 1s .14s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(91,156,239,.4));
+}
+/* Grassi — arancione (inner) — r=26 → circ≈163 */
+.v102-arc-g {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 163;
+  stroke-dashoffset: 163;
+  transition: stroke-dashoffset 1s .21s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(255,140,50,.4));
+}
+
+/* ── Centro ring: testo SOLO kcal ── */
+.v102-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 0;
+}
+.v102-ring-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--acc);
+  letter-spacing: -.5px;
+  text-shadow: 0 0 20px rgba(200,245,60,.35);
+}
+.v102-ring-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-top: 3px;
+}
+
+/* ── Colonna info destra ── */
+.v102-ring-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v102-tgt-row {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v102-rem-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--acc);
+  letter-spacing: -.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v102-rem-lbl {
+  font-size: 10px;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.v102-pbar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--bg4);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.v102-pbar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--acc), var(--green));
+  transition: width .9s cubic-bezier(.22,1,.36,1);
+  width: 0%;
+}
+
+/* ── Legend ── */
+.v102-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.v102-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.v102-leg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.v102-leg-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: .02em;
+}
+
+/* ── Macro card grid: 4 colonne ── */
+.v102-macros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 340px) {
+  .v102-macros { grid-template-columns: repeat(2, 1fr); }
+}
+.v102-macro-card {
+  background: linear-gradient(160deg, var(--bg3), var(--bg4));
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--mc, var(--acc));
+  border-radius: 14px;
+  padding: 10px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  transition: border-color .2s, transform .15s;
+}
+.v102-macro-card:active { transform: scale(.97); }
+.v102-mc-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+.v102-mc-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--mc, var(--acc));
+  letter-spacing: -.2px;
+}
+.v102-mc-bar-wrap {
+  width: 100%;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--bg4);
+  overflow: hidden;
+}
+.v102-mc-bar {
+  height: 100%;
+  border-radius: 99px;
+  width: 0%;
+  transition: width .8s cubic-bezier(.22,1,.36,1);
+}
+.v102-mc-lbl {
+  font-size: 8px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 1px;
+}
+.v102-mc-target {
+  font-size: 9px;
+  color: var(--text3);
+}
+
+/* ── Light theme ── */
+body.light-theme .v102-riepilogo {
+  background: var(--bg2) !important;
+  border-color: var(--border) !important;
+}
+body.light-theme .v102-riep-pct-badge {
+  color: #3d7200;
+  background: rgba(80,140,0,.08);
+  border-color: rgba(80,140,0,.28);
+}
+body.light-theme .v102-ring-val  { color: #3d7200; text-shadow: none; }
+body.light-theme .v102-rem-val   { color: #3d7200; }
+body.light-theme .v102-arc-kcal  { stroke: #5a9900; filter: none; }
+body.light-theme .v102-arc-p     { filter: none; }
+body.light-theme .v102-arc-c     { filter: none; }
+body.light-theme .v102-arc-g     { filter: none; }
+body.light-theme .v102-nr-bg     { stroke: rgba(0,0,0,.07); }
+body.light-theme .v102-macro-card {
+  background: #fff;
+  border-color: rgba(0,0,0,.08);
+}
+body.light-theme .v102-mc-lbl   { color: #888; }
+body.light-theme .v102-mc-target { color: #999; }
+body.light-theme .v102-tgt-row  { color: #888; }
+body.light-theme .v102-rem-lbl  { color: #666; }
+body.light-theme .v102-leg-name { color: #555; }
+
+</style>
+
+<script>
+(function _v102RiepPatch() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════
+   Aggiorna il riepilogo V102 con i nuovi selettori CSS
+   Compatibile con renderNutr/updateNutrBar esistenti
+══════════════════════════════════════════════════════ */
+function _updateV102Arcs() {
+  try {
+    /* Leggi i valori correnti dagli elementi già aggiornati dal codice base */
+    var eaten = parseInt(document.getElementById('n-eaten')?.textContent || '0', 10) || 0;
+    var remEl = document.getElementById('n-rem');
+    var tgtEl = document.getElementById('n-target');
+    var pctEl = document.getElementById('n-bar-pct');
+    var barEl = document.getElementById('n-bar');
+
+    /* Aggiorna badge % in header */
+    var badgeEl = document.querySelector('.v102-riep-pct-badge');
+    if (badgeEl && pctEl) badgeEl.textContent = pctEl.textContent || '0%';
+
+    /* Aggiorna la barra V102 */
+    var v102bar = document.querySelector('.v102-pbar-fill');
+    if (v102bar && barEl) v102bar.style.width = barEl.style.width;
+
+    /* Aggiorna rimanenti: estrai solo il numero */
+    var v102rem = document.querySelector('.v102-rem-val');
+    if (v102rem && remEl) {
+      var remTxt = remEl.textContent || '—';
+      /* Format: "2264 kcal rimanenti" → mostra solo "2264" nel val, label separata */
+      var remNum = remTxt.replace(/kcal.*$/i, '').trim();
+      v102rem.textContent = remNum || '—';
+    }
+
+    /* Aggiorna archi SVG con le nuove circonferenze */
+    /* r=68 → circ=2π×68≈427, r=54→339, r=40→251, r=26→163 */
+    var CIRCS = { kcal: 427, p: 339, c: 251, g: 163 };
+
+    /* Leggi le macro pill per i valori */
+    function _getPct(valId, tgtId) {
+      try {
+        var val = parseFloat((document.getElementById(valId)?.textContent || '0').replace('g','')) || 0;
+        var tgt = parseFloat((document.getElementById(tgtId)?.textContent || '0').replace(/[^0-9.]/g,'')) || 1;
+        return Math.min(1, val / tgt);
+      } catch(e) { return 0; }
+    }
+
+    /* Pct kcal dalla barra */
+    var kcalPct = 0;
+    if (barEl) kcalPct = parseFloat(barEl.style.width) / 100 || 0;
+
+    var pPct = _getPct('nm-pv', 'nm-pc');
+    var cPct = _getPct('nm-cv', 'nm-cc');
+    var gPct = _getPct('nm-gv', 'nm-gc');
+
+    function _setArc(id, circ, pct) {
+      var el = document.getElementById(id);
+      if (el) el.style.strokeDashoffset = circ * (1 - Math.min(1, pct));
+    }
+    _setArc('nr-kcal-arc', CIRCS.kcal, kcalPct);
+    _setArc('nr-p-arc',    CIRCS.p,    pPct);
+    _setArc('nr-c-arc',    CIRCS.c,    cPct);
+    _setArc('nr-g-arc',    CIRCS.g,    gPct);
+
+    /* Aggiorna barre macro card V102 */
+    function _setMacroBar(barId, pct) {
+      var el = document.getElementById(barId);
+      if (el) el.style.width = Math.min(100, pct * 100) + '%';
+    }
+    _setMacroBar('nm-pb', pPct);
+    _setMacroBar('nm-cb', cPct);
+    _setMacroBar('nm-gb', gPct);
+    /* fibre */
+    var fPct = _getPct('nm-fv', 'nm-fc');
+    _setMacroBar('nm-fb', fPct);
+
+  } catch(e) {}
+}
+window._v102UpdateRiep = _updateV102Arcs;
+
+/* Hook sulle funzioni di aggiornamento nutrizione */
+function _hookNutr() {
+  var fns = ['renderNutr','updateNutr','updateNutrBar','renderNutrSummary',
+             'renderMeals','v67RenderMenuCards','v71RenderAllCards'];
+  fns.forEach(function(name) {
+    var orig = window[name];
+    if (typeof orig !== 'function' || orig['_v102']) return;
+    window[name] = function() {
+      var r = orig.apply(this, arguments);
+      setTimeout(_updateV102Arcs, 120);
+      return r;
+    };
+    window[name]['_v102'] = true;
+  });
+}
+
+_hookNutr();
+setTimeout(_hookNutr, 500);
+setTimeout(_hookNutr, 1200);
+
+/* Aggiorna subito se i dati ci sono già */
+setTimeout(_updateV102Arcs, 800);
+setTimeout(_updateV102Arcs, 2000);
+
+/* MutationObserver su n-eaten per rilevare aggiornamenti */
+try {
+  var eatenEl = document.getElementById('n-eaten');
+  if (eatenEl && window.MutationObserver) {
+    new MutationObserver(function() {
+      setTimeout(_updateV102Arcs, 80);
+    }).observe(eatenEl, { characterData: true, childList: true, subtree: true });
+  }
+} catch(e) {}
+
+} catch(e) {}
+})();
+</script>
 
 </body>
 ═══════════════════════════════════════════════════════════════════ -->
@@ -70559,38 +71790,1305 @@ setTimeout(function() {
 }
 
 /* ── pulsante Fine più visibile nel dark e light theme ── */
-.wo-fine-inprog {
-  border-width: 1.5px !important;
+/* wo-fine-* sostituito da wof-* in v101-fine-styles */
+</style>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V101
+     ① Redesign completo sezione Fine Allenamento
+        Dark: sfondo scuro con accent verde brillante, confetti,
+              stats rapide (serie/durata/volume), frasi motivazionali
+        Light: stesso layout, colori verdi più scuri, alta leggibilità
+     ② 50 nuove ricette (colazioni, secondi, bowl, meal prep, smoothie)
+     ③ Fix: wof-stat aggiornati automaticamente al completamento
+═══════════════════════════════════════════════════════════════ -->
+
+<style id="v101-fine-styles">
+
+/* ═══════════════════════════════════════════════════
+   SEZIONE IN CORSO — wof-inprog
+═══════════════════════════════════════════════════ */
+.wof-inprog {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 20px 0 0;
+  padding: 16px 18px;
+  background: linear-gradient(135deg,
+    rgba(200,245,60,.07) 0%,
+    rgba(91,156,239,.05) 100%);
+  border: 1.5px solid rgba(200,245,60,.28);
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
 }
-.wo-fine-btn-secondary {
-  font-size: 13px !important;
-  padding: 11px 20px !important;
-  min-width: 130px;
+.wof-inprog::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, rgba(200,245,60,.6), transparent);
+  animation: wofSweep 2.5s ease-in-out infinite;
 }
-.wo-fine-btn-main {
-  font-size: 24px !important;
-  letter-spacing: .12em !important;
-  padding: 20px !important;
-  border-radius: 18px !important;
+@keyframes wofSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.wof-inprog-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.wof-inprog-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(200,245,60,.5));
+}
+.wof-inprog-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: .02em;
+}
+.wof-inprog-sub {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 1px;
 }
 
-/* Light theme: Fine button scuro con testo bianco */
-body.light-theme .wo-fine-btn-main {
-  background: linear-gradient(135deg, #5a9900, #4a8000) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 20px rgba(80,140,0,.30) !important;
+/* Pulsante "Termina" — outline accent */
+.wof-btn-stop {
+  flex-shrink: 0;
+  padding: 10px 20px;
+  background: rgba(200,245,60,.08);
+  border: 1.5px solid rgba(200,245,60,.45);
+  border-radius: 99px;
+  color: var(--acc);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .18s, transform .12s, box-shadow .18s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
 }
-body.light-theme .wo-fine-complete {
-  background: rgba(80,140,0,.07) !important;
-  border-color: rgba(80,140,0,.35) !important;
+.wof-btn-stop:hover  { background: rgba(200,245,60,.14); }
+.wof-btn-stop:active {
+  background: rgba(200,245,60,.22);
+  transform: scale(.96);
 }
-body.light-theme .wo-fine-complete-badge {
-  color: #3d7000 !important;
+
+/* ═══════════════════════════════════════════════════
+   SEZIONE COMPLETATA — wof-complete
+═══════════════════════════════════════════════════ */
+.wof-complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 0;
+  padding: 24px 20px 28px;
+  background:
+    linear-gradient(160deg,
+      rgba(200,245,60,.11) 0%,
+      rgba(91,156,239,.06) 60%,
+      rgba(200,245,60,.05) 100%);
+  border: 1.5px solid rgba(200,245,60,.40);
+  border-radius: 22px;
+  position: relative;
+  overflow: hidden;
+  animation: wofCompleteIn .5s cubic-bezier(.22,1,.36,1) both;
 }
-body.light-theme .wo-fine-complete-sub {
-  color: #555 !important;
+/* Bagliore superiore */
+.wof-complete::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 10%; right: 10%;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent, var(--acc), #a8d620, var(--acc), transparent);
+  border-radius: 99px;
+  box-shadow: 0 0 16px rgba(200,245,60,.7);
 }
+@keyframes wofCompleteIn {
+  from { opacity: 0; transform: translateY(20px) scale(.95); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Confetti emoji */
+.wof-confetti {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wof-c {
+  position: absolute;
+  font-size: 20px;
+  opacity: 0;
+  animation: wofFall 3.5s ease-in forwards;
+}
+.wof-c1 { left: 10%; animation-delay: .1s; font-size: 24px; }
+.wof-c2 { left: 25%; animation-delay: .4s; font-size: 18px; }
+.wof-c3 { left: 50%; animation-delay: .2s; font-size: 22px; }
+.wof-c4 { left: 72%; animation-delay: .55s; font-size: 20px; }
+.wof-c5 { left: 88%; animation-delay: .3s; font-size: 16px; }
+@keyframes wofFall {
+  0%   { opacity: 0; top: -10%; transform: rotate(0deg) scale(.5); }
+  15%  { opacity: 1; }
+  80%  { opacity: .6; }
+  100% { opacity: 0; top: 90%; transform: rotate(360deg) scale(1); }
+}
+
+/* Badge */
+.wof-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+.wof-badge-icon {
+  font-size: 48px;
+  filter: drop-shadow(0 0 14px rgba(200,245,60,.7));
+  animation: wofPulse 2s ease-in-out infinite;
+}
+@keyframes wofPulse {
+  0%,100% { filter: drop-shadow(0 0 10px rgba(200,245,60,.5)); transform: scale(1); }
+  50%     { filter: drop-shadow(0 0 22px rgba(200,245,60,.9)); transform: scale(1.06); }
+}
+.wof-badge-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  color: var(--acc);
+  letter-spacing: .14em;
+  text-shadow: 0 0 20px rgba(200,245,60,.4);
+}
+
+/* Frase motivazionale */
+.wof-motivation {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 280px;
+  position: relative;
+  z-index: 1;
+  font-style: italic;
+}
+
+/* Stats row */
+.wof-stats-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+.wof-stat-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(200,245,60,.20);
+  border-radius: 14px;
+  backdrop-filter: blur(4px);
+}
+.wof-stat-ico  { font-size: 16px; }
+.wof-stat-val  {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--acc);
+  line-height: 1;
+}
+.wof-stat-lbl  {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Pulsante SALVA E CHIUDI */
+.wof-btn-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--acc) 0%, #a8d620 50%, var(--acc) 100%);
+  background-size: 200% auto;
+  border: none;
+  border-radius: 18px;
+  color: #06060E;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: .14em;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    0 4px 24px rgba(200,245,60,.35),
+    0 0 0 0 rgba(200,245,60,.0);
+  transition: transform .15s, box-shadow .15s, background-position .4s;
+  -webkit-tap-highlight-color: transparent;
+  animation: wofBtnGlow 3s ease-in-out infinite;
+}
+@keyframes wofBtnGlow {
+  0%,100% { box-shadow: 0 4px 24px rgba(200,245,60,.35), 0 0 0 0 rgba(200,245,60,.0); }
+  50%     { box-shadow: 0 4px 32px rgba(200,245,60,.55), 0 0 0 6px rgba(200,245,60,.06); }
+}
+.wof-btn-main:hover  { background-position: right center; }
+.wof-btn-main:active {
+  transform: scale(.97);
+  box-shadow: 0 2px 12px rgba(200,245,60,.25);
+}
+.wof-btn-icon { font-size: 22px; }
+.wof-btn-text { line-height: 1; }
+
+/* ── Padding bottom wo-ovl ── */
+#wo-ovl {
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 16px)) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   LIGHT THEME
+═══════════════════════════════════════════════════ */
+body.light-theme .wof-inprog {
+  background: linear-gradient(135deg, rgba(80,140,0,.06), rgba(60,120,200,.04));
+  border-color: rgba(80,140,0,.30);
+}
+body.light-theme .wof-inprog::before {
+  background: linear-gradient(90deg, transparent, rgba(80,140,0,.5), transparent);
+}
+body.light-theme .wof-inprog-icon { filter: none; }
+body.light-theme .wof-inprog-title { color: var(--text); }
+body.light-theme .wof-inprog-sub   { color: var(--text2); }
+body.light-theme .wof-btn-stop {
+  background: rgba(80,140,0,.08);
+  border-color: rgba(80,140,0,.45);
+  color: #3d7200;
+}
+body.light-theme .wof-btn-stop:active { background: rgba(80,140,0,.18); }
+
+body.light-theme .wof-complete {
+  background: linear-gradient(160deg,
+    rgba(80,140,0,.08) 0%,
+    rgba(60,120,200,.04) 60%,
+    rgba(80,140,0,.05) 100%);
+  border-color: rgba(80,140,0,.35);
+}
+body.light-theme .wof-complete::before {
+  background: linear-gradient(90deg, transparent, #5a9900, #7ab800, #5a9900, transparent);
+  box-shadow: 0 0 12px rgba(80,140,0,.5);
+}
+body.light-theme .wof-badge-text {
+  color: #3d7000;
+  text-shadow: none;
+}
+body.light-theme .wof-badge-icon {
+  filter: drop-shadow(0 0 10px rgba(80,140,0,.4));
+}
+@keyframes wofPulseLight {
+  0%,100% { filter: drop-shadow(0 0 8px rgba(80,140,0,.3)); transform: scale(1); }
+  50%     { filter: drop-shadow(0 0 18px rgba(80,140,0,.6)); transform: scale(1.06); }
+}
+body.light-theme .wof-badge-icon { animation: wofPulseLight 2s ease-in-out infinite; }
+body.light-theme .wof-motivation  { color: #555; }
+body.light-theme .wof-stat-pill {
+  background: rgba(80,140,0,.05);
+  border-color: rgba(80,140,0,.18);
+}
+body.light-theme .wof-stat-val  { color: #3d7200; }
+body.light-theme .wof-stat-lbl  { color: #888; }
+body.light-theme .wof-btn-main  {
+  background: linear-gradient(135deg, #5a9900 0%, #3d7000 50%, #5a9900 100%);
+  background-size: 200% auto;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(80,140,0,.35);
+  animation: wofBtnGlowLight 3s ease-in-out infinite;
+}
+@keyframes wofBtnGlowLight {
+  0%,100% { box-shadow: 0 4px 20px rgba(80,140,0,.3); }
+  50%     { box-shadow: 0 4px 28px rgba(80,140,0,.5), 0 0 0 5px rgba(80,140,0,.06); }
+}
+
 </style>
+
+<script>
+(function _v101FinePatch() {
+'use strict';
+try {
+
+/* Frasi motivazionali rotanti */
+var MOTIVAZIONI = [
+  'Ottimo lavoro! Stai costruendo il meglio di te. 💪',
+  'Ogni serie completata è un passo verso il tuo obiettivo. 🎯',
+  'La costanza batte il talento. Continua così! 🔥',
+  'Il corpo raggiunge ciò che la mente crede. Bravo! ⚡',
+  'Non fermarti mai — il progresso è il tuo premio. 🏆',
+  'Hai dato tutto oggi. Domani darai di più. 💥',
+  'La disciplina è il ponte tra gli obiettivi e i risultati. 🌟',
+  'Ogni goccia di sudore conta. Sei sulla strada giusta. 💦',
+  'Il tuo io futuro ti ringrazierà. Ottima sessione! 🙌',
+  'Forza non è solo muscoli — è anche presentarsi ogni giorno. ⭐',
+];
+
+function _pickMotivazione() {
+  return MOTIVAZIONI[Math.floor(Math.random() * MOTIVAZIONI.length)];
+}
+
+/* Aggiorna le stats quick nella sezione completata */
+function _updateWofStats() {
+  try {
+    // Serie completate
+    var sets = window.woSets || {};
+    var doneSets = Object.keys(sets).filter(function(k){ return sets[k]; }).length;
+    var sEl = document.getElementById('wof-stat-sets');
+    if (sEl) sEl.textContent = doneSets;
+
+    // Durata (dal timer)
+    var timeEl = document.getElementById('wo-time');
+    var statTimeEl = document.getElementById('wof-stat-time');
+    if (timeEl && statTimeEl) statTimeEl.textContent = timeEl.textContent || '—';
+
+    // Volume totale (kg × reps per ogni serie completata)
+    var weights = window.woWeights || {};
+    var exs = window.woDayData && window.woDayData.exercises || [];
+    var totalVol = 0;
+    exs.forEach(function(ex, ei) {
+      var sets2 = parseInt(ex.s, 10) || 3;
+      var reps  = parseInt(ex.r, 10) || 10;
+      for (var si = 0; si < sets2; si++) {
+        var key  = ei + '_' + si;
+        var wkey = 'wo_w_' + ei + '_' + si;
+        if (sets[key]) {
+          var kg = parseFloat(weights[wkey]) || 0;
+          totalVol += kg * reps;
+        }
+      }
+    });
+    var volEl = document.getElementById('wof-stat-vol');
+    if (volEl) volEl.textContent = totalVol > 0 ? Math.round(totalVol) : '—';
+
+    // Frase motivazionale
+    var motEl = document.getElementById('wof-motivation');
+    if (motEl) motEl.textContent = _pickMotivazione();
+  } catch(e) {}
+}
+
+/* Aggiorna il pulsante Fine (in-progress vs complete) + stats */
+function _updateFinSection() {
+  try {
+    var exs = window.woDayData && window.woDayData.exercises || [];
+    var totalSets = exs.reduce(function(a, ex){ return a + (parseInt(ex.s,10)||3); }, 0);
+    var sets = window.woSets || {};
+    var doneSets = Object.keys(sets).filter(function(k){ return sets[k]; }).length;
+    var allDone = totalSets > 0 && doneSets >= totalSets;
+
+    var inProg   = document.getElementById('wo-fine-in-progress');
+    var complete = document.getElementById('wo-fine-complete');
+    if (!inProg || !complete) return;
+
+    if (allDone) {
+      if (inProg.style.display !== 'none') {
+        inProg.style.display = 'none';
+        complete.style.display = 'flex';
+        _updateWofStats();
+        /* Scroll al pulsante */
+        setTimeout(function() {
+          var s = document.getElementById('wo-fine-section');
+          if (s) s.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 300);
+      }
+    } else {
+      inProg.style.display = 'flex';
+      complete.style.display = 'none';
+    }
+
+    /* Aggiorna anche progress ring e counter */
+    if (typeof window._v100UpdateWoPct === 'function') window._v100UpdateWoPct();
+  } catch(e) {}
+}
+window._v101UpdateFin = _updateFinSection;
+
+/* Hook toggleWoSet */
+function _hookToggle() {
+  var _orig = window.toggleWoSet;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.toggleWoSet = function _v101Toggle(ei, si, rs) {
+    var r = _orig.apply(this, arguments);
+    setTimeout(_updateFinSection, 60);
+    return r;
+  };
+  window.toggleWoSet._v101 = true;
+  return true;
+}
+
+/* Hook renderWoExs */
+function _hookRender() {
+  var _orig = window.renderWoExs;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.renderWoExs = function _v101Render() {
+    var r = _orig.apply(this, arguments);
+    setTimeout(_updateFinSection, 120);
+    return r;
+  };
+  window.renderWoExs._v101 = true;
+  return true;
+}
+
+/* Hook startWorkout */
+function _hookStart() {
+  var _orig = window.startWorkout;
+  if (typeof _orig !== 'function' || _orig._v101) return false;
+  window.startWorkout = function _v101Start() {
+    var r = _orig.apply(this, arguments);
+    setTimeout(function() { _hookToggle(); _hookRender(); _updateFinSection(); }, 600);
+    return r;
+  };
+  window.startWorkout._v101 = true;
+  return true;
+}
+
+function _install() {
+  _hookToggle();
+  _hookRender();
+  _hookStart();
+}
+_install();
+setTimeout(_install, 400);
+setTimeout(_install, 900);
+
+/* Init motivazione */
+setTimeout(function() {
+  var motEl = document.getElementById('wof-motivation');
+  if (motEl) motEl.textContent = _pickMotivazione();
+}, 500);
+
+} catch(e) {}
+})();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   PATCH V101 — 50 NUOVE RICETTE
+   • 12 colazioni proteiche (variazioni e nuovi formati)
+   • 10 bowl e piatti unici
+   • 8 secondi di carne e pesce
+   • 8 zuppe e vellutate
+   • 7 meal prep / batch cooking
+   • 5 smoothie proteici
+════════════════════════════════════════════════════════════ */
+(function _v101AddRecipes() {
+'use strict';
+try {
+
+var NR101 = [
+
+/* ════ COLAZIONI PROTEICHE ════ */
+{ id:'r101-col1', name:'Overnight oats proteici al cacao',ico:'🍫',
+  tags:['colazione','massa','rapido','high-protein','meal-prep'], time:'5 min', kcal:380, p:28, c:48, g:8, fiber:7, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['avena','latte','proteine whey','cacao','banana'],
+  desc:'Prepara la sera, mangia la mattina. Proteine complete senza cottura.',
+  ingredienti:['70g fiocchi d\'avena','250ml latte scremato','25g whey al cacao','1 cucchiaino miele','½ banana a rondelle','5g cacao amaro'],
+  steps:['Mescola avena, latte, whey e cacao in un barattolo.','Aggiungi il miele e mescola bene.','Chiudi e refrigera tutta la notte.','Al mattino aggiungi la banana e consuma freddo.'] },
+
+{ id:'r101-col2', name:'Scrambled eggs alla mediterranea',ico:'🍳',
+  tags:['colazione','mantenimento','rapido','high-protein','mediterraneo'], time:'8 min', kcal:330, p:26, c:12, g:18, fiber:2, diff:'Facile',
+  tipo:'colazione_salata', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['uova','pomodorini','olive','origano','feta'],
+  desc:'Uova strapazzate stile greco. Colazione proteica e antiossidante.',
+  ingredienti:['3 uova intere','80g pomodorini','30g feta sbriciolata','10 olive nere','Origano secco','5ml olio EVO','Sale, pepe'],
+  steps:['Scalda olio in padella, aggiungi i pomodorini tagliati a metà, cuoci 2 min.','Aggiungi le olive e un pizzico di origano.','Sbatti le uova e versale in padella, mescola delicatamente a fuoco basso.','Togli dal fuoco ancora morbide, aggiungi feta e servi.'] },
+
+{ id:'r101-col3', name:'Porridge avena con mela e cannella',ico:'🍎',
+  tags:['colazione','mantenimento','rapido','veg'], time:'5 min', kcal:310, p:12, c:52, g:6, fiber:8, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['avena','latte','mela','cannella','noci'],
+  desc:'Colazione classica e saziante. Fibre, omega-3 e carboidrati lenti.',
+  ingredienti:['70g fiocchi d\'avena','250ml latte','1 mela grattugiata','1 cucchiaino cannella','15g noci tritate','1 cucchiaino miele'],
+  steps:['Cuoci l\'avena nel latte a fuoco medio 3-4 min mescolando.','Aggiungi la mela grattugiata e la cannella, mescola.','Versa in ciotola, cospargi le noci e irrora con miele.','Servi caldo.'] },
+
+{ id:'r101-col4', name:'Waffle proteici banana-avena',ico:'🧇',
+  tags:['colazione','massa','high-protein'], time:'15 min', kcal:420, p:30, c:48, g:10, fiber:5, diff:'Facile',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['avena','uova','banana','whey','lievito'],
+  desc:'Waffle ad alto contenuto proteico. Perfetti per la mattina pre-workout.',
+  ingredienti:['60g fiocchi d\'avena macinati','2 uova','1 banana matura','20g whey alla vaniglia','½ cucchiaino lievito','Cannella'],
+  steps:['Frulla insieme tutti gli ingredienti fino a batter liscio.','Scalda la piastra per waffle e spruzza un po\' d\'olio spray.','Versa il composto e cuoci 4-5 min.','Servi con yogurt greco e frutti di bosco.'] },
+
+{ id:'r101-col5', name:'Bowl skyr con granola proteica',ico:'🥣',
+  tags:['colazione','definizione','rapido','high-protein'], time:'3 min', kcal:340, p:24, c:42, g:7, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['skyr','granola','frutti di bosco','miele'],
+  desc:'Colazione proteica islandese. Skyr = il latticino più proteico in natura.',
+  ingredienti:['200g skyr naturale','30g granola low-sugar','80g frutti di bosco misti','1 cucchiaino miele','Semi di chia 5g'],
+  steps:['Versa lo skyr in una ciotola.','Aggiungi granola, frutti di bosco e semi di chia.','Irrora con miele e consuma subito.','Per variare aggiungi burro di mandorle (10g).'] },
+
+{ id:'r101-col6', name:'Frittata al forno con verdure e formaggio',ico:'🥚',
+  tags:['colazione','mantenimento','meal-prep','high-protein'], time:'25 min', kcal:290, p:24, c:8, g:18, fiber:3, diff:'Facile',
+  tipo:'colazione_salata', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['uova','zucchine','peperoni','parmigiano','latte'],
+  desc:'Frittata da forno: preparala domenica, mangiala tutta la settimana.',
+  ingredienti:['4 uova intere','2 albumi','1 zucchina','½ peperone rosso','30g parmigiano','50ml latte','Sale, pepe, erbe aromatiche'],
+  steps:['Preriscalda forno a 180°C. Taglia le verdure a dadini piccoli.','Sbatti uova, albumi e latte. Aggiungi verdure, parmigiano, sale e pepe.','Versa in teglia foderata con carta forno.','Cuoci 20-22 min. Lascia raffreddare e taglia in porzioni.'] },
+
+{ id:'r101-col7', name:'Smoothie bowl tropical proteico',ico:'🥭',
+  tags:['colazione','definizione','rapido','high-protein','smoothie'], time:'5 min', kcal:350, p:26, c:44, g:6, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['mango','ananas','whey','latte di cocco','banana'],
+  desc:'Colazione estiva fresca e proteica. Frutta tropicale e proteine del siero.',
+  ingredienti:['100g mango surgelato','80g ananas','25g whey alla vaniglia','100ml latte di cocco light','½ banana','Topping: cocco grattugiato, kiwi, semi di chia'],
+  steps:['Frulla mango, ananas, banana, whey e latte di cocco fino a crema densa.','Versa in ciotola (deve essere spessa, non liquida).','Aggiungi i topping: cocco, kiwi a fette, semi di chia.','Consuma subito con cucchiaio.'] },
+
+{ id:'r101-col8', name:'Pane di segale con burro di mandorle e banana',ico:'🍞',
+  tags:['colazione','massa','rapido'], time:'3 min', kcal:380, p:14, c:52, g:14, fiber:6, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['pane segale','burro di mandorle','banana','miele'],
+  desc:'Colazione nordica. Grassi buoni, carboidrati complessi, sazietà lunga.',
+  ingredienti:['2 fette pane di segale','20g burro di mandorle naturale','1 banana a rondelle','1 cucchiaino miele','Cannella'],
+  steps:['Tosta il pane.','Spalma il burro di mandorle su entrambe le fette.','Aggiungi le rondelle di banana.','Irrora con miele e cannella.'] },
+
+{ id:'r101-col9', name:'Toast proteico tonno e avocado',ico:'🐟',
+  tags:['colazione','definizione','rapido','high-protein','low-carb'], time:'7 min', kcal:360, p:32, c:24, g:14, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_salata', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['pane integrale','tonno','avocado','limone'],
+  desc:'Toast proteico salato. Perfetto per chi non ama il dolce a colazione.',
+  ingredienti:['2 fette pane integrale','130g tonno al naturale','½ avocado','Succo di limone','Sale, pepe','Peperoncino in scaglie','Rucola 20g'],
+  steps:['Tosta il pane.','Schiaccia l\'avocado con succo di limone e sale.','Scola il tonno e condiscilo con pepe.','Assembla: avocado, tonno, rucola, peperoncino.'] },
+
+{ id:'r101-col10', name:'Mug cake proteico alla vaniglia',ico:'☕',
+  tags:['colazione','massa','rapido','high-protein'], time:'5 min', kcal:310, p:28, c:32, g:7, fiber:3, diff:'Facilissimo',
+  tipo:'colazione_dolce', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['whey','uovo','avena','latte','vaniglia'],
+  desc:'Torta in tazza al microonde. Colazione calda e proteica in 5 minuti.',
+  ingredienti:['25g whey alla vaniglia','1 uovo','30g avena macinata','50ml latte','½ cucchiaino lievito','Gocce cioccolato fondente 10g'],
+  steps:['Mescola whey, avena, lievito in una tazza grande.','Aggiungi uovo e latte, mescola bene fino a composto liscio.','Aggiungi le gocce di cioccolato.','Cuoci al microonde 90-120 secondi a potenza massima. Lascia riposare 1 minuto.'] },
+
+{ id:'r101-col11', name:'Crepes proteiche con ricotta e mirtilli',ico:'🫐',
+  tags:['colazione','mantenimento','high-protein'], time:'15 min', kcal:370, p:28, c:36, g:10, fiber:3, diff:'Facile',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['uova','farina avena','latte','ricotta','mirtilli'],
+  desc:'Crepes leggere e proteiche. Ripieno di ricotta fresca e mirtilli.',
+  ingredienti:['2 uova','40g farina d\'avena','100ml latte','Per il ripieno: 100g ricotta, 80g mirtilli, 1 cucchiaino miele'],
+  steps:['Sbatti uova, farina e latte fino a batter liscio. Lascia riposare 5 min.','Cuoci crepes sottili in padella antiaderente calda (1-2 min per lato).','Mescola ricotta con miele.','Farcisci le crepes con ricotta e mirtilli, ripiega e servi.'] },
+
+{ id:'r101-col12', name:'Granola homemade proteica',ico:'🌰',
+  tags:['colazione','mantenimento','meal-prep','high-protein'], time:'25 min', kcal:320, p:14, c:38, g:12, fiber:6, diff:'Facile',
+  tipo:'colazione_dolce', goal:['mantenimento','massa'], cat:'🌅 Colazione',
+  alimenti:['avena','noci','mandorle','miele','albume','cannella'],
+  desc:'Granola fatta in casa: senza zuccheri industriali, ricca di proteine.',
+  ingredienti:['150g fiocchi d\'avena','40g mix noci e mandorle','2 albumi','2 cucchiai miele','1 cucchiaino cannella','Semi di zucca 20g','Uvetta 20g'],
+  steps:['Preriscalda forno 160°C.','Mescola avena, frutta secca, semi con albumi, miele e cannella.','Stendi su placca con carta forno in strato uniforme.','Cuoci 20-22 min mescolando a metà. Lascia raffreddare prima di aggiungere uvetta.'] },
+
+/* ════ BOWL E PIATTI UNICI ════ */
+{ id:'r101-bowl1', name:'Bowl riso integrale salmone e edamame',ico:'🐟',
+  tags:['pranzo','definizione','high-protein','meal-prep','pesce'], time:'15 min', kcal:480, p:38, c:46, g:12, fiber:6, diff:'Facile',
+  tipo:'piatto_unico', goal:['definizione','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['riso integrale','salmone','edamame','avocado','sesamo'],
+  desc:'Bowl ispirata al poke hawaiano con salmone fresco e riso integrale.',
+  ingredienti:['80g riso integrale cotto','150g salmone fresco a cubetti','80g edamame sgusciati','½ avocado','1 cucchiaio salsa di soia','Succo di lime','Semi di sesamo','Cipollotto'],
+  steps:['Prepara il riso e lascia raffreddare.','Marina il salmone in salsa di soia e lime 5 min.','Assembla la bowl: riso, salmone, edamame, avocado.','Guarnisci con sesamo e cipollotto.'] },
+
+{ id:'r101-bowl2', name:'Bowl di lenticchie, riso basmati e curry',ico:'🍛',
+  tags:['pranzo','mantenimento','veg','vegan','meal-prep'], time:'20 min', kcal:420, p:22, c:62, g:7, fiber:14, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['lenticchie rosse','riso basmati','curry','cipolla','latte cocco'],
+  desc:'Dahl express veloce. Proteine vegetali e carboidrati lenti per sazietà lunga.',
+  ingredienti:['80g riso basmati','100g lenticchie rosse','½ cipolla','1 cucchiaino curry in polvere','100ml latte di cocco light','1 spicchio aglio','Sale'],
+  steps:['Cuoci il riso separatamente.','Soffriggi cipolla e aglio, aggiungi curry 1 min.','Aggiungi lenticchie e 300ml acqua. Cuoci 12 min.','Aggiungi latte di cocco, cuoci altri 3 min. Servi sul riso.'] },
+
+{ id:'r101-bowl3', name:'Burrito bowl pollo e fagioli neri',ico:'🫘',
+  tags:['pranzo','mantenimento','high-protein','meal-prep'], time:'20 min', kcal:500, p:40, c:52, g:10, fiber:12, diff:'Facile',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['pollo','fagioli neri','riso','mais','avocado'],
+  desc:'Burrito bowl senza tortilla. Più proteine, meno carboidrati.',
+  ingredienti:['180g petto di pollo a striscioline','100g fagioli neri cotti','80g riso integrale cotto','50g mais','½ avocado','Salsa di pomodoro piccante','Coriandolo','Lime'],
+  steps:['Griglia il pollo con paprika, cumino, sale.','Assembla la bowl: riso come base.','Aggiungi pollo, fagioli, mais, avocado.','Condisci con salsa, coriandolo e lime.'] },
+
+{ id:'r101-bowl4', name:'Bowl di quinoa, pollo arrostito e pesto',ico:'🌿',
+  tags:['pranzo','mantenimento','high-protein','mediterraneo'], time:'25 min', kcal:470, p:36, c:42, g:14, fiber:5, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['quinoa','pollo','basilico','pinoli','parmigiano'],
+  desc:'Bowl completa con proteine nobili e cereale antico. Pesto homemade.',
+  ingredienti:['80g quinoa','180g petto di pollo','Pesto (30g basilico, 10g pinoli, 15g parmigiano, 10ml olio)','Pomodorini 80g','Rucola 30g'],
+  steps:['Cuoci la quinoa 15 min in acqua salata.','Griglia il pollo e affettalo.','Prepara il pesto frullando gli ingredienti.','Assembla: quinoa, pollo, pesto, pomodorini, rucola.'] },
+
+{ id:'r101-bowl5', name:'Noodle bowl di soba con tofu e miso',ico:'🍜',
+  tags:['cena','definizione','veg','vegan'], time:'15 min', kcal:360, p:20, c:48, g:8, fiber:4, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['soba','tofu','miso','edamame','zenzero'],
+  desc:'Noodle giapponesi di grano saraceno. Leggeri, proteici, anti-infiammatori.',
+  ingredienti:['80g soba (noodles di grano saraceno)','150g tofu compatto','1 cucchiaio miso bianco','80g edamame','1cm zenzero fresco','1 spicchio aglio','Salsa di soia 15ml','Sesamo'],
+  steps:['Cuoci i soba 5 min, scola e raffredda.','Cuoci il tofu a cubetti in padella fino a doratura.','Sciogli il miso in 200ml acqua calda con soia e zenzero.','Assembla: soba, tofu, edamame, brodo miso. Sesamo sopra.'] },
+
+{ id:'r101-bowl6', name:'Rice bowl manzo teriyaki e broccoli',ico:'🥩',
+  tags:['cena','massa','high-protein'], time:'20 min', kcal:520, p:38, c:54, g:14, fiber:5, diff:'Media',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🌙 Cena',
+  alimenti:['manzo','riso','broccoli','salsa teriyaki','sesamo'],
+  desc:'Bowl ispirata alla cucina giapponese. Proteine nobili con glassa dolce-salata.',
+  ingredienti:['160g controfiletto di manzo a striscioline','80g riso jasmine','100g broccoli a cimette','2 cucchiai salsa teriyaki','1 cucchiaino sesamo','Cipollotto'],
+  steps:['Cuoci il riso.','Sbollenta i broccoli 3 min.','Rosola il manzo a fuoco alto 3-4 min, aggiungi salsa teriyaki a fine cottura.','Assembla: riso, manzo, broccoli. Sesamo e cipollotto sopra.'] },
+
+{ id:'r101-bowl7', name:'Buddha bowl invernale con zucca e tahini',ico:'🎃',
+  tags:['pranzo','mantenimento','veg','vegan','meal-prep'], time:'35 min', kcal:430, p:16, c:58, g:15, fiber:11, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🍽️ Pranzo',
+  alimenti:['zucca','ceci','farro','tahini','melograno'],
+  desc:'Bowl autunnale e invernale. Zucca arrosto, farro e salsa tahini al limone.',
+  ingredienti:['80g farro perlato','200g zucca a cubetti','100g ceci cotti','30g melograno','Spinaci baby 40g','Salsa: 2 cucchiai tahini, succo di limone, aglio, acqua'],
+  steps:['Cuoci il farro 25 min. Arrosta la zucca in forno 200°C 20 min.','Prepara la salsa tahini con limone, aglio e acqua tiepida.','Assembla: farro, zucca, ceci, spinaci, melograno.','Versa la salsa tahini sopra.'] },
+
+{ id:'r101-bowl8', name:'Gyudon (bowl di manzo e cipolla in salsa)',ico:'🍲',
+  tags:['cena','massa','high-protein'], time:'20 min', kcal:490, p:34, c:52, g:14, fiber:2, diff:'Facile',
+  tipo:'piatto_unico', goal:['massa','mantenimento'], cat:'🌙 Cena',
+  alimenti:['manzo','cipolla','riso','mirin','salsa di soia'],
+  desc:'Classico giapponese street food. Veloce, proteico e appagante.',
+  ingredienti:['160g manzo macinato o a fettine','1 cipolla media','80g riso','2 cucchiai mirin','2 cucchiai salsa di soia','1 cucchiaino zucchero di canna','Zenzero in polvere'],
+  steps:['Cuoci il riso.','Fai appassire la cipolla in olio 5 min.','Aggiungi il manzo e cuoci 4 min.','Aggiungi mirin, soia e zucchero. Cuoci 3 min a fuoco vivo. Servi sul riso.'] },
+
+/* ════ SECONDI ════ */
+{ id:'r101-sec1', name:'Pollo al limone e timo con verdure al vapore',ico:'🍋',
+  tags:['cena','definizione','high-protein','rapido','low-carb'], time:'15 min', kcal:280, p:42, c:6, g:9, fiber:3, diff:'Facilissimo',
+  tipo:'secondo_carne', goal:['definizione','cut'], cat:'🌙 Cena',
+  alimenti:['pollo','limone','timo','zucchine','carote'],
+  desc:'Cena iperproteica classica. Marinatura rapida che trasforma il petto.',
+  ingredienti:['200g petto di pollo','Succo di 1 limone','Timo fresco','1 zucchina','1 carota','5ml olio EVO','Sale, aglio in polvere'],
+  steps:['Marina il pollo in limone, timo, aglio e olio per 10 min.','Scalda padella o griglia, cuoci il pollo 5-6 min per lato.','Cuoci le verdure al vapore 8 min.','Servi il pollo affettato con le verdure e un filo di limone.'] },
+
+{ id:'r101-sec2', name:'Merluzzo al pomodoro fresco e capperi',ico:'🐟',
+  tags:['cena','definizione','pesce','mediterraneo','rapido'], time:'18 min', kcal:250, p:36, c:10, g:6, fiber:3, diff:'Facile',
+  tipo:'secondo_pesce', goal:['definizione','mantenimento'], cat:'🌙 Cena',
+  alimenti:['merluzzo','pomodorini','capperi','olive','aglio'],
+  desc:'Pesce bianco con sugo mediterraneo. Pochi grassi, tante proteine.',
+  ingredienti:['200g filetto di merluzzo','150g pomodorini','Capperi 20g','Olive verdi 20g','2 spicchi aglio','Prezzemolo','10ml olio EVO'],
+  steps:['In padella: soffriggi aglio in olio, aggiungi pomodorini e cuoci 5 min.','Aggiungi capperi, olive e un cucchiaio d\'acqua.','Immergi il merluzzo nel sugo, copri con coperchio.','Cuoci 10-12 min a fuoco medio. Prezzemolo abbondante a fine cottura.'] },
+
+{ id:'r101-sec3', name:'Spiedini di tacchino e peperoni alla griglia',ico:'🥙',
+  tags:['cena','definizione','high-protein','rapido','mediterraneo'], time:'20 min', kcal:290, p:40, c:10, g:8, fiber:3, diff:'Facile',
+  tipo:'secondo_carne', goal:['definizione','mantenimento'], cat:'🌙 Cena',
+  alimenti:['tacchino','peperoni','zucchine','aglio','origano'],
+  desc:'Spiedini estivi leggeri. Alternare proteine e verdure riduce l\'indice glicemico.',
+  ingredienti:['200g petto di tacchino a cubetti','1 peperone rosso','1 zucchina','Succo di limone','Origano','Aglio in polvere','10ml olio EVO'],
+  steps:['Taglia tacchino e verdure a cubetti simili.','Marina in olio, limone, origano e aglio 15 min.','Infilza alternando tacchino e verdure sugli spiedini.','Griglia 6-8 min girando regolarmente.'] },
+
+{ id:'r101-sec4', name:'Salmone in crosta di pistacchi',ico:'🐠',
+  tags:['cena','mantenimento','pesce','high-protein'], time:'20 min', kcal:400, p:38, c:6, g:24, fiber:2, diff:'Facile',
+  tipo:'secondo_pesce', goal:['mantenimento','massa'], cat:'🌙 Cena',
+  alimenti:['salmone','pistacchi','prezzemolo','limone','olio evo'],
+  desc:'Salmone con crosta croccante di pistacchi. Elegante e ricchissimo di omega-3.',
+  ingredienti:['180g filetto di salmone','30g pistacchi tritati grossolanamente','Prezzemolo tritato','Scorza di limone','5ml olio EVO','Senape 1 cucchiaino','Sale'],
+  steps:['Preriscalda forno 200°C.','Spalma la senape sul salmone.','Mescola pistacchi, prezzemolo e scorza di limone. Premi sulla superficie del salmone.','Cuoci in forno 15 min finché la crosta è dorata.'] },
+
+{ id:'r101-sec5', name:'Polpette di pollo e spinaci in salsa di pomodoro',ico:'🧆',
+  tags:['cena','mantenimento','high-protein','meal-prep'], time:'25 min', kcal:350, p:38, c:18, g:12, fiber:5, diff:'Facile',
+  tipo:'secondo_carne', goal:['mantenimento','massa'], cat:'🌙 Cena',
+  alimenti:['pollo macinato','spinaci','uovo','parmigiano','passata'],
+  desc:'Polpette light di pollo con verdure. Cena completa con salsa di pomodoro.',
+  ingredienti:['250g pollo macinato','80g spinaci cotti e strizzati','1 uovo','20g parmigiano','Aglio, prezzemolo','Per il sugo: 250g passata, aglio, basilico','10ml olio EVO'],
+  steps:['Mescola pollo macinato, spinaci tritati, uovo, parmigiano, aglio e prezzemolo.','Forma 8-10 polpette.','Rosola le polpette in olio 3 min per lato.','Aggiungi la passata e cuoci a fuoco basso con coperchio 15 min.'] },
+
+/* ════ ZUPPE E VELLUTATE ════ */
+{ id:'r101-zup1', name:'Vellutata di zucca e lenticchie rosse',ico:'🎃',
+  tags:['cena','mantenimento','veg','vegan','meal-prep'], time:'30 min', kcal:280, p:14, c:44, g:4, fiber:10, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['zucca','lenticchie rosse','brodo vegetale','curcuma','zenzero'],
+  desc:'Vellutata invernale ricca di beta-carotene e proteine vegetali.',
+  ingredienti:['400g zucca a cubetti','100g lenticchie rosse','600ml brodo vegetale','1 cipolla','1 cucchiaino curcuma','1cm zenzero','5ml olio EVO'],
+  steps:['Soffriggi cipolla in olio, aggiungi curcuma e zenzero 1 min.','Aggiungi zucca e lenticchie, copri con brodo.','Cuoci 20 min a fuoco medio finché tutto è morbido.','Frulla fino a vellutata liscia. Aggiusta di sale.'] },
+
+{ id:'r101-zup2', name:'Minestrone proteico con ceci e pasta integrale',ico:'🥣',
+  tags:['cena','mantenimento','veg','meal-prep','mediterraneo'], time:'35 min', kcal:380, p:18, c:58, g:7, fiber:15, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['ceci','pasta integrale','carote','zucchine','pomodori','sedano'],
+  desc:'Minestrone italiano classico arricchito di ceci. Un pasto completo.',
+  ingredienti:['100g ceci cotti','50g pasta integrale piccola','1 carota','1 zucchina','1 pomodoro','1 gambo sedano','1 cipolla','Rosmarino','800ml brodo vegetale','10ml olio EVO'],
+  steps:['Soffriggi cipolla e sedano in olio 3 min.','Aggiungi carota, zucchina e pomodoro a cubetti. Cuoci 5 min.','Aggiungi ceci, brodo e rosmarino. Cuoci 15 min.','Aggiungi la pasta e cuoci altri 10 min. Olio EVO a crudo.'] },
+
+{ id:'r101-zup3', name:'Zuppa di miso con tofu e alghe wakame',ico:'🍵',
+  tags:['cena','definizione','veg','vegan','rapido','low-carb'], time:'10 min', kcal:160, p:14, c:8, g:6, fiber:2, diff:'Facilissimo',
+  tipo:'piatto_unico', goal:['definizione','cut'], cat:'🌙 Cena',
+  alimenti:['miso','tofu','alghe wakame','cipollotto','dashi'],
+  desc:'Zuppa giapponese tradizionale. Leggerissima, probiotica e saziante.',
+  ingredienti:['150g tofu morbido a cubetti','2 cucchiai miso bianco','5g alghe wakame secche','2 cipollotti','500ml acqua calda (non bollente)'],
+  steps:['Porta l\'acqua a 70°C (non bollire o il miso perde i probiotici).','Sciogli il miso nell\'acqua mescolando bene.','Aggiungi il tofu, le alghe reidratate e cuoci 3 min.','Servi con cipollotto a rondelle.'] },
+
+{ id:'r101-zup4', name:'Gazpacho andaluso con gamberetti',ico:'🥤',
+  tags:['pranzo','definizione','pesce','rapido','low-carb','mediterraneo'], time:'10 min', kcal:190, p:18, c:14, g:5, fiber:4, diff:'Facilissimo',
+  tipo:'piatto_unico', goal:['definizione','cut'], cat:'🍽️ Pranzo',
+  alimenti:['pomodori','peperoni','cetriolo','aglio','gamberetti'],
+  desc:'Zuppa fredda spagnola. Rinfrescante, ricca di antiossidanti e proteine.',
+  ingredienti:['400g pomodori maturi','½ peperone rosso','½ cetriolo','1 spicchio aglio','10ml olio EVO','Aceto di vino rosso','100g gamberetti cotti','Sale'],
+  steps:['Frulla pomodori, peperone, cetriolo, aglio, olio e aceto.','Aggiusta di sale e refrigera almeno 30 min.','Versa in ciotola e aggiungi i gamberetti sopra.','Servi molto freddo con un filo d\'olio.'] },
+
+{ id:'r101-zup5', name:'Ribollita toscana con cavolo nero',ico:'🥬',
+  tags:['cena','mantenimento','veg','vegan','meal-prep','mediterraneo'], time:'40 min', kcal:320, p:14, c:48, g:6, fiber:14, diff:'Facile',
+  tipo:'piatto_unico', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['cannellini','cavolo nero','pane integrale','pomodori','carote'],
+  desc:'Zuppa toscana povera. Ricchissima di fibre e proteine vegetali.',
+  ingredienti:['200g cannellini cotti','150g cavolo nero','1 fetta pane integrale raffermo','1 pomodoro','1 carota','1 cipolla','2 spicchi aglio','Rosmarino','10ml olio EVO'],
+  steps:['Soffriggi aglio, cipolla e rosmarino. Aggiungi carota e pomodoro.','Aggiungi i fagioli (metà interi, metà schiacciati), 500ml acqua.','Cuoci 15 min, aggiungi cavolo nero a strisce.','Cuoci altri 15 min. Aggiungi pane a pezzi, cuoci 5 min. Olio a crudo.'] },
+
+/* ════ MEAL PREP / BATCH COOKING ════ */
+{ id:'r101-mp1', name:'Pollo al forno con spezie 4 porzioni',ico:'🍗',
+  tags:['mantenimento','meal-prep','high-protein','batch'], time:'35 min', kcal:240, p:42, c:2, g:7, fiber:1, diff:'Facilissimo',
+  tipo:'secondo_carne', goal:['definizione','mantenimento'], cat:'🍽️ Pranzo',
+  alimenti:['pollo','paprika','curcuma','aglio','limone'],
+  desc:'Base proteica per tutta la settimana. Una cottura, 4-5 pasti. ',
+  ingredienti:['800g petti di pollo','2 cucchiaini paprika affumicata','1 cucchiaino curcuma','2 spicchi aglio grattugiati','Succo di 1 limone','15ml olio EVO','Sale, pepe'],
+  steps:['Mescola le spezie con olio, aglio e limone.','Marina il pollo nella marinatura 30 min (o tutta la notte).','Preriscalda forno 200°C. Disponi su placca.','Cuoci 25-28 min. Lascia raffreddare completamente prima di conservare in frigo.'] },
+
+{ id:'r101-mp2', name:'Riso integrale cotto in brodo 4 porzioni',ico:'🌾',
+  tags:['mantenimento','meal-prep','veg','vegan','batch'], time:'40 min', kcal:150, p:4, c:32, g:1, fiber:2, diff:'Facilissimo',
+  tipo:'meal_prep', goal:['mantenimento','massa'], cat:'🍽️ Pranzo',
+  alimenti:['riso integrale','brodo vegetale'],
+  desc:'Base carbo da usare in bowl, insalate o come contorno per 4-5 giorni.',
+  ingredienti:['400g riso integrale','800ml brodo vegetale','Sale','1 foglia d\'alloro'],
+  steps:['Risciacqua il riso sotto acqua fredda.','Porta il brodo a ebollizione, aggiungi riso e alloro.','Abbassa il fuoco, cuoci 35 min con coperchio.','Sgrana con una forchetta, lascia raffreddare completamente prima di conservare.'] },
+
+{ id:'r101-mp3', name:'Frittate di uova in vasocottura (6 pz)',ico:'🥚',
+  tags:['colazione','definizione','meal-prep','high-protein','batch'], time:'25 min', kcal:120, p:12, c:2, g:7, fiber:1, diff:'Facile',
+  tipo:'secondo_uova', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['uova','albumi','spinaci','peperoni','feta'],
+  desc:'Egg muffin da batch cooking. 6 porzioni in 25 minuti, si conservano 5 giorni.',
+  ingredienti:['4 uova intere','4 albumi','80g spinaci baby','½ peperone rosso a dadini','40g feta sbriciolata','Sale, pepe, erbe aromatiche'],
+  steps:['Preriscalda forno 180°C. Ungi 6 stampini da muffin.','Sbatti uova e albumi con sale, pepe e erbe.','Distribuisci spinaci, peperone e feta negli stampini.','Versa il composto di uova. Cuoci 18-20 min. Lascia raffreddare prima di conservare.'] },
+
+{ id:'r101-mp4', name:'Legumi misti in salsa di pomodoro (4 porz)',ico:'🫘',
+  tags:['cena','mantenimento','veg','vegan','meal-prep','batch'], time:'25 min', kcal:280, p:16, c:42, g:4, fiber:14, diff:'Facile',
+  tipo:'secondo_proteico_veg', goal:['mantenimento','definizione'], cat:'🌙 Cena',
+  alimenti:['ceci','lenticchie','fagioli borlotti','passata','rosmarino'],
+  desc:'Mix di legumi in salsa mediterranea. Proteine vegetali complete e fibre.',
+  ingredienti:['150g ceci cotti','150g lenticchie verdi cotte','150g fagioli borlotti cotti','400g passata','2 spicchi aglio','Rosmarino','10ml olio EVO','Sale'],
+  steps:['Soffriggi aglio e rosmarino in olio.','Aggiungi la passata, cuoci 5 min.','Aggiungi tutti i legumi e 100ml acqua.','Cuoci 15 min a fuoco basso. Lascia raffreddare prima di conservare.'] },
+
+/* ════ SMOOTHIE PROTEICI ════ */
+{ id:'r101-smo1', name:'Smoothie verde proteico',ico:'💚',
+  tags:['colazione','definizione','rapido','high-protein','smoothie'], time:'3 min', kcal:280, p:26, c:30, g:5, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['definizione','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['spinaci','banana','whey','mandorle','latte'],
+  desc:'Il green smoothie proteico perfetto. Spinaci non si sentono, ti giuro.',
+  ingredienti:['100g spinaci baby','1 banana surgelata','25g whey alla vaniglia','200ml latte scremato','10g mandorle','1 cucchiaino miele'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla ad alta velocità 60 secondi.','Versa in bicchiere alto e consuma subito.','Variante: aggiungi 1 cucchiaio di burro di arachidi per più calorie.'] },
+
+{ id:'r101-smo2', name:'Smoothie ai frutti rossi post-workout',ico:'🍓',
+  tags:['post-workout','mantenimento','rapido','high-protein','smoothie'], time:'3 min', kcal:310, p:28, c:38, g:4, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['massa','mantenimento'], cat:'⚡ Snack / Post WO',
+  alimenti:['frutti rossi','whey','yogurt greco','banana','latte'],
+  desc:'Recovery drink naturale. Antiossidanti dai frutti rossi + proteine veloci dal whey.',
+  ingredienti:['150g mix frutti rossi surgelati','25g whey alla fragola','100g yogurt greco','150ml latte','½ banana','1 cucchiaino miele'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60 secondi.','Consuma entro 30 min dall\'allenamento.','Per più carboidrati aggiungi 1 cucchiaio di avena.'] },
+
+{ id:'r101-smo3', name:'Smoothie al cioccolato e burro di arachidi',ico:'🥜',
+  tags:['colazione','massa','rapido','high-protein','smoothie'], time:'3 min', kcal:420, p:32, c:40, g:16, fiber:5, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['massa','mantenimento'], cat:'🌅 Colazione',
+  alimenti:['banana','whey cacao','burro arachidi','latte','avena'],
+  desc:'Smoothie ipercalorico per la massa. Sembra un milkshake, fa crescere i muscoli.',
+  ingredienti:['1 banana grande surgelata','25g whey al cacao','20g burro di arachidi naturale','250ml latte intero','30g fiocchi d\'avena','Ghiaccio'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 90 secondi.','Servi subito in bicchierone.','Per ridurre calorie usa latte scremato e togli l\'avena.'] },
+
+{ id:'r101-smo4', name:'Smoothie mango e curcuma anti-infiammatorio',ico:'🌟',
+  tags:['colazione','mantenimento','rapido','smoothie','recovery'], time:'3 min', kcal:260, p:18, c:36, g:4, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['mango','curcuma','zenzero','whey','latte cocco'],
+  desc:'Smoothie dorato anti-infiammatorio. Curcuma e zenzero accelerano il recupero.',
+  ingredienti:['150g mango surgelato','25g whey alla vaniglia','150ml latte di cocco light','½ cucchiaino curcuma','½cm zenzero fresco','Pepe nero (attiva curcuma)','Ghiaccio'],
+  steps:['Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60 secondi.','Il pepe nero è essenziale per attivare la curcumina!','Consuma entro 10 min dalla preparazione.'] },
+
+{ id:'r101-smo5', name:'Smoothie alle pere e cannella autunnale',ico:'🍐',
+  tags:['colazione','mantenimento','rapido','smoothie','high-protein'], time:'3 min', kcal:290, p:22, c:38, g:5, fiber:4, diff:'Facilissimo',
+  tipo:'colazione_liquida', goal:['mantenimento','definizione'], cat:'🌅 Colazione',
+  alimenti:['pere','cannella','whey','yogurt','avena'],
+  desc:'Smoothie autunnale vellutato. Pere mature + cannella + proteine = perfetto.',
+  ingredienti:['2 pere mature sbucciate','25g whey alla vaniglia','100g yogurt greco','150ml latte','1 cucchiaino cannella','20g avena'],
+  steps:['Taglia le pere a cubetti.','Aggiungi tutti gli ingredienti nel frullatore.','Frulla 60-90 secondi.','Servi con un pizzico di cannella in superficie.'] },
+
+];
+
+/* ── Iniezione in RICETTE e RECIPES_DB ── */
+if (!Array.isArray(window.RICETTE))    window.RICETTE    = [];
+if (!Array.isArray(window.RECIPES_DB)) window.RECIPES_DB = [];
+
+var existingIds = {};
+window.RICETTE.forEach(function(r)    { if (r && r.id) existingIds[r.id] = true; });
+window.RECIPES_DB.forEach(function(r) { if (r && r.id) existingIds[r.id] = true; });
+
+var added = 0;
+NR101.forEach(function(r) {
+  if (!r || !r.id || existingIds[r.id]) return;
+  existingIds[r.id] = true;
+
+  window.RICETTE.push({
+    id: r.id, name: r.name, ico: r.ico || '🍽️',
+    tags: r.tags || [], time: r.time || '15 min',
+    kcal: r.kcal, p: r.p, c: r.c, g: r.g,
+    diff: r.diff || 'Facile', desc: r.desc || '',
+    alimenti: r.alimenti || [],
+    ingredienti: r.ingredienti || [],
+    steps: r.steps || []
+  });
+
+  window.RECIPES_DB.push({
+    id: r.id, name: r.name,
+    tipo: r.tipo || 'piatto_unico',
+    goal: r.goal || ['mantenimento'],
+    kcal: r.kcal, p: r.p, c: r.c, g: r.g,
+    fiber: r.fiber || 3,
+    time: typeof r.time === 'string' ? parseInt(r.time) : (r.time || 15),
+    cat: r.cat || '🍳 Ricette',
+    ingredienti: r.ingredienti || [],
+    steps: r.steps || []
+  });
+  added++;
+});
+
+try {
+  if (localStorage.getItem('ft_dev_mode')) {
+    console.info('[V101] +' + added + ' ricette | tot RICETTE: ' + window.RICETTE.length);
+  }
+} catch(e) {}
+
+} catch(e) {}
+})();
+</script>
+
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V102 — Riepilogo Giornaliero: redesign completo
+     • Ring SVG 160px viewBox, raggi più ampi e stroke più sottili
+     • Nessuna sovrapposizione testo: kcal centrato nel ring (solo quello)
+     • Rimanenti e target nella colonna destra, ben spaziati
+     • 4 macro card uniformi con icona + barra colorata
+     • Badge % in alto a destra del header
+     • Compatibile con entrambi i temi (dark / light)
+═══════════════════════════════════════════════════════════════ -->
+
+<style id="v102-riep-styles">
+
+/* ── Container riepilogo ── */
+.v102-riepilogo {
+  padding: 18px 16px !important;
+  margin: 0 12px 14px !important;
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 20px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* ── Header row ── */
+.v102-riep-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.v102-riep-header .card-hdr-l {
+  margin-bottom: 0 !important;
+}
+.v102-riep-pct-badge {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px;
+  letter-spacing: .06em;
+  color: var(--acc);
+  background: rgba(200,245,60,.10);
+  border: 1px solid rgba(200,245,60,.28);
+  border-radius: 99px;
+  padding: 3px 12px;
+  min-width: 48px;
+  text-align: center;
+  transition: color .3s, background .3s;
+}
+
+/* ── Ring + Info layout ── */
+.v102-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+/* ── SVG ring wrapper: quadrato fisso ── */
+.v102-ring-wrap {
+  flex-shrink: 0;
+  width: 148px;
+  height: 148px;
+  position: relative;
+}
+
+/* ── Archi di sfondo (grigio) ── */
+.v102-nr-bg {
+  fill: none;
+  stroke: var(--bg4);
+  stroke-width: 8;
+}
+.v102-nr-bg-p { stroke-width: 8; }
+.v102-nr-bg-c { stroke-width: 8; }
+.v102-nr-bg-g { stroke-width: 8; }
+
+/* ── Archi colorati ── */
+/* Kcal — verde accent (outer) — r=68 → circ≈427 */
+.v102-arc-kcal {
+  fill: none;
+  stroke: var(--acc);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 427;
+  stroke-dashoffset: 427;
+  transition: stroke-dashoffset 1s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 4px rgba(200,245,60,.45));
+}
+/* Proteine — verde (mid-outer) — r=54 → circ≈339 */
+.v102-arc-p {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 339;
+  stroke-dashoffset: 339;
+  transition: stroke-dashoffset 1s .07s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(50,200,120,.4));
+}
+/* Carbs — blu (mid-inner) — r=40 → circ≈251 */
+.v102-arc-c {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251;
+  stroke-dashoffset: 251;
+  transition: stroke-dashoffset 1s .14s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(91,156,239,.4));
+}
+/* Grassi — arancione (inner) — r=26 → circ≈163 */
+.v102-arc-g {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 163;
+  stroke-dashoffset: 163;
+  transition: stroke-dashoffset 1s .21s cubic-bezier(.22,1,.36,1);
+  filter: drop-shadow(0 0 3px rgba(255,140,50,.4));
+}
+
+/* ── Centro ring: testo SOLO kcal ── */
+.v102-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 0;
+}
+.v102-ring-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--acc);
+  letter-spacing: -.5px;
+  text-shadow: 0 0 20px rgba(200,245,60,.35);
+}
+.v102-ring-label {
+  font-size: 9px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-top: 3px;
+}
+
+/* ── Colonna info destra ── */
+.v102-ring-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.v102-tgt-row {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v102-rem-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--acc);
+  letter-spacing: -.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v102-rem-lbl {
+  font-size: 10px;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+.v102-pbar {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--bg4);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.v102-pbar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--acc), var(--green));
+  transition: width .9s cubic-bezier(.22,1,.36,1);
+  width: 0%;
+}
+
+/* ── Legend ── */
+.v102-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.v102-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.v102-leg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.v102-leg-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: .02em;
+}
+
+/* ── Macro card grid: 4 colonne ── */
+.v102-macros {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 340px) {
+  .v102-macros { grid-template-columns: repeat(2, 1fr); }
+}
+.v102-macro-card {
+  background: linear-gradient(160deg, var(--bg3), var(--bg4));
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--mc, var(--acc));
+  border-radius: 14px;
+  padding: 10px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  transition: border-color .2s, transform .15s;
+}
+.v102-macro-card:active { transform: scale(.97); }
+.v102-mc-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+.v102-mc-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--mc, var(--acc));
+  letter-spacing: -.2px;
+}
+.v102-mc-bar-wrap {
+  width: 100%;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--bg4);
+  overflow: hidden;
+}
+.v102-mc-bar {
+  height: 100%;
+  border-radius: 99px;
+  width: 0%;
+  transition: width .8s cubic-bezier(.22,1,.36,1);
+}
+.v102-mc-lbl {
+  font-size: 8px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 1px;
+}
+.v102-mc-target {
+  font-size: 9px;
+  color: var(--text3);
+}
+
+/* ── Light theme ── */
+body.light-theme .v102-riepilogo {
+  background: var(--bg2) !important;
+  border-color: var(--border) !important;
+}
+body.light-theme .v102-riep-pct-badge {
+  color: #3d7200;
+  background: rgba(80,140,0,.08);
+  border-color: rgba(80,140,0,.28);
+}
+body.light-theme .v102-ring-val  { color: #3d7200; text-shadow: none; }
+body.light-theme .v102-rem-val   { color: #3d7200; }
+body.light-theme .v102-arc-kcal  { stroke: #5a9900; filter: none; }
+body.light-theme .v102-arc-p     { filter: none; }
+body.light-theme .v102-arc-c     { filter: none; }
+body.light-theme .v102-arc-g     { filter: none; }
+body.light-theme .v102-nr-bg     { stroke: rgba(0,0,0,.07); }
+body.light-theme .v102-macro-card {
+  background: #fff;
+  border-color: rgba(0,0,0,.08);
+}
+body.light-theme .v102-mc-lbl   { color: #888; }
+body.light-theme .v102-mc-target { color: #999; }
+body.light-theme .v102-tgt-row  { color: #888; }
+body.light-theme .v102-rem-lbl  { color: #666; }
+body.light-theme .v102-leg-name { color: #555; }
+
+</style>
+
+<script>
+(function _v102RiepPatch() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════
+   Aggiorna il riepilogo V102 con i nuovi selettori CSS
+   Compatibile con renderNutr/updateNutrBar esistenti
+══════════════════════════════════════════════════════ */
+function _updateV102Arcs() {
+  try {
+    /* Leggi i valori correnti dagli elementi già aggiornati dal codice base */
+    var eaten = parseInt(document.getElementById('n-eaten')?.textContent || '0', 10) || 0;
+    var remEl = document.getElementById('n-rem');
+    var tgtEl = document.getElementById('n-target');
+    var pctEl = document.getElementById('n-bar-pct');
+    var barEl = document.getElementById('n-bar');
+
+    /* Aggiorna badge % in header */
+    var badgeEl = document.querySelector('.v102-riep-pct-badge');
+    if (badgeEl && pctEl) badgeEl.textContent = pctEl.textContent || '0%';
+
+    /* Aggiorna la barra V102 */
+    var v102bar = document.querySelector('.v102-pbar-fill');
+    if (v102bar && barEl) v102bar.style.width = barEl.style.width;
+
+    /* Aggiorna rimanenti: estrai solo il numero */
+    var v102rem = document.querySelector('.v102-rem-val');
+    if (v102rem && remEl) {
+      var remTxt = remEl.textContent || '—';
+      /* Format: "2264 kcal rimanenti" → mostra solo "2264" nel val, label separata */
+      var remNum = remTxt.replace(/kcal.*$/i, '').trim();
+      v102rem.textContent = remNum || '—';
+    }
+
+    /* Aggiorna archi SVG con le nuove circonferenze */
+    /* r=68 → circ=2π×68≈427, r=54→339, r=40→251, r=26→163 */
+    var CIRCS = { kcal: 427, p: 339, c: 251, g: 163 };
+
+    /* Leggi le macro pill per i valori */
+    function _getPct(valId, tgtId) {
+      try {
+        var val = parseFloat((document.getElementById(valId)?.textContent || '0').replace('g','')) || 0;
+        var tgt = parseFloat((document.getElementById(tgtId)?.textContent || '0').replace(/[^0-9.]/g,'')) || 1;
+        return Math.min(1, val / tgt);
+      } catch(e) { return 0; }
+    }
+
+    /* Pct kcal dalla barra */
+    var kcalPct = 0;
+    if (barEl) kcalPct = parseFloat(barEl.style.width) / 100 || 0;
+
+    var pPct = _getPct('nm-pv', 'nm-pc');
+    var cPct = _getPct('nm-cv', 'nm-cc');
+    var gPct = _getPct('nm-gv', 'nm-gc');
+
+    function _setArc(id, circ, pct) {
+      var el = document.getElementById(id);
+      if (el) el.style.strokeDashoffset = circ * (1 - Math.min(1, pct));
+    }
+    _setArc('nr-kcal-arc', CIRCS.kcal, kcalPct);
+    _setArc('nr-p-arc',    CIRCS.p,    pPct);
+    _setArc('nr-c-arc',    CIRCS.c,    cPct);
+    _setArc('nr-g-arc',    CIRCS.g,    gPct);
+
+    /* Aggiorna barre macro card V102 */
+    function _setMacroBar(barId, pct) {
+      var el = document.getElementById(barId);
+      if (el) el.style.width = Math.min(100, pct * 100) + '%';
+    }
+    _setMacroBar('nm-pb', pPct);
+    _setMacroBar('nm-cb', cPct);
+    _setMacroBar('nm-gb', gPct);
+    /* fibre */
+    var fPct = _getPct('nm-fv', 'nm-fc');
+    _setMacroBar('nm-fb', fPct);
+
+  } catch(e) {}
+}
+window._v102UpdateRiep = _updateV102Arcs;
+
+/* Hook sulle funzioni di aggiornamento nutrizione */
+function _hookNutr() {
+  var fns = ['renderNutr','updateNutr','updateNutrBar','renderNutrSummary',
+             'renderMeals','v67RenderMenuCards','v71RenderAllCards'];
+  fns.forEach(function(name) {
+    var orig = window[name];
+    if (typeof orig !== 'function' || orig['_v102']) return;
+    window[name] = function() {
+      var r = orig.apply(this, arguments);
+      setTimeout(_updateV102Arcs, 120);
+      return r;
+    };
+    window[name]['_v102'] = true;
+  });
+}
+
+_hookNutr();
+setTimeout(_hookNutr, 500);
+setTimeout(_hookNutr, 1200);
+
+/* Aggiorna subito se i dati ci sono già */
+setTimeout(_updateV102Arcs, 800);
+setTimeout(_updateV102Arcs, 2000);
+
+/* MutationObserver su n-eaten per rilevare aggiornamenti */
+try {
+  var eatenEl = document.getElementById('n-eaten');
+  if (eatenEl && window.MutationObserver) {
+    new MutationObserver(function() {
+      setTimeout(_updateV102Arcs, 80);
+    }).observe(eatenEl, { characterData: true, childList: true, subtree: true });
+  }
+} catch(e) {}
+
+} catch(e) {}
+})();
+</script>
 
 </body>
 </html>
