@@ -73877,5 +73877,330 @@ try {
 })();
 </script>
 
+
+<!-- ════════════════════════════════════════════════════════════
+     V108 — RILEVAMENTO CAPACITOR
+     Quando l'app gira impacchettata come APK tramite Capacitor
+     (non più come pagina web/PWA in browser), alcune Web API
+     standard funzionano in modo diverso o non funzionano affatto
+     dentro la WebView nativa Android:
+
+     - signInWithRedirect (Firebase Auth) si appoggia a un redirect
+       di pagina completo, che in WebView Android viene spesso
+       bloccato o non torna mai indietro correttamente (limitazione
+       nota di sicurezza Google sulle WebView non di sistema).
+     - Notification API standard ha supporto parziale/inconsistente
+       nelle WebView Android: meglio il plugin nativo quando c'è.
+     - navigator.vibrate funziona in molte WebView ma il plugin
+       nativo Haptics è più affidabile su tutti i dispositivi.
+
+     QUESTA PATCH NON ROMPE NULLA SUL WEB: ogni hook controlla prima
+     se gira dentro Capacitor (window.Capacitor?.isNativePlatform())
+     e SOLO in quel caso devia al plugin nativo. Se i plugin non
+     sono installati (es. prima del setup in Android Studio, o se
+     l'app gira ancora come PWA web), il codice fa fallback
+     silenzioso al comportamento originale invariato.
+
+     Nessuna riga esistente modificata — solo wrapping dei punti
+     d'ingresso reali già individuati nel codice:
+       - window.firebaseSignIn  (login Google)
+       - window.FitNotif.show   (notifiche)
+       - navigator.vibrate      (vibrazione, tramite override globale)
+
+     IMPORTANTE PER CHI FA IL BUILD: questa patch da sola non basta
+     per il login Google nativo. Vanno comunque installati i plugin
+     Capacitor elencati sotto e configurato Firebase Console (SHA-1
+     del keystore, google-services.json) — vedi la guida Capacitor.
+     Senza i plugin installati, l'app si comporta come prima
+     (fallback automatico), quindi questa patch è sicura da
+     includere anche prima di aver fatto il setup nativo completo.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V108_CAPACITOR_BRIDGE() {
+'use strict';
+try {
+
+  /* ══════════════════════════════════════════════════════════
+     Rilevamento ambiente — singola fonte di verità
+  ══════════════════════════════════════════════════════════ */
+  function _v108IsNative() {
+    try {
+      return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+    } catch (e) {
+      return false;
+    }
+  }
+  window._v108IsNative = _v108IsNative;
+  window._v108Platform = function () {
+    try {
+      if (!_v108IsNative()) return 'web';
+      return (window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'native';
+    } catch (e) { return 'web'; }
+  };
+
+  /* ══════════════════════════════════════════════════════════
+     LOGIN GOOGLE — usa il plugin nativo quando disponibile,
+     altrimenti fallback al signInWithRedirect originale via
+     window.firebaseSignIn (invariato, definito altrove nel file).
+
+     Plugin atteso (da installare lato Android Studio):
+       npm install @codetrix-studio/capacitor-google-auth
+     Espone (quando installato e importato dal progetto nativo):
+       window.Capacitor.Plugins.GoogleAuth.signIn()
+     che ritorna { idToken, ... } da scambiare con
+     GoogleAuthProvider.credential(idToken) lato Firebase JS SDK
+     (già importato più sopra nel file come modulo ESM).
+  ══════════════════════════════════════════════════════════ */
+  var _v108OrigFirebaseSignIn = null;
+
+  function _v108InstallLoginBridge() {
+    if (typeof window.firebaseSignIn !== 'function' || window.firebaseSignIn._v108wrapped) return false;
+
+    _v108OrigFirebaseSignIn = window.firebaseSignIn;
+
+    window.firebaseSignIn = async function () {
+      if (!_v108IsNative()) {
+        /* Comportamento web invariato */
+        return _v108OrigFirebaseSignIn.apply(this, arguments);
+      }
+
+      /* Siamo dentro l'app nativa: prova il plugin Google Auth nativo */
+      try {
+        var plugins = window.Capacitor && window.Capacitor.Plugins;
+        var GoogleAuthPlugin = plugins && plugins.GoogleAuth;
+
+        if (!GoogleAuthPlugin || typeof GoogleAuthPlugin.signIn !== 'function') {
+          console.warn('[V108] Plugin GoogleAuth nativo non trovato — fallback a signInWithRedirect (potrebbe non funzionare in WebView). Installa @codetrix-studio/capacitor-google-auth per il login nativo.');
+          return _v108OrigFirebaseSignIn.apply(this, arguments);
+        }
+
+        var btnG = document.getElementById('google-signin-btn');
+        if (btnG) { btnG.disabled = true; btnG.textContent = 'Accesso in corso…'; }
+
+        var result = await GoogleAuthPlugin.signIn();
+        var idToken = result && (result.authentication && result.authentication.idToken || result.idToken);
+
+        if (!idToken) {
+          throw new Error('Token Google non ricevuto dal plugin nativo');
+        }
+
+        /* Scambia il token nativo con una credenziale Firebase.
+           Le funzioni GoogleAuthProvider/signInWithCredential/auth
+           sono definite nel modulo Firebase Auth più sopra in
+           questo stesso documento (script type="module"); le
+           recuperiamo da window se sono state esposte, altrimenti
+           segnaliamo che serve esporle per completare il bridge. */
+        if (typeof window._v108FirebaseCredentialSignIn === 'function') {
+          await window._v108FirebaseCredentialSignIn(idToken);
+        } else {
+          console.warn('[V108] window._v108FirebaseCredentialSignIn non definita — vedi nota di integrazione nella guida Capacitor per completare lo scambio del token con Firebase.');
+        }
+
+        if (btnG) { btnG.disabled = false; btnG.textContent = 'Continua con Google'; }
+        return true;
+      } catch (e) {
+        console.warn('[V108] Login Google nativo fallito:', e);
+        var btnG2 = document.getElementById('google-signin-btn');
+        if (btnG2) { btnG2.disabled = false; btnG2.textContent = 'Continua con Google'; }
+        var errEl = document.getElementById('auth-error-msg');
+        if (errEl) {
+          errEl.textContent = 'Accesso Google non riuscito. Riprova.';
+          errEl.style.display = 'block';
+        }
+        return false;
+      }
+    };
+    window.firebaseSignIn._v108wrapped = true;
+    return true;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     VIBRAZIONE — usa il plugin Haptics nativo quando disponibile.
+     Plugin atteso: npm install @capacitor/haptics
+     navigator.vibrate(ms) o navigator.vibrate([pattern]) vengono
+     entrambi tradotti in impactOccurred/vibrate del plugin.
+  ══════════════════════════════════════════════════════════ */
+  function _v108InstallHapticsBridge() {
+    if (navigator._v108VibrateWrapped) return false;
+    var _origVibrate = navigator.vibrate ? navigator.vibrate.bind(navigator) : null;
+
+    try {
+      Object.defineProperty(navigator, 'vibrate', {
+        configurable: true,
+        writable: true,
+        value: function (pattern) {
+          if (!_v108IsNative()) {
+            return _origVibrate ? _origVibrate(pattern) : false;
+          }
+          try {
+            var plugins = window.Capacitor && window.Capacitor.Plugins;
+            var Haptics = plugins && plugins.Haptics;
+            if (Haptics && typeof Haptics.vibrate === 'function') {
+              var ms = Array.isArray(pattern) ? pattern[0] : pattern;
+              Haptics.vibrate({ duration: ms || 10 });
+              return true;
+            }
+          } catch (e) {}
+          /* Fallback: prova comunque la Web API standard, alcune
+             WebView Android la supportano nativamente */
+          return _origVibrate ? _origVibrate(pattern) : false;
+        }
+      });
+      navigator._v108VibrateWrapped = true;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     NOTIFICHE — wrappa FitNotif.show per usare il plugin
+     LocalNotifications nativo quando disponibile.
+     Plugin atteso: npm install @capacitor/local-notifications
+  ══════════════════════════════════════════════════════════ */
+  function _v108InstallNotifBridge() {
+    /* IMPORTANTE: window.FitNotif NON è una funzione factory richiamabile —
+       è definita nel sorgente come IIFE auto-invocata
+       (`window.FitNotif = function(){...}();`, si noti le parentesi finali),
+       quindi window.FitNotif è SEMPRE l'oggetto già risolto
+       {show, schedule, cancel, requestPermission, getPermission}.
+       Il codice esistente la usa così: window.FitNotif.show(...). */
+    if (!window.FitNotif || typeof window.FitNotif.show !== 'function' || window.FitNotif._v108wrapped) return false;
+
+    var _origShow = window.FitNotif.show;
+
+    window.FitNotif.show = async function (opts) {
+      if (!_v108IsNative()) {
+        return _origShow.call(window.FitNotif, opts); // comportamento web invariato
+      }
+
+      try {
+        var plugins = window.Capacitor && window.Capacitor.Plugins;
+        var LocalNotifications = plugins && plugins.LocalNotifications;
+        if (LocalNotifications && typeof LocalNotifications.schedule === 'function') {
+          await LocalNotifications.schedule({
+            notifications: [{
+              title: (opts && opts.title) || 'FitTrack AI',
+              body: (opts && opts.body) || '',
+              id: Math.floor(Math.random() * 100000),
+              schedule: { at: new Date(Date.now() + 100) }
+            }]
+          });
+          if (typeof addNotification === 'function') {
+            addNotification((opts && opts.title) || 'FitTrack AI', (opts && opts.body) || '', (opts && opts.data && opts.data.type) || 'info');
+          }
+          return true;
+        }
+      } catch (e) {
+        console.warn('[V108] LocalNotifications nativo fallito, fallback a Notification API:', e);
+      }
+      return _origShow.call(window.FitNotif, opts);
+    };
+
+    window.FitNotif._v108wrapped = true;
+    return true;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     Installazione — ritenta finché firebaseSignIn/FitNotif non
+     sono definite (sono dichiarate più avanti nel documento)
+  ══════════════════════════════════════════════════════════ */
+  function _v108InstallAll() {
+    _v108InstallLoginBridge();
+    _v108InstallHapticsBridge();
+    _v108InstallNotifBridge();
+  }
+
+  _v108InstallAll();
+  setTimeout(_v108InstallAll, 300);
+  setTimeout(_v108InstallAll, 1000);
+  setTimeout(_v108InstallAll, 2500);
+
+  window._v108Version = 'V108';
+  if (_v108IsNative()) {
+    console.info('%c[FitTrack V108] Ambiente nativo Capacitor rilevato (' + window._v108Platform() + ') — bridge attivi', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+  } else {
+    console.info('%c[FitTrack V108] Ambiente web — comportamento standard invariato', 'color:#9A9AB0;font-weight:bold;font-size:12px;');
+  }
+
+} catch (e) { console.warn('[FT_V108_CAPACITOR_BRIDGE]', e); }
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V109 — COMPLETAMENTO LOGIN NATIVO: scambio token Firebase
+     Il bridge V108 chiama window._v108FirebaseCredentialSignIn(idToken)
+     quando il plugin Capacitor GoogleAuth restituisce un token nativo,
+     ma quella funzione non era ancora definita.
+
+     Questo modulo la definisce, importando autonomamente le funzioni
+     Firebase necessarie (GoogleAuthProvider.credential, signInWithCredential)
+     dallo stesso CDN già usato nel modulo Firebase Auth originale più
+     sopra in questo documento. Gli import ESM sono idempotenti — il
+     browser riusa la cache del modulo già caricato, non lo scarica
+     due volte e non duplica nulla.
+
+     IMPORTANTE: non serve duplicare _routeAfterLogin (la funzione che
+     gestisce cosa succede dopo un login riuscito, definita nel modulo
+     Firebase originale). Quel modulo ha già un listener
+     onAuthStateChanged(auth, ...) attivo, che reagisce a QUALSIASI
+     cambio di stato sull'istanza auth condivisa — incluso quello
+     generato qui da signInWithCredential. getApps()[0] garantisce che
+     sia la stessa istanza Firebase app in tutto il documento, quindi
+     il login nativo attiva automaticamente lo stesso flusso post-login
+     (creazione profilo, routing alla home, ecc.) di quello web.
+
+     Architettura append-only, nessuna riga esistente modificata.
+════════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { getApps, initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import {
+    getAuth, GoogleAuthProvider, signInWithCredential
+  } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+  try {
+    var _firebaseConfig = {
+      apiKey: "AIzaSyDDUoIkszKgK_9Yu5wHlqZ9IifIQWnhvv0",
+      authDomain: "fittrack-fb939.firebaseapp.com",
+      databaseURL: "https://fittrack-fb939-default-rtdb.europe-west1.firebaseio.com",
+      projectId: "fittrack-fb939",
+      storageBucket: "fittrack-fb939.firebasestorage.app",
+      messagingSenderId: "828892951236",
+      appId: "1:828892951236:web:ffe330ca7fe0cc6dae0f91"
+    };
+
+    /* Riusa l'istanza app già inizializzata dal modulo Firebase
+       originale (getApps().length sarà già 1 a questo punto) */
+    var _app = getApps().length ? getApps()[0] : initializeApp(_firebaseConfig);
+    var _auth = getAuth(_app);
+
+    /* ══════════════════════════════════════════════════════════
+       Funzione attesa dal bridge V108 (FT_V108_CAPACITOR_BRIDGE).
+       Riceve l'ID token restituito dal plugin nativo
+       @codetrix-studio/capacitor-google-auth dopo il login, lo
+       scambia con una vera sessione Firebase.
+    ══════════════════════════════════════════════════════════ */
+    window._v108FirebaseCredentialSignIn = async function (idToken) {
+      if (!idToken) throw new Error('idToken mancante — il plugin nativo non ha restituito un token valido');
+
+      var credential = GoogleAuthProvider.credential(idToken);
+      var result = await signInWithCredential(_auth, credential);
+
+      /* Non serve chiamare _routeAfterLogin esplicitamente: il
+         listener onAuthStateChanged nel modulo Firebase originale
+         scatta automaticamente appena signInWithCredential aggiorna
+         lo stato di _auth (stessa istanza condivisa via getApps()).
+         Qui ci limitiamo a confermare il completamento al chiamante. */
+      return result.user;
+    };
+
+    window._v109Version = 'V109';
+    console.info('%c[FitTrack V109] Bridge login nativo Google completato ✅', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+  } catch (e) {
+    console.warn('[FT_V109_TOKEN_EXCHANGE]', e);
+  }
+</script>
+
 </body>
 </html>
