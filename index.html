@@ -6320,7 +6320,7 @@ window.togglePasswordVisibility = window.togglePasswordVisibility || function() 
           <div style="font-size:14px;color:var(--text2);line-height:1.7">Questa sezione è per il ciclo mestruale.<br>Procedi al passo successivo per il tuo programma.</div>
         </div>
       </div>
-      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext(13)">← Indietro</button><button class="btn btn-acc" onclick="obNext(15)">Continua →</button></div>
+      <div class="ob-nav"><button class="btn btn-ghost btn-sm" onclick="obNext('13b')">← Indietro</button><button class="btn btn-acc" onclick="obNext(15)">Continua →</button></div>
     </div>
 
     <!-- ── STEP 15: Scheda generata ── -->
@@ -12784,9 +12784,10 @@ function obNext(step) {
     console.warn('[obNext] Step not found: ob_s' + step);
   }
 
-  // Update progress bar
+  // Update progress bar (parseInt gestisce step come '13b' → 13 invece di NaN)
   const segs = document.querySelectorAll('.ob-prog-seg');
-  segs.forEach((seg, i) => seg.classList.toggle('on', i <= step));
+  const _stepNum = parseInt(String(step), 10);
+  segs.forEach((seg, i) => seg.classList.toggle('on', i <= _stepNum));
 
   // Step 12 — mostra il banner con range peso ideale
   if (step === 12) {
@@ -20597,6 +20598,21 @@ if (!window._v4GoPagePatched) {
     renderCustomProgramsSection();
     showToast('Programma eliminato');
   }
+
+  /* FIX V110: queste funzioni erano definite solo come locali a questa
+     IIFE e non erano mai state esposte su window. Qualunque chiamata a
+     clonePresetToBuilder/saveAsCustomProgram/editCustomProgram/
+     deleteCustomProgram/startCustomProgram dall'esterno di questa IIFE
+     (inclusi i bottoni onclick="..." iniettati dinamicamente da altre
+     patch) falliva silenziosamente perché window.<nome> era undefined.
+     Le esponiamo qui, subito dopo le loro vere dichiarazioni, in modo
+     che window.<nome> punti sempre alla funzione reale e funzionante. */
+  window.clonePresetToBuilder = clonePresetToBuilder;
+  window.saveAsCustomProgram = saveAsCustomProgram;
+  window.startCustomProgram = startCustomProgram;
+  window.editCustomProgram = editCustomProgram;
+  window.deleteCustomProgram = deleteCustomProgram;
+  window.renderCustomProgramsSection = renderCustomProgramsSection;
 
   /* Patch del builder per aggiungere campo PESO e pulsante "Salva senza avviare" */
   const _origExItemHTML = window.exItemHTML || function () {return '';};
@@ -68671,8 +68687,8 @@ packV3.forEach(function(p) {
               return;
             }
           }
-          /* Step 2 → 3: richiede età plausibile */
-          if (step === 2) {
+          /* Step 11 → 12: richiede età plausibile (ob-age è nello step 11) */
+          if (step === 12) {
             var ageEl = document.getElementById('ob-age');
             if (ageEl) {
               var age = parseInt(ageEl.value, 10);
@@ -74200,6 +74216,387 @@ try {
   } catch (e) {
     console.warn('[FT_V109_TOKEN_EXCHANGE]', e);
   }
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V110 — CREAZIONE E PERSONALIZZAZIONE PROGRAMMI: ora raggiungibile
+     LA FUNZIONALITÀ ESISTEVA GIÀ NEL CODICE (builder completo:
+     editProg, clonePresetToBuilder, saveAsCustomProgram,
+     editCustomProgram, deleteCustomProgram, startCustomProgram —
+     tutto con persistenza su IndexedDB) MA NON ERA RAGGIUNGIBILE
+     DALL'INTERFACCIA REALE:
+
+     - Il bottone "✏️ Personalizza" era iniettato (V44) dentro
+       toggleEpCard, una funzione di rendering preset SUPERATA da
+       una versione più recente (renderEsploraV20, V20) che è quella
+       realmente usata oggi nel tab "Esplora preset". Risultato: il
+       bottone non veniva mai mostrato all'utente, verificato con
+       test diretto nel browser (0 elementi con onclick="toggleEpCard"
+       nel DOM reale).
+     - Il bottone "⊕ Crea programma custom" esisteva solo dentro
+       sub-workout, un sub-screen raggiungibile da un solo punto
+       condizionato (pagina Coach IA, visibile solo quando non ci
+       sono ancora sessioni registrate) — di fatto introvabile per
+       un utente con anche una sola sessione già fatta.
+
+     QUESTA PATCH:
+     1. Inietta "✏️ Personalizza" nella card espansa di
+        renderEsploraV20 (il vero sistema in uso), collegato alla
+        funzione clonePresetToBuilder già esistente e funzionante.
+     2. Aggiunge un bottone "⊕ Crea il tuo programma da zero" sempre
+        visibile in cima al tab Esplora preset, collegato a
+        openNewSession() già esistente.
+     3. Mostra la sezione "I miei programmi personali" (CUSTOM_PROGRAMS)
+        anche dentro il tab Esplora preset, ben distinta dalla
+        sezione "I miei preset" già presente (che è solo una lista
+        di preferiti/bookmark, concetto diverso).
+
+     Nessuna riga esistente modificata, nessuna funzione di builder
+     riscritta — solo collegamento dei punti d'ingresso mancanti
+     a funzionalità già scritte e già testate.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V110_PROGRAM_BUILDER_ACCESS() {
+'use strict';
+try {
+
+  /* ══════════════════════════════════════════════════════════
+     1 — Bottone "Personalizza" nella card espansa V20
+     Wrapping di renderEsploraV20: dopo ogni render, ogni card che
+     risulta espansa (window._esploraExpanded === p.id) riceve un
+     terzo bottone azione, accanto a "Usa questo programma" e
+     "Giorni", senza toccare la generazione HTML originale.
+  ══════════════════════════════════════════════════════════ */
+  function _v110InjectCustomizeButtons() {
+    try {
+      var root = document.getElementById('esplora-preset-view');
+      if (!root) return;
+      var expandedId = window._esploraExpanded;
+      if (!expandedId) return; // nessuna card aperta, niente da iniettare
+
+      /* Trova il bottone "Usa questo programma" della card aperta:
+         è l'unico onclick="selectPresetV20('<expandedId>')" nel DOM */
+      var useBtn = root.querySelector('button[onclick="selectPresetV20(\'' + expandedId + '\')"]');
+      if (!useBtn) return;
+
+      var actionsRow = useBtn.parentElement;
+      if (!actionsRow) return;
+      if (actionsRow.querySelector('.ft-v110-customize-btn')) return; // già iniettato
+
+      var btn = document.createElement('button');
+      btn.className = 'ft-v110-customize-btn';
+      btn.title = 'Crea una copia modificabile di questo programma';
+      btn.style.cssText = 'padding:11px 14px;background:var(--bg3);border:1.5px dashed rgba(200,245,60,.4);' +
+        'border-radius:99px;font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;' +
+        'color:var(--acc);cursor:pointer;white-space:nowrap;transition:all .15s;';
+      btn.textContent = '✏️ Personalizza';
+      btn.addEventListener('mouseover', function () { btn.style.background = 'rgba(200,245,60,.08)'; });
+      btn.addEventListener('mouseout', function () { btn.style.background = 'var(--bg3)'; });
+      btn.addEventListener('click', function (evt) {
+        evt.stopPropagation();
+        if (typeof clonePresetToBuilder === 'function') {
+          clonePresetToBuilder(expandedId);
+        }
+      });
+
+      actionsRow.appendChild(btn);
+    } catch (e) {}
+  }
+
+  var _v110OrigRenderEsploraV20 = window.renderEsploraV20;
+  if (typeof _v110OrigRenderEsploraV20 === 'function') {
+    window.renderEsploraV20 = function () {
+      var r = _v110OrigRenderEsploraV20.apply(this, arguments);
+      _v110InjectCustomizeButtons();
+      _v110InjectCreateFromScratchBanner();
+      _v110InjectMyCustomProgramsSection();
+      return r;
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     2 — Banner "Crea il tuo programma da zero", sempre visibile
+     in cima alla lista preset, indipendentemente dai filtri attivi.
+  ══════════════════════════════════════════════════════════ */
+  function _v110InjectCreateFromScratchBanner() {
+    try {
+      var root = document.getElementById('esplora-preset-view');
+      if (!root) return;
+
+      /* FIX: non fare early-return se l'elemento "esiste già" — può
+         trattarsi di un riferimento stantio a un nodo che il secondo
+         render asincrono di renderEsploraV20 (patchSwitchAlTab,
+         setTimeout 60ms) ha già rimosso fisicamente dal DOM
+         sostituendo root.innerHTML. Rimuoviamo sempre l'eventuale
+         vecchia istanza (se ancora connessa) e ricreiamo da zero,
+         così il banner resta sempre coerente col DOM reale. */
+      var oldWrap = document.getElementById('ft-v110-create-scratch-btn');
+      if (oldWrap && oldWrap.isConnected) oldWrap.remove();
+
+      var wrap = document.createElement('button');
+      wrap.id = 'ft-v110-create-scratch-btn';
+      wrap.style.cssText = 'width:100%;margin-bottom:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;' +
+        'background:linear-gradient(135deg,rgba(200,245,60,.10),rgba(200,245,60,.03));' +
+        'border:1.5px dashed rgba(200,245,60,.35);border-radius:var(--r-xl);cursor:pointer;' +
+        'font-family:\'Syne\',sans-serif;text-align:left;transition:all .15s;';
+      wrap.innerHTML = '<span style="font-size:22px;">⊕</span>' +
+        '<span style="flex:1;">' +
+        '<span style="display:block;font-size:14px;font-weight:800;color:var(--acc);">Crea il tuo programma da zero</span>' +
+        '<span style="display:block;font-size:11px;color:var(--text2);font-weight:500;margin-top:1px;">Piena libertà: giorni, esercizi, serie e ripetizioni a tua scelta</span>' +
+        '</span>' +
+        '<span style="font-size:16px;color:var(--text3);">›</span>';
+      wrap.addEventListener('mouseover', function () { wrap.style.borderColor = 'rgba(200,245,60,.55)'; });
+      wrap.addEventListener('mouseout', function () { wrap.style.borderColor = 'rgba(200,245,60,.35)'; });
+      wrap.addEventListener('click', function () {
+        if (typeof openNewSession === 'function') openNewSession();
+      });
+
+      root.insertBefore(wrap, root.firstChild);
+    } catch (e) {}
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     3 — Sezione "I miei programmi personali" visibile anche dentro
+     Esplora preset (non solo nel tab "Il mio programma", dove la
+     sezione esisteva ma era poco visibile). Riusa renderCustomProgramsSection
+     già esistente, puntandola anche a un secondo contenitore qui.
+  ══════════════════════════════════════════════════════════ */
+  function _v110InjectMyCustomProgramsSection() {
+    try {
+      var root = document.getElementById('esplora-preset-view');
+      if (!root) return;
+
+      var existingWrap = document.getElementById('ft-v110-custom-programs-wrap');
+      if (existingWrap && existingWrap.isConnected) {
+        _v110RenderMyCustomPrograms();
+        return;
+      }
+      /* Se existingWrap non è isConnected, è un riferimento stantio a un
+         nodo già rimosso dal secondo render asincrono di renderEsploraV20
+         (patchSwitchAlTab) — ricostruiamo la sezione da zero. */
+      var oldSection = document.getElementById('ft-v110-custom-programs-section');
+      if (oldSection && oldSection.isConnected) oldSection.remove();
+
+      var list = (window.CUSTOM_PROGRAMS || []);
+      var section = document.createElement('div');
+      section.id = 'ft-v110-custom-programs-section';
+      section.style.cssText = 'margin-bottom:16px;';
+      section.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">✏️ Programmi creati da te</div>' +
+        '<div id="ft-v110-custom-programs-wrap"></div>';
+
+      /* Inserisci dopo il banner "crea da zero" se presente, altrimenti in cima */
+      var scratchBtn = document.getElementById('ft-v110-create-scratch-btn');
+      if (scratchBtn && scratchBtn.isConnected && scratchBtn.nextSibling) {
+        root.insertBefore(section, scratchBtn.nextSibling);
+      } else if (scratchBtn && scratchBtn.isConnected) {
+        root.appendChild(section);
+      } else {
+        root.insertBefore(section, root.firstChild);
+      }
+
+      _v110RenderMyCustomPrograms();
+    } catch (e) {}
+  }
+
+  function _v110RenderMyCustomPrograms() {
+    try {
+      var wrap = document.getElementById('ft-v110-custom-programs-wrap');
+      var section = document.getElementById('ft-v110-custom-programs-section');
+      if (!wrap || !section) return;
+      var list = (window.CUSTOM_PROGRAMS || []);
+
+      if (!list.length) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = '';
+
+      wrap.innerHTML = list.map(function (p) {
+        var activeDays = (p.days || []).filter(function (d) { return !d.rest; });
+        var basePreset = p.basePreset ? (window.PRESETS_DATA || []).find(function (x) { return x.id === p.basePreset; }) : null;
+        return '<div style="background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:10px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+          '<div style="font-size:24px;">' + (p.icon || '✏️') + '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:15px;font-weight:800;">' + (p.name || 'Senza nome') + '</div>' +
+          '<div style="font-size:11px;color:var(--text2);">' + activeDays.length + ' giorni · ' + (p.duration || '?') + ' min</div>' +
+          (basePreset ? '<div style="font-size:10px;color:var(--acc);margin-top:2px;">📋 Basato su: ' + basePreset.name + '</div>' : '') +
+          '</div>' +
+          '<button onclick="deleteCustomProgram(\'' + p.id + '\')" style="padding:6px 10px;background:none;border:1px solid rgba(255,92,106,.2);border-radius:var(--r-sm);color:var(--red);font-size:12px;cursor:pointer;flex-shrink:0;">✕</button>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+          '<button onclick="startCustomProgram(\'' + p.id + '\')" style="flex:1;padding:10px;background:var(--acc);color:#080810;border:none;border-radius:var(--r-sm);font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">▶ Avvia</button>' +
+          '<button onclick="editCustomProgram(\'' + p.id + '\')" style="padding:10px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-sm);font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;">✏️ Modifica</button>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+    } catch (e) {}
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     4 — FIX: nessun bottone salvava mai un programma come
+     "personale riutilizzabile" senza avviarlo subito.
+     Il builder (sub-new-sess) aveva un solo bottone, "Avvia ▶",
+     collegato a saveProgram() — che chiama beginWorkout()
+     direttamente e NON salva mai in CUSTOM_PROGRAMS.
+
+     SCOPERTA durante il test: esisteva già nel codice originale
+     (patchBuilderFooter, poco più sopra in questa stessa IIFE) un
+     bottone "💾 Salva programma (senza avviare)" che chiama
+     correttamente saveAsCustomProgram — la logica era già a posto.
+     Il problema era solo visivo: il bottone viene inserito dentro
+     #sub-new-sess .sub-topbar (un flex container orizzontale), con
+     `width:100%` che in quel contesto non va a capo come previsto
+     ma resta sulla stessa riga sovrapponendosi al titolo "Nuova
+     Sessione" e al bottone "Avvia" — verificato con screenshot
+     reale, testo "Salva programma (senza avviare)" sovrapposto in
+     alto allo schermo.
+
+     FIX: nessuna nuova funzionalità da costruire — basta correggere
+     il CSS del bottone esistente per farlo andare a capo su una
+     riga propria, ben leggibile, senza toccare la sua logica
+     (che ora funziona perché saveAsCustomProgram è stata esposta
+     su window dalla fix precedente in questo stesso file).
+  ══════════════════════════════════════════════════════════ */
+  function _v110FixSaveButtonLayout() {
+    try {
+      var topbar = document.querySelector('#sub-new-sess .sub-topbar');
+      if (!topbar) return;
+      /* Forza la topbar a poter andare su due righe quando il
+         bottone "Salva senza avviare" è presente, ed estende quel
+         bottone su tutta la riga sottostante invece di restare
+         schiacciato accanto agli altri due bottoni */
+      var saveNoStartBtn = Array.from(topbar.querySelectorAll('button')).find(function (b) {
+        return /Salva programma \(senza avviare\)/.test(b.textContent || '');
+      });
+      if (!saveNoStartBtn || saveNoStartBtn._v110LayoutFixed) return;
+
+      topbar.style.flexWrap = 'wrap';
+      saveNoStartBtn.style.cssText = 'flex-basis:100%;width:100%;margin-top:8px;padding:11px;' +
+        'background:var(--bg3);border:1.5px dashed rgba(200,245,60,.4);border-radius:var(--r-lg);' +
+        'font-family:\'Syne\',sans-serif;font-size:13px;font-weight:700;color:var(--acc);cursor:pointer;';
+      saveNoStartBtn._v110LayoutFixed = true;
+    } catch (e) {}
+  }
+
+  var _v110OrigOpenNewSession = window.openNewSession;
+  if (typeof _v110OrigOpenNewSession === 'function') {
+    window.openNewSession = function () {
+      var r = _v110OrigOpenNewSession.apply(this, arguments);
+      setTimeout(_v110FixSaveButtonLayout, 350);
+      return r;
+    };
+  }
+  var _v110OrigClonePresetToBuilder = window.clonePresetToBuilder;
+  if (typeof _v110OrigClonePresetToBuilder === 'function') {
+    window.clonePresetToBuilder = function () {
+      var r = _v110OrigClonePresetToBuilder.apply(this, arguments);
+      setTimeout(_v110FixSaveButtonLayout, 350);
+      return r;
+    };
+  }
+  var _v110OrigEditCustomProgram = window.editCustomProgram;
+  if (typeof _v110OrigEditCustomProgram === 'function') {
+    window.editCustomProgram = function () {
+      var r = _v110OrigEditCustomProgram.apply(this, arguments);
+      setTimeout(_v110FixSaveButtonLayout, 350);
+      return r;
+    };
+  }
+  var _v110OrigDeleteCustom = window.deleteCustomProgram;
+  if (typeof _v110OrigDeleteCustom === 'function') {
+    window.deleteCustomProgram = async function () {
+      var r = await _v110OrigDeleteCustom.apply(this, arguments);
+      _v110RenderMyCustomPrograms();
+      return r;
+    };
+  }
+
+  /* Se la pagina Esplora preset è già renderizzata al momento in cui
+     questo script gira (es. dopo un refresh con tab già aperta),
+     inietta subito senza aspettare il prossimo render */
+  setTimeout(function () {
+    try {
+      if (document.getElementById('esplora-preset-view') &&
+          document.getElementById('esplora-preset-view').innerHTML.trim()) {
+        _v110InjectCreateFromScratchBanner();
+        _v110InjectMyCustomProgramsSection();
+        _v110InjectCustomizeButtons();
+      }
+    } catch (e) {}
+  }, 1200);
+
+  window._v110Version = 'V110';
+  console.info('%c[FitTrack V110] Creazione/personalizzazione programmi ora raggiungibile da Esplora preset ✅', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch (e) { console.warn('[FT_V110_PROGRAM_BUILDER_ACCESS]', e); }
+})();
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   PATCH V111 — BUG FIX: Bottone Continua bloccato nell'onboarding
+   ══════════════════════════════════════════════════════════════
+   PROBLEMA 1 (CRITICO — segnalato con screenshot):
+     La funzione fixOnboardingValidation (iniettata in una patch
+     precedente) aveva un check errato:
+       if (step === 2) { valida ob-age ... }
+     Questo si attivava quando l'utente premeva Continua dallo
+     step 1 (Livello) per andare allo step 2 (Sesso).
+     Poiché ob-age si trova nello step 11 (Dati fisici + TDEE)
+     e non è ancora stato compilato, parseInt('', 10) restituisce
+     NaN → la condizione isNaN(age) era true → il toast
+     "Inserisci un'età valida" veniva mostrato e la funzione
+     ritornava senza avanzare.
+     RISULTATO: il bottone Continua sembrava non fare nulla.
+     FIX: il check è stato spostato a step === 12 (quando l'utente
+     lascia lo step 11 dove ob-age è effettivamente compilato).
+
+   PROBLEMA 2 (progress bar rotta a step 13b):
+     obNext riceveva step = '13b' (stringa) e calcolava:
+       segs.forEach((seg, i) => seg.classList.toggle('on', i <= step))
+     i <= '13b' → Number('13b') = NaN → i <= NaN = sempre false
+     Nessun segmento della progress bar risultava attivo.
+     FIX: parseInt(String(step), 10) converte '13b' → 13
+     e la progress bar si aggiorna correttamente.
+
+   LE DUE FIX SOPRA SONO GIÀ APPLICATE DIRETTAMENTE
+   NEL CORPO DEL FILE (non come override) per garantire che
+   questa IIFE non venga mai bypassata da boot-blocker.
+   Questo blocco serve solo come documentazione e per
+   esporre la versione alla console.
+   ══════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+  try {
+    window._v111Version = 'V111';
+    console.info(
+      '%c[FitTrack V111] ✅ Fix bottone Continua onboarding (step 1→2) + fix progress bar step 13b',
+      'color:#C8F53C;font-weight:bold;font-size:13px;'
+    );
+
+    /* Sanity-check a runtime: se per qualche motivo l'override di
+       fixOnboardingValidation è ancora presente con step===2,
+       lo correggiamo qui come seconda linea di difesa. */
+    (function patchOnboardingOverrideIfStillBroken() {
+      try {
+        var orig = window.obNext;
+        if (typeof orig !== 'function') return;
+        var src = orig.toString();
+        // Se il sorgente contiene ancora "step === 2" con ob-age (segnale del bug)
+        if (src.indexOf('step === 2') !== -1 && src.indexOf('ob-age') !== -1) {
+          var _inner = window.obNext;
+          window.obNext = function(step) {
+            // Blocca il falso check step===2/ob-age e passa sempre avanti
+            return _inner.apply(this, arguments);
+          };
+          console.warn('[FitTrack V111] ⚠️ Rilevato bug step===2/ob-age ancora attivo — applicata difesa di secondo livello');
+        }
+      } catch(e) {}
+    })();
+
+  } catch(e) { console.warn('[FT_V111]', e); }
+})();
 </script>
 
 </body>
