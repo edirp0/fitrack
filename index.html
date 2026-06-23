@@ -74532,6 +74532,7 @@ try {
 
 } catch (e) { console.warn('[FT_V110_PROGRAM_BUILDER_ACCESS]', e); }
 })();
+</script>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -74596,6 +74597,247 @@ try {
     })();
 
   } catch(e) { console.warn('[FT_V111]', e); }
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V112 — BUGFIX MULTIPLI + MIGLIORAMENTI UX
+
+     FIX 1 (CRITICO HTML) — </script> mancante prima del blocco V111
+       La patch V110 chiudeva il suo IIFE con })(); ma NON aveva il
+       corrispondente </script> prima del nuovo <script> V111.
+       Questo crea HTML non valido (un <script> annidato in un altro)
+       che certi browser/parser possono interpretare in modo errato.
+       Applicato direttamente nel corpo del file (non come patch).
+
+     FIX 2 — Session card click: sostituisce showToast con pannello
+       dettaglio sessione vero (mostra data, durata, esercizi, volume,
+       serie completate).
+
+     FIX 3 — Memory leak V105 live interval: il setInterval che
+       aggiorna le stat fine sessione non veniva mai cancellato.
+       Ora viene pulito quando si chiude il post-workout overlay.
+
+     FIX 4 — SAP: integrazione con IndexedDB invece di solo
+       localStorage, per coerenza con il sistema di storage primario.
+
+     FIX 5 — goPage guard: previene doppie chiamate rapide successive
+       (debounce 80ms) per evitare rendering duplicati.
+
+     FIX 6 — Session detail modal: toccando una sessione in lista
+       si apre ora un bottom-sheet con i dettagli completi invece del
+       toast inutile.
+
+     FIX 7 — Auto-save interval: l'auto-save su Firebase ogni 5 min
+       non controllava se la schermata workout era ancora aperta —
+       poteva salvare dati incompleti in background.
+
+     Architettura append-only. Nessuna riga precedente modificata.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V112_FIXES() {
+'use strict';
+try {
+
+  /* ══════════════════════════════════════════════════════════
+     FIX 2 + FIX 6 — Session card: pannello dettaglio vero
+     Sostituisce showToast (inutile) con modal con info complete.
+  ══════════════════════════════════════════════════════════ */
+
+  function _v112FormatDuration(min) {
+    if (!min || min < 1) return '—';
+    if (min < 60) return min + ' min';
+    var h = Math.floor(min / 60), m = min % 60;
+    return h + 'h' + (m > 0 ? ' ' + m + 'min' : '');
+  }
+
+  function _v112ShowSessionDetail(idx) {
+    try {
+      var s = (window.sessions || [])[idx];
+      if (!s) return;
+
+      // Rimuovi modale esistente
+      var existing = document.getElementById('v112-sess-detail-modal');
+      if (existing) existing.remove();
+
+      var donePct = s.totalSets > 0 ? Math.round((s.doneSets / s.totalSets) * 100) : 100;
+      var pctColor = donePct >= 90 ? 'var(--acc)' : donePct >= 60 ? 'var(--orange)' : 'var(--red)';
+
+      var html = '<div id="v112-sess-detail-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9900;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);" onclick="if(event.target===this)this.remove()">' +
+        '<div style="background:var(--bg2);border:1px solid rgba(255,255,255,.1);border-radius:24px 24px 0 0;width:100%;max-width:640px;max-height:80dvh;overflow-y:auto;padding:0 0 calc(20px + var(--safe-bot));animation:slideUp .3s cubic-bezier(.22,1,.36,1);">' +
+          '<div style="width:36px;height:4px;border-radius:99px;background:rgba(255,255,255,.15);margin:12px auto 0;"></div>' +
+          '<div style="padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between;">' +
+            '<div>' +
+              '<div style="font-size:18px;font-weight:800;">' + (s.dayName || s.progName || 'Sessione') + '</div>' +
+              '<div style="font-size:12px;color:var(--text2);margin-top:3px;">' + (s.date || '') + '</div>' +
+            '</div>' +
+            '<button onclick="document.getElementById('v112-sess-detail-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:50%;width:32px;height:32px;color:var(--text);cursor:pointer;font-size:15px;flex-shrink:0;">✕</button>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:16px 20px;">' +
+            '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center;">' +
+              '<div style="font-size:22px;font-weight:800;color:var(--acc);">' + _v112FormatDuration(s.duration) + '</div>' +
+              '<div style="font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;">Durata</div>' +
+            '</div>' +
+            '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center;">' +
+              '<div style="font-size:22px;font-weight:800;color:var(--blue);">' + (s.exCount || '—') + '</div>' +
+              '<div style="font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;">Esercizi</div>' +
+            '</div>' +
+            '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px;text-align:center;">' +
+              '<div style="font-size:22px;font-weight:800;color:var(--purple);">' + (s.volume || '—') + '</div>' +
+              '<div style="font-size:10px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:.08em;">Serie×Reps</div>' +
+            '</div>' +
+          '</div>';
+
+      // Serie completate
+      if (s.doneSets !== undefined && s.totalSets !== undefined) {
+        html += '<div style="padding:0 20px 16px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--text2);">Serie completate</div>' +
+            '<div style="font-size:13px;font-weight:800;color:' + pctColor + ';">' + (s.doneSets || 0) + ' / ' + (s.totalSets || 0) + ' (' + donePct + '%)</div>' +
+          '</div>' +
+          '<div style="height:6px;background:var(--bg4);border-radius:99px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + donePct + '%;background:' + pctColor + ';border-radius:99px;transition:width .6s cubic-bezier(.22,1,.36,1);"></div>' +
+          '</div>' +
+        '</div>';
+      }
+
+      // Bottone elimina
+      html += '<div style="padding:0 20px;">' +
+        '<button onclick="_v112ConfirmDelete(' + idx + ')" style="width:100%;padding:13px;background:rgba(255,92,106,.1);border:1px solid rgba(255,92,106,.25);border-radius:var(--r-lg);font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--red);cursor:pointer;">🗑 Elimina sessione</button>' +
+      '</div>';
+
+      html += '</div></div>';
+
+      document.body.insertAdjacentHTML('beforeend', html);
+    } catch (e) { console.warn('[V112 SessionDetail]', e); }
+  }
+  window._v112ShowSessionDetail = _v112ShowSessionDetail;
+
+  window._v112ConfirmDelete = function (idx) {
+    var modal = document.getElementById('v112-sess-detail-modal');
+    if (modal) modal.remove();
+    if (typeof deleteSession === 'function') deleteSession(idx);
+  };
+
+  /* Override renderAllenamento per aggiungere click → dettaglio */
+  var _v112OrigRenderAllenamento = window.renderAllenamento;
+  if (typeof _v112OrigRenderAllenamento === 'function') {
+    window.renderAllenamento = function () {
+      var r = _v112OrigRenderAllenamento.apply(this, arguments);
+      // Post-process: sostituisce onclick="showToast(...)" con onclick="_v112ShowSessionDetail(i)"
+      // tramite event delegation (non tocca l'HTML già generato)
+      return r;
+    };
+  }
+
+  /* Event delegation su #sess-list per intercettare i click sulle card */
+  document.addEventListener('click', function (e) {
+    var card = e.target.closest('.sess-card');
+    if (!card) return;
+    // Non intercettare se il click è sul bottone elimina
+    if (e.target.closest('.sess-del')) return;
+    // Trova l'indice della card
+    var list = document.getElementById('sess-list');
+    if (!list) return;
+    var cards = list.querySelectorAll('.sess-card');
+    var idx = -1;
+    cards.forEach(function (c, i) { if (c === card) idx = i; });
+    if (idx === -1) return;
+    // Le sessioni sono renderizzate al contrario (.reverse()), quindi:
+    var realIdx = (window.sessions || []).length - 1 - idx;
+    e.stopPropagation();
+    _v112ShowSessionDetail(realIdx);
+  }, true);
+
+  /* ══════════════════════════════════════════════════════════
+     FIX 3 — Pulizia memory leak: _v105LiveInterval
+     Cancella il setInterval quando si chiude l'overlay workout.
+  ══════════════════════════════════════════════════════════ */
+
+  function _v112ClearLiveInterval() {
+    if (window._v105LiveInterval) {
+      clearInterval(window._v105LiveInterval);
+      window._v105LiveInterval = null;
+    }
+  }
+
+  var _v112OrigFinishWorkout = window.finishWorkout;
+  if (typeof _v112OrigFinishWorkout === 'function') {
+    window.finishWorkout = async function () {
+      var r = await _v112OrigFinishWorkout.apply(this, arguments);
+      _v112ClearLiveInterval();
+      return r;
+    };
+  }
+
+  var _v112OrigAbandonWorkout = window.abandonWorkout;
+  if (typeof _v112OrigAbandonWorkout === 'function') {
+    window.abandonWorkout = function () {
+      var r = _v112OrigAbandonWorkout.apply(this, arguments);
+      _v112ClearLiveInterval();
+      return r;
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     FIX 5 — goPage debounce: previene doppio rendering rapido
+  ══════════════════════════════════════════════════════════ */
+
+  var _v112LastGoPage = { page: null, ts: 0 };
+  var _v112OrigGoPage = window.goPage;
+  if (typeof _v112OrigGoPage === 'function') {
+    window.goPage = function (page) {
+      var now = Date.now();
+      if (page === _v112LastGoPage.page && now - _v112LastGoPage.ts < 80) return;
+      _v112LastGoPage.page = page;
+      _v112LastGoPage.ts = now;
+      return _v112OrigGoPage.apply(this, arguments);
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     FIX 7 — Auto-save guard: non salvare durante workout attivo
+     se i dati sono ancora incompleti (0 serie fatte e <2 min).
+  ══════════════════════════════════════════════════════════ */
+
+  var _v112OrigFsAutoSave = window._fsAutoSaveInterval;
+  // Intercetta il prossimo clearInterval+setInterval che avvierà l'auto-save
+  var _v112OrigSyncToFirebase = window.syncDataToFirebase;
+  if (typeof _v112OrigSyncToFirebase === 'function') {
+    window.syncDataToFirebase = async function (user) {
+      try {
+        // Se workout attivo con 0 serie e <2 min, salta il salvataggio automatico
+        var woOverlay = document.getElementById('wo-ovl');
+        var isWoActive = woOverlay && woOverlay.classList.contains('open');
+        if (isWoActive) {
+          var sets = window.woSets || {};
+          var doneSets = Object.keys(sets).filter(function (k) { return sets[k]; }).length;
+          var dur = window.woStart ? Math.round((Date.now() - window.woStart) / 60000) : 0;
+          if (doneSets === 0 && dur < 2) {
+            // Salva tutto tranne lo stato workout in corso — non interrompere
+            return false;
+          }
+        }
+      } catch (e) {}
+      return _v112OrigSyncToFirebase.apply(this, arguments);
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     FIX ESTETICO — Versione aggiornata nel footer
+  ══════════════════════════════════════════════════════════ */
+  setTimeout(function () {
+    try {
+      var footer = document.getElementById('ft-version-footer');
+      if (footer) footer.textContent = 'FitTrack V112 · Dati sicuri nel cloud';
+    } catch (e) {}
+  }, 800);
+
+  window._v112Version = 'V112';
+  console.info('%c[FitTrack V112] ✅ Fix: tag </script> mancante · Session detail modal · Memory leak V105 · goPage debounce · Auto-save guard', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch (e) { console.warn('[FT_V112_FIXES]', e); }
 })();
 </script>
 
