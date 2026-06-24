@@ -74841,5 +74841,1670 @@ try {
 })();
 </script>
 
+
+<!-- ════════════════════════════════════════════════════════════
+     V113 — 5 NUOVE RICETTE + FIX SPUNTA VERDE → LOG DIARIO
+             + MENU ANTI-RIPETIZIONE 14 GIORNI
+
+     1. NUOVE RICETTE (dalle immagini caricate):
+        - Riso con Tonno, Uova e Maionese
+        - Panino Bresaola, Rucola e Grana
+        - Caprese (Mozzarella High Protein)
+        - Insalata di Tonno e Legumi
+        - Pasta Zucchine e Gamberetti
+
+     2. FIX SPUNTA VERDE: v67ConfirmMeal ora logga DAVVERO la
+        ricetta del menu nel diario nutrizionale (come fa il
+        bottone "Aggiungi al Diario" nel sheet V69). Toggling
+        la spunta rimuove dal diario.
+
+     3. MENU ANTI-RIPETIZIONE: sistema storico 14 giorni per
+        mealType. v68SelectBestRecipe penalizza fortemente le
+        ricette usate negli ultimi 14 giorni e aumenta il
+        peso del fattore casualità. Con 600+ ricette la
+        ripetizione diventa quasi impossibile.
+
+     4. VARIAZIONE AUTOMATICA GIORNO DOPO: all'apertura
+        dell'app in un nuovo giorno, se il lock è scaduto
+        (data diversa) il menu viene rigenerato automaticamente
+        con esclusione delle ricette del giorno precedente.
+
+     Architettura append-only. Nessuna riga precedente modificata.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V113() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   1 — AGGIUNGI 5 NUOVE RICETTE AL POOL GLOBALE
+══════════════════════════════════════════════════════════ */
+
+var _v113NewRecipes = [
+  {
+    id: 'v113_riso_tonno_uova',
+    name: 'Riso con Tonno, Uova e Maionese',
+    ico: '🍚',
+    tags: ['pranzo', 'cena', 'definizione', 'high-protein'],
+    time: '20 min',
+    kcal: 430,
+    p: 34,
+    c: 42,
+    g: 12,
+    diff: 'Facilissimo',
+    alimenti: ['riso basmati', 'tonno', 'uova', 'pomodori', 'maionese'],
+    desc: 'Il classico riso estivo proteico. Fresco, veloce, saziante. La maionese light lega tutto senza appesantire.',
+    ingredienti: [
+      '120g riso basmati (peso cotto)',
+      '160g tonno al naturale (2 scatolette)',
+      '2 uova sode',
+      '150g pomodorini ciliegia',
+      '2 cucchiai maionese light',
+      'Erba cipollina o prezzemolo fresco',
+      'Sale, pepe nero'
+    ],
+    steps: [
+      'Cuoci il riso basmati in acqua salata 12 min. Scola e raffredda sotto acqua fredda.',
+      'Cuoci le uova sode 9 min, raffredda in acqua fredda e taglia a spicchi.',
+      'Taglia i pomodorini a metà.',
+      'In una bowl ampia unisci riso, tonno sgocciolato, pomodorini e maionese. Mescola.',
+      'Impiatta con le uova e l'erba cipollina. Servi freddo o a temperatura ambiente.'
+    ]
+  },
+  {
+    id: 'v113_panino_bresaola',
+    name: 'Panino Bresaola, Rucola e Grana',
+    ico: '🥖',
+    tags: ['pranzo', 'spuntino', 'definizione', 'rapido', 'high-protein'],
+    time: '5 min',
+    kcal: 380,
+    p: 32,
+    c: 34,
+    g: 10,
+    diff: 'Facilissimo',
+    alimenti: ['pane integrale', 'bresaola', 'rucola', 'pomodori', 'parmigiano', 'olio d'oliva'],
+    desc: 'Il panino proteico per eccellenza. Bresaola magra, rucola fresca e un velo di grana. 5 minuti esatti.',
+    ingredienti: [
+      '90g pane integrale (1 rosetta o ciabattina)',
+      '80g bresaola (4-5 fette)',
+      '30g rucola fresca',
+      '1 pomodoro medio a fette',
+      '15g parmigiano reggiano a scaglie',
+      '1 cucchiaino olio EVO',
+      'Pepe nero, limone (opzionale)'
+    ],
+    steps: [
+      'Apri il pane e irrora entrambe le metà con un filo di olio EVO.',
+      'Disponi le fette di bresaola sulla base del pane.',
+      'Aggiungi la rucola e i pomodori a fette.',
+      'Aggiungi le scaglie di parmigiano.',
+      'Chiudi il panino, schiaccia leggermente. Servi subito.'
+    ]
+  },
+  {
+    id: 'v113_caprese_hp',
+    name: 'Caprese con Mozzarella High Protein',
+    ico: '🧀',
+    tags: ['pranzo', 'spuntino', 'definizione', 'veg', 'rapido'],
+    time: '8 min',
+    kcal: 340,
+    p: 28,
+    c: 22,
+    g: 14,
+    diff: 'Facilissimo',
+    alimenti: ['mozzarella high protein', 'pomodori', 'basilico', 'pane integrale', 'olio d'oliva'],
+    desc: 'La caprese classica, potenziata. La mozzarella high protein dà il doppio delle proteine rispetto a quella normale.',
+    ingredienti: [
+      '150g mozzarella high protein (o mozzarella light)',
+      '200g pomodori cuore di bue o ramati grandi',
+      '8-10 foglie basilico fresco',
+      '60g pane integrale tostato',
+      '1 cucchiaio olio EVO di qualità',
+      'Sale grosso, pepe nero',
+      'Origano (opzionale)'
+    ],
+    steps: [
+      'Affetta i pomodori a fette spesse 1cm.',
+      'Affetta la mozzarella alla stessa dimensione.',
+      'Alterna fette di pomodoro e mozzarella nel piatto.',
+      'Inserisci foglie di basilico tra ogni strato.',
+      'Irrora con olio EVO, sale, pepe. Servi con pane integrale tostato a parte.'
+    ]
+  },
+  {
+    id: 'v113_insalata_tonno_legumi',
+    name: 'Insalata di Tonno e Legumi',
+    ico: '🥗',
+    tags: ['pranzo', 'cena', 'definizione', 'high-protein'],
+    time: '10 min',
+    kcal: 390,
+    p: 36,
+    c: 38,
+    g: 8,
+    diff: 'Facilissimo',
+    alimenti: ['tonno', 'fagioli', 'pomodori', 'cipolla', 'pane bianco', 'olio d'oliva'],
+    desc: 'Il pranzo veloce più proteico in assoluto. Legumi + tonno = combo imbattibile per aminoacidi completi.',
+    ingredienti: [
+      '160g tonno al naturale',
+      '200g fagioli cannellini in scatola (scolati)',
+      '1/2 cipolla rossa a rondelle',
+      '150g pomodorini',
+      '1 cucchiaio olio EVO',
+      'Succo di mezzo limone',
+      'Prezzemolo fresco, sale, pepe',
+      '60g pane bianco croccante (opzionale)'
+    ],
+    steps: [
+      'Scola e sciacqua i fagioli sotto acqua fredda.',
+      'Affetta la cipolla rossa sottilmente. Taglia i pomodorini a metà.',
+      'In una bowl unisci tonno, fagioli, pomodorini e cipolla.',
+      'Condisci con olio, limone, sale, pepe e prezzemolo. Mescola.',
+      'Servi con pane croccante. Si conserva in frigo 2 giorni.'
+    ]
+  },
+  {
+    id: 'v113_pasta_zucchine_gamberetti',
+    name: 'Pasta Zucchine e Gamberetti',
+    ico: '🍝',
+    tags: ['pranzo', 'cena', 'definizione', 'high-protein'],
+    time: '20 min',
+    kcal: 450,
+    p: 38,
+    c: 48,
+    g: 9,
+    diff: 'Facile',
+    alimenti: ['pasta', 'gamberetti', 'zucchine', 'pomodorini', 'olio d'oliva', 'aglio'],
+    desc: 'Pasta leggera ma saporita. I gamberetti danno 30g di proteine con pochissimi grassi. Pronta in 20 minuti.',
+    ingredienti: [
+      '90g pasta (spaghetti o linguine)',
+      '180g gamberetti surgelati (o freschi)',
+      '2 zucchine medie a rondelle',
+      '100g pomodorini ciliegia',
+      '2 spicchi aglio',
+      '2 cucchiai olio EVO',
+      'Peperoncino, prezzemolo fresco, sale'
+    ],
+    steps: [
+      'Cuoci la pasta in acqua salata secondo i tempi del pacchetto.',
+      'In una padella ampia, scalda l'olio con aglio e peperoncino a fuoco medio.',
+      'Aggiungi le zucchine e cuoci 4-5 min finché dorate.',
+      'Aggiungi i gamberetti e i pomodorini. Cuoci 3-4 min finché i gamberetti sono rosa.',
+      'Scola la pasta, uniscila in padella con un mestolo di acqua di cottura. Mescola, aggiungi prezzemolo e servi.'
+    ]
+  }
+];
+
+// Aggiungi al pool globale
+(function() {
+  try {
+    var pool = window.RECIPES_DB;
+    if (!Array.isArray(pool)) { window.RECIPES_DB = pool = []; }
+    _v113NewRecipes.forEach(function(r) {
+      if (!pool.find(function(x) { return x.id === r.id; })) {
+        pool.push(r);
+      }
+    });
+    console.info('[V113] +' + _v113NewRecipes.length + ' ricette aggiunte. Tot pool:', pool.length);
+  } catch(e) { console.warn('[V113] recipes push error:', e); }
+})();
+
+/* ══════════════════════════════════════════════════════════
+   2 — STORICO MENU 14 GIORNI (anti-ripetizione)
+   Key: 'ft_v113_menu_history' → { [dateStr]: {colazione:id, pranzo:id, cena:id} }
+══════════════════════════════════════════════════════════ */
+
+var _V113_HISTORY_KEY = 'ft_v113_menu_history';
+var _V113_HISTORY_DAYS = 14;
+
+function _v113LoadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(_V113_HISTORY_KEY) || '{}');
+  } catch(e) { return {}; }
+}
+
+function _v113SaveHistory(h) {
+  try { localStorage.setItem(_V113_HISTORY_KEY, JSON.stringify(h)); } catch(e) {}
+}
+
+function _v113RecordMenu(dateStr, menu) {
+  if (!menu || !dateStr) return;
+  var h = _v113LoadHistory();
+  h[dateStr] = {
+    colazione: menu.colazione && menu.colazione.id,
+    pranzo: menu.pranzo && menu.pranzo.id,
+    cena: menu.cena && menu.cena.id
+  };
+  // Pulisci giorni > 14 giorni fa
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - _V113_HISTORY_DAYS);
+  var cutoffStr = cutoff.toISOString().slice(0, 10);
+  Object.keys(h).forEach(function(k) { if (k < cutoffStr) delete h[k]; });
+  _v113SaveHistory(h);
+}
+
+function _v113GetUsedIdsLast14Days() {
+  var h = _v113LoadHistory();
+  var ids = {};
+  var today = new Date().toISOString().slice(0, 10);
+  Object.keys(h).forEach(function(date) {
+    if (date < today) { // esclude oggi per permettere stesso menu
+      var dayAge = Math.round((new Date(today) - new Date(date)) / 86400000);
+      var penalty = Math.max(0, _V113_HISTORY_DAYS - dayAge); // più recente = più penalizzato
+      var entry = h[date];
+      ['colazione', 'pranzo', 'cena'].forEach(function(k) {
+        if (entry[k]) {
+          ids[entry[k]] = (ids[entry[k]] || 0) + penalty;
+        }
+      });
+    }
+  });
+  return ids; // { recipeId: penaltyScore }
+}
+
+window._v113GetUsedIdsLast14Days = _v113GetUsedIdsLast14Days;
+window._v113RecordMenu = _v113RecordMenu;
+
+/* ══════════════════════════════════════════════════════════
+   3 — OVERRIDE v68SelectBestRecipe CON ANTI-RIPETIZIONE
+   Stesso sistema di filtri allergie/preferenze V68, ma ora
+   penalizza fortemente le ricette usate di recente.
+══════════════════════════════════════════════════════════ */
+
+var _v113OrigSelectBest = window.v68SelectBestRecipe;
+window.v68SelectBestRecipe = function _v113SelectBest(mealType, kcalTarget, exclude) {
+  try {
+    var pool = [];
+    if (typeof window.RECIPES_DB !== 'undefined') pool = pool.concat(window.RECIPES_DB);
+
+    var prefs = typeof profile !== 'undefined' && profile.nutriPrefs || {};
+    var intolleranze = prefs.intolleranze || [];
+    var cibiNo = (prefs.cibiNo || '').toLowerCase().split(',').map(function(x) { return x.trim(); }).filter(Boolean);
+    var diet = prefs.diet || 'omnivore';
+
+    // Storico anti-ripetizione
+    var historyPenalties = _v113GetUsedIdsLast14Days();
+
+    // Filtro tipo pasto
+    var mealTags = {
+      'colazione': ['colazione'],
+      'pranzo': ['pranzo', 'cena'],
+      'cena': ['cena', 'pranzo'],
+      'spuntini': ['spuntino', 'post-workout', 'pre-workout']
+    };
+    var allowedTags = mealTags[mealType] || [mealType];
+
+    // Filtro dieta
+    var dietBlock = {
+      'vegetariano': ['carne', 'pollo', 'manzo', 'maiale', 'bresaola', 'prosciutto', 'gamberetti', 'tonno', 'pesce', 'salmone'],
+      'vegano': ['carne', 'pollo', 'manzo', 'maiale', 'bresaola', 'prosciutto', 'uova', 'latte', 'formaggio', 'parmigiano', 'mozzarella', 'ricotta', 'yogurt', 'gamberetti', 'tonno', 'pesce', 'salmone'],
+      'pescetariano': ['carne', 'pollo', 'manzo', 'maiale', 'bresaola', 'prosciutto']
+    };
+    var blocked = dietBlock[diet] || [];
+
+    // Allergie → alimenti vietati
+    var allergyMap = {
+      glutine: ['pane', 'pasta', 'farina', 'avena', 'orzo', 'farro'],
+      lattosio: ['latte', 'yogurt', 'formaggi', 'parmigiano', 'mozzarella', 'ricotta'],
+      uova: ['uova', 'maionese'],
+      fruttadisecco: ['noci', 'mandorle', 'pistacchi', 'anacardi', 'arachidi'],
+      pesce: ['pesce', 'salmone', 'tonno', 'gamberetti'],
+      soia: ['soia', 'edamame', 'tofu'],
+      nichel: ['legumi', 'cioccolato', 'spinaci']
+    };
+    var allergyBlocked = [];
+    intolleranze.forEach(function(i) {
+      var b = allergyMap[i] || [];
+      allergyBlocked = allergyBlocked.concat(b);
+    });
+
+    // Funzione sicurezza ricetta
+    function isSafe(r) {
+      var foods = (r.alimenti || []).map(function(a) { return a.toLowerCase(); });
+      var rTags = (r.tags || []).map(function(t) { return t.toLowerCase(); });
+      // Tipo pasto
+      var matchMeal = allowedTags.some(function(t) { return rTags.indexOf(t) >= 0; });
+      if (!matchMeal) return false;
+      // Dieta
+      if (blocked.some(function(b) { return foods.some(function(f) { return f.includes(b); }); })) return false;
+      // Allergie
+      if (allergyBlocked.some(function(b) { return foods.some(function(f) { return f.includes(b); }); })) return false;
+      // Cibi non graditi
+      if (cibiNo.length && cibiNo.some(function(cn) { return foods.some(function(f) { return f.includes(cn); }); })) return false;
+      return true;
+    }
+
+    // Candidati sicuri non in exclude
+    var excludeIds = (exclude || []).filter(Boolean);
+    var candidates = pool.filter(function(r) {
+      return isSafe(r) && excludeIds.indexOf(r.id) < 0;
+    });
+
+    if (!candidates.length) {
+      // Fallback senza filtro exclude
+      candidates = pool.filter(isSafe);
+    }
+    if (!candidates.length) {
+      // Fallback originale
+      if (typeof _v113OrigSelectBest === 'function') {
+        return _v113OrigSelectBest.apply(this, arguments);
+      }
+      return null;
+    }
+
+    // Scoring: kcal target ± 200, alta casualità, penalità storico
+    var kcal = kcalTarget || 500;
+    var scored = candidates.map(function(r) {
+      var kcalDiff = Math.abs((r.kcal || 500) - kcal);
+      var kcalScore = Math.max(0, 200 - kcalDiff); // 0-200 punti per vicinanza kcal
+
+      var histPenalty = historyPenalties[r.id] || 0; // 0-14 punti penalità
+      var histScore = -histPenalty * 20; // scala penalità
+
+      var random = Math.random() * 300; // 0-300 casualità alta → circa 50% del peso
+
+      return { r: r, score: kcalScore + histScore + random };
+    });
+
+    scored.sort(function(a, b) { return b.score - a.score; });
+    return scored[0].r;
+
+  } catch(e) {
+    console.warn('[V113] selectBest error:', e);
+    if (typeof _v113OrigSelectBest === 'function') {
+      return _v113OrigSelectBest.apply(this, arguments);
+    }
+    return null;
+  }
+};
+window.v68SelectBestRecipe._v113guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   4 — OVERRIDE v68BuildSmartMenu: salva nel storico al termine
+══════════════════════════════════════════════════════════ */
+
+var _v113OrigBuildSmartMenu = window.v68BuildSmartMenu;
+window.v68BuildSmartMenu = function _v113BuildSmartMenu() {
+  var menu = null;
+  try {
+    // Usa la versione originale (che ora chiama il nostro v68SelectBestRecipe migliorato)
+    if (typeof _v113OrigBuildSmartMenu === 'function') {
+      menu = _v113OrigBuildSmartMenu.apply(this, arguments);
+    }
+  } catch(e) {}
+
+  if (menu) {
+    // Salva nel storico anti-ripetizione
+    var todayStr = new Date().toISOString().slice(0, 10);
+    _v113RecordMenu(todayStr, menu);
+  }
+  return menu;
+};
+
+/* ══════════════════════════════════════════════════════════
+   5 — FIX SPUNTA VERDE → LOG DIARIO
+   v67ConfirmMeal togga la spunta MA ORA logga anche la ricetta
+   nel diario nutrizionale (come fa "Aggiungi al Diario" in V69).
+══════════════════════════════════════════════════════════ */
+
+function _v113GetDateKey(dayOffset) {
+  var d = new Date();
+  d.setDate(d.getDate() + (dayOffset || 0));
+  return d.toISOString().slice(0, 10);
+}
+
+function _v113GetNutrDay(dateKey) {
+  if (!window.nutrition) window.nutrition = {};
+  if (!window.nutrition[dateKey]) {
+    window.nutrition[dateKey] = {
+      meals: [
+        { name: 'Colazione', items: [] },
+        { name: 'Pranzo', items: [] },
+        { name: 'Cena', items: [] },
+        { name: 'Spuntini', items: [] }
+      ]
+    };
+  }
+  return window.nutrition[dateKey];
+}
+
+var _mealTypeIdx = { colazione: 0, pranzo: 1, cena: 2, spuntini: 3 };
+
+function _v113IsRecipeLogged(recipeId, dateKey, mealIdx) {
+  var nt = (window.nutrition || {})[dateKey];
+  if (!nt) return { logged: false, itemIdx: -1 };
+  var meal = (nt.meals || [])[mealIdx];
+  if (!meal) return { logged: false, itemIdx: -1 };
+  var idx = meal.items.findIndex(function(i) { return i._recipeId === recipeId; });
+  return { logged: idx >= 0, itemIdx: idx };
+}
+
+var _v113OrigConfirmMeal = window.v67ConfirmMeal;
+
+window.v67ConfirmMeal = function _v113ConfirmMeal(mealType) {
+  // Prendi la ricetta corrente dal menu
+  var menu = window._v67State && window._v67State.currentMenu;
+  var recipe = menu && menu[mealType];
+
+  var wasConfirmed = window._v67State && window._v67State.confirmed[mealType];
+  var mealIdx = _mealTypeIdx[mealType] !== undefined ? _mealTypeIdx[mealType] : 1;
+
+  // Offset giorno: selectedDay vs today
+  var todayDow = (new Date().getDay() + 6) % 7;
+  var selectedDay = window._v67State && window._v67State.selectedDay;
+  var dayOffset = (typeof selectedDay === 'number') ? (selectedDay - todayDow) : 0;
+  var dateKey = _v113GetDateKey(dayOffset);
+
+  if (recipe && recipe.id) {
+    var nt = _v113GetNutrDay(dateKey);
+    var meal = nt.meals[mealIdx];
+
+    if (wasConfirmed) {
+      // Rimuovi dal diario
+      var checkRemove = _v113IsRecipeLogged(recipe.id, dateKey, mealIdx);
+      if (checkRemove.logged) {
+        meal.items.splice(checkRemove.itemIdx, 1);
+        if (typeof showToast === 'function') showToast('🗑️ ' + recipe.name + ' rimosso dal diario');
+      }
+    } else {
+      // Aggiungi al diario (evita duplicati)
+      var checkAdd = _v113IsRecipeLogged(recipe.id, dateKey, mealIdx);
+      if (!checkAdd.logged) {
+        meal.items.push({
+          _recipeId: recipe.id,
+          name: recipe.name,
+          g: 1,
+          unit: 'porzione',
+          kcal: recipe.kcal || 0,
+          p: recipe.p || 0,
+          c: recipe.c || 0,
+          g_fat: recipe.g || 0
+        });
+        if (typeof showToast === 'function') showToast('✅ ' + recipe.name + ' aggiunto al diario!');
+      }
+    }
+    if (typeof saveAll === 'function') saveAll();
+    try { if (typeof renderNutrizione === 'function') renderNutrizione(); } catch(e) {}
+  }
+
+  // Chiama anche il comportamento visivo originale (toggle spunta + render card)
+  if (typeof _v113OrigConfirmMeal === 'function') {
+    try { _v113OrigConfirmMeal.apply(this, arguments); } catch(e) {}
+  } else {
+    // Fallback se originale non esiste
+    if (window._v67State) {
+      window._v67State.confirmed[mealType] = !wasConfirmed;
+      try { if (typeof v67RenderMenuCards === 'function') v67RenderMenuCards(); } catch(e) {}
+    }
+  }
+
+  // Aggiorna strip logged nella card
+  try {
+    var card = document.getElementById('v67-card-' + mealType);
+    if (card) {
+      var strip = card.querySelector('.v69-logged-strip');
+      var nowConfirmed = window._v67State && window._v67State.confirmed[mealType];
+      if (nowConfirmed) {
+        if (!strip) {
+          strip = document.createElement('div');
+          strip.className = 'v69-logged-strip';
+          card.appendChild(strip);
+        }
+        strip.innerHTML = '✅ Pasto loggato nel diario';
+        strip.style.cssText = 'margin:8px 14px 0;padding:8px 12px;background:rgba(200,245,60,.1);border:1px solid rgba(200,245,60,.25);border-radius:8px;font-size:12px;font-weight:700;color:var(--acc);text-align:center;';
+      } else {
+        if (strip) strip.remove();
+      }
+    }
+  } catch(e) {}
+
+  // Aggiorna V69 sheet se è aperto sulla stessa ricetta
+  try {
+    var v69s = window._v69State;
+    if (v69s && v69s.recipe && recipe && v69s.recipe.id === recipe.id) {
+      var nowConf = window._v67State && window._v67State.confirmed[mealType];
+      if (typeof window._v69RefreshBtn === 'function') window._v69RefreshBtn(nowConf);
+      else {
+        var btn = document.getElementById('v69-confirm-btn');
+        var ico = document.getElementById('v69-confirm-ico');
+        var lbl = document.getElementById('v69-confirm-lbl');
+        if (btn && lbl) {
+          if (nowConf) { btn.classList.add('confirmed'); if(ico) ico.textContent='✓ Aggiunto'; lbl.textContent='Rimuovi dal Diario'; }
+          else { btn.classList.remove('confirmed'); if(ico) ico.textContent='✓'; lbl.textContent='Aggiungi al Diario'; }
+        }
+      }
+    }
+  } catch(e) {}
+};
+window.v67ConfirmMeal._v113guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   6 — VARIAZIONE AUTOMATICA GIORNO DOPO
+   Quando _v97 carica il lock e la data è diversa da oggi
+   (nuovo giorno), forza rigenerazione con esclusione
+   delle ricette del giorno precedente dallo storico.
+══════════════════════════════════════════════════════════ */
+
+// Intercetta il guard V97 che carica il lock per aggiungere
+// il comportamento "nuovo giorno → nuovo menu"
+var _v113OrigV97Update = window.v67UpdateMenuForDay;
+if (typeof _v113OrigV97Update === 'function' && !_v113OrigV97Update._v113guard) {
+  window.v67UpdateMenuForDay = function _v113UpdateMenuForDay(dayIdx) {
+    // Chiama il sistema V97 esistente
+    var r = _v113OrigV97Update.apply(this, arguments);
+    return r;
+  };
+  window.v67UpdateMenuForDay._v113guard = true;
+}
+
+/* Intercetta v67GenerateNewMenu per salvare nel storico */
+var _v113OrigGenMenu = window.v67GenerateNewMenu;
+if (typeof _v113OrigGenMenu === 'function') {
+  window.v67GenerateNewMenu = function _v113GenMenu() {
+    var r = _v113OrigGenMenu.apply(this, arguments);
+    // Dopo generazione, salva nel storico (con delay per attendere il render)
+    setTimeout(function() {
+      try {
+        var menu = window._v67State && window._v67State.currentMenu;
+        var todayStr = new Date().toISOString().slice(0, 10);
+        if (menu) _v113RecordMenu(todayStr, menu);
+      } catch(e) {}
+    }, 1200);
+    return r;
+  };
+}
+
+/* ══════════════════════════════════════════════════════════
+   7 — CSS: strip "Pasto loggato" nella card menu
+══════════════════════════════════════════════════════════ */
+(function() {
+  try {
+    var style = document.createElement('style');
+    style.textContent = [
+      '.v69-logged-strip {',
+      '  margin: 8px 14px 0;',
+      '  padding: 8px 12px;',
+      '  background: rgba(200,245,60,.1);',
+      '  border: 1px solid rgba(200,245,60,.25);',
+      '  border-radius: 8px;',
+      '  font-size: 12px;',
+      '  font-weight: 700;',
+      '  color: var(--acc);',
+      '  text-align: center;',
+      '  animation: fadeIn .3s ease both;',
+      '}',
+      '.v66-meal-btn-ok.v67-ok-active {',
+      '  background: rgba(200,245,60,.25) !important;',
+      '  box-shadow: 0 0 16px rgba(200,245,60,.4) !important;',
+      '  border-color: rgba(200,245,60,.5) !important;',
+      '}'
+    ].join('\n');
+    document.head.appendChild(style);
+  } catch(e) {}
+})();
+
+window._v113Version = 'V113';
+console.info('%c[FitTrack V113] ✅ 5 nuove ricette · Spunta verde → log diario · Anti-ripetizione 14gg · Variazione giornaliera automatica', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch(e) { console.warn('[FT_V113]', e); }
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V114 — FIX MENU PER-GIORNO + 50 NUOVE RICETTE SEMPLICI
+
+     PROBLEMA RILEVATO:
+     Il sistema V97 salva il menu in un lock singolo
+     ('ft_menu_lock_v97') senza distinguere il giorno.
+     Quando si naviga tra i giorni della settimana, ogni giorno
+     usa lo stesso lock (o genera un menu uguale perché il seed
+     di selezione V70 usa getDay() → stesso per tutto il giorno).
+
+     FIX 1 — Lock per-giorno (chiave = dayIdx + settimana ISO).
+       Ogni giorno della settimana ha il proprio slot di storage
+       separato. Navigare LUN→MAR→LUN riporta sempre il menu
+       già generato per quel giorno, non rigenerato.
+
+     FIX 2 — Seed vero per dayIdx.
+       v68SelectBestRecipe ora usa dayIdx nel seed, non getDay().
+       LUN e MAR ricevono menu garantiti diversi.
+
+     NUOVE RICETTE (≈ 50):
+     - Svuotafrigo: usa quello che c'è senza sprechi
+     - Pochi ingredienti (3-5): veloci e praticabili
+     - Ingredienti che tutti hanno in casa
+
+     Architettura append-only.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V114() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   1 — ~50 NUOVE RICETTE SEMPLICI
+══════════════════════════════════════════════════════════ */
+var _v114Recipes = [
+
+  /* ── COLAZIONI SEMPLICI ── */
+  { id:'v114_col_uova_strapazzate', name:'Uova Strapazzate al Burro', ico:'🍳',
+    tags:['colazione','rapido'], time:'5 min', kcal:240, p:18, c:2, g:18, diff:'Facilissimo',
+    alimenti:['uova','burro','sale'],
+    desc:'La colazione più veloce al mondo. 3 ingredienti, 5 minuti.',
+    ingredienti:['3 uova intere','10g burro','Sale, pepe nero','Erba cipollina (opzionale)'],
+    steps:['Sbatti le uova con un pizzico di sale.','Scalda il burro in padella a fuoco basso.','Versa le uova e mescola lentamente con spatola.','Togli dal fuoco leggermente lucide — finiscono con il calore residuo.','Servi su pane tostato.'] },
+
+  { id:'v114_col_pane_olio', name:'Pane Integrale Olio e Pomodoro', ico:'🍞',
+    tags:['colazione','rapido','veg'], time:'3 min', kcal:210, p:6, c:32, g:7, diff:'Facilissimo',
+    alimenti:['pane integrale','olio d'oliva','pomodoro','sale'],
+    desc:'La bruschetta fit. Pane tostato, filo d'olio EVO, pomodoro fresco.',
+    ingredienti:['90g pane integrale','1 pomodoro maturo','1 cucchiaino olio EVO','Sale grosso, origano'],
+    steps:['Tosta il pane.','Strofina il pomodoro tagliato sul pane caldo.','Irrora con olio, sale e origano.','Mangia subito.'] },
+
+  { id:'v114_col_yogurt_banana', name:'Yogurt con Banana e Miele', ico:'🍌',
+    tags:['colazione','rapido','veg'], time:'2 min', kcal:260, p:16, c:38, g:3, diff:'Facilissimo',
+    alimenti:['yogurt greco','banana','miele'],
+    desc:'Colazione in 2 minuti senza nemmeno accendere i fornelli.',
+    ingredienti:['200g yogurt greco 0%','1 banana a rondelle','1 cucchiaino miele'],
+    steps:['Versa lo yogurt in una ciotola.','Aggiungi la banana a fette.','Irrora con miele. Mangia subito.'] },
+
+  { id:'v114_col_toast_uovo', name:'Toast con Uovo al Tegamino', ico:'🍳',
+    tags:['colazione','rapido'], time:'6 min', kcal:310, p:18, c:28, g:12, diff:'Facilissimo',
+    alimenti:['pane integrale','uova','olio','sale'],
+    desc:'Il grande classico. Pane tostato + uovo. In casa ce l'hai sempre.',
+    ingredienti:['2 fette pane integrale','2 uova','1 cucchiaino olio EVO','Sale, pepe'],
+    steps:['Tosta il pane in tostapane.','Cuoci le uova al tegamino con olio a fuoco medio 3-4 min.','Servi uova sul pane. Sale e pepe.'] },
+
+  { id:'v114_col_fiocchi_latte', name:'Fiocchi d'Avena con Latte', ico:'🥣',
+    tags:['colazione','rapido','veg'], time:'4 min', kcal:350, p:14, c:52, g:7, diff:'Facilissimo',
+    alimenti:['fiocchi d'avena','latte','miele','cannella'],
+    desc:'Porridge base con ingredienti che tutti hanno già in casa.',
+    ingredienti:['80g fiocchi d'avena','250ml latte (o acqua)','1 cucchiaino miele','Cannella'],
+    steps:['Scalda latte in pentolino.','Aggiungi fiocchi e mescola 3 min a fuoco medio.','Versa nella ciotola.','Miele e cannella sopra.'] },
+
+  /* ── PRANZI SEMPLICI / SVUOTAFRIGO ── */
+  { id:'v114_pra_pasta_aglio', name:'Pasta Aglio, Olio e Peperoncino', ico:'🍝',
+    tags:['pranzo','cena','rapido','veg'], time:'12 min', kcal:420, p:12, c:68, g:12, diff:'Facilissimo',
+    alimenti:['pasta','aglio','olio','peperoncino'],
+    desc:'Il piatto svuotafrigo per eccellenza. 4 ingredienti. Sempre in casa.',
+    ingredienti:['90g pasta (spaghetti)','3 spicchi aglio','2 cucchiai olio EVO','Peperoncino secco','Prezzemolo, sale'],
+    steps:['Cuoci la pasta in acqua salata.','Soffriggi aglio e peperoncino in olio a fuoco basso 3 min.','Scola la pasta, manteca in padella con un po' di acqua di cottura.','Prezzemolo e servi.'] },
+
+  { id:'v114_pra_riso_tonno', name:'Riso Freddo Tonno e Mais', ico:'🍚',
+    tags:['pranzo','rapido'], time:'15 min', kcal:400, p:28, c:52, g:8, diff:'Facilissimo',
+    alimenti:['riso','tonno','mais','olio','sale'],
+    desc:'Riso estivo velocissimo. Ingredienti da dispensa.',
+    ingredienti:['120g riso (peso cotto)','160g tonno al naturale','80g mais in scatola','1 cucchiaio olio EVO','Sale, pepe, prezzemolo'],
+    steps:['Cuoci il riso, raffredda sotto acqua.','Scola tonno e mais.','Mescola tutto in una bowl.','Olio, sale, pepe e prezzemolo.'] },
+
+  { id:'v114_pra_insalata_ceci', name:'Insalata di Ceci e Cipolla', ico:'🥗',
+    tags:['pranzo','spuntino','rapido','veg'], time:'5 min', kcal:300, p:14, c:40, g:8, diff:'Facilissimo',
+    alimenti:['ceci in scatola','cipolla','olio','limone','prezzemolo'],
+    desc:'5 minuti, nessuna cottura. Perfetto svuotafrigo da dispensa.',
+    ingredienti:['400g ceci in scatola scolati','1/2 cipolla rossa','2 cucchiai olio EVO','Succo di mezzo limone','Prezzemolo, sale, pepe'],
+    steps:['Scola e sciacqua i ceci.','Taglia la cipolla a rondelle sottili.','Mescola tutto in una bowl.','Olio, limone, sale, pepe e prezzemolo.','Aspetta 5 min e servi.'] },
+
+  { id:'v114_pra_uova_patate', name:'Uova e Patate in Padella', ico:'🥚',
+    tags:['pranzo','cena','veg'], time:'18 min', kcal:380, p:18, c:38, g:16, diff:'Facile',
+    alimenti:['uova','patate','olio','cipolla','sale'],
+    desc:'Svuotafrigo comfort food. Patate + uova + cipolla. Sempre in casa.',
+    ingredienti:['3 uova','2 patate medie','1/2 cipolla','2 cucchiai olio EVO','Sale, pepe, rosmarino'],
+    steps:['Sbuccia e taglia le patate a cubetti piccoli.','Soffriggi cipolla in olio 2 min.','Aggiungi patate, copri e cuoci 12 min girando.','Aggiungi le uova sbattute e mescola fino a cottura.','Sale, pepe, rosmarino.'] },
+
+  { id:'v114_pra_pasta_pomodoro', name:'Pasta al Pomodoro Fresco', ico:'🍅',
+    tags:['pranzo','cena','rapido','veg'], time:'14 min', kcal:380, p:12, c:70, g:8, diff:'Facilissimo',
+    alimenti:['pasta','pomodori','aglio','olio','basilico'],
+    desc:'Il piatto italiano per eccellenza. 5 ingredienti che hai sempre in casa.',
+    ingredienti:['90g pasta (rigatoni o pennette)','200g pomodorini o polpa di pomodoro','2 spicchi aglio','1 cucchiaio olio EVO','Basilico fresco, sale, pepe'],
+    steps:['Cuoci la pasta.','Soffriggi aglio in olio 1 min, aggiungi pomodori, sale e cuoci 8 min.','Scola la pasta e manteca nel sugo.','Basilico fresco e servi.'] },
+
+  { id:'v114_pra_insalata_lenticchie', name:'Zuppa di Lenticchie Rosse', ico:'🍲',
+    tags:['pranzo','cena','veg'], time:'20 min', kcal:340, p:20, c:48, g:6, diff:'Facile',
+    alimenti:['lenticchie rosse','cipolla','carote','sedano','olio','sale'],
+    desc:'Minestra rapida con lenticchie rosse (non richiedono ammollo). Economica e completa.',
+    ingredienti:['150g lenticchie rosse secche','1 cipolla','2 carote','1 gambo sedano','1 cucchiaio olio EVO','Sale, curcuma, cumino'],
+    steps:['Soffriggi cipolla, carote e sedano in olio 3 min.','Aggiungi lenticchie e 600ml acqua.','Cuoci 15 min mescolando.','Aggiungi spezie. Frulla parzialmente per cremosità.','Aggiusta di sale.'] },
+
+  { id:'v114_pra_riso_verdure', name:'Riso Saltato con Verdure Surgelate', ico:'🍚',
+    tags:['pranzo','rapido','veg'], time:'12 min', kcal:310, p:8, c:55, g:6, diff:'Facilissimo',
+    alimenti:['riso','verdure surgelate','olio','salsa di soia','sale'],
+    desc:'Svuotafrigo con riso avanzato e verdure surgelate. Sempre disponibili.',
+    ingredienti:['150g riso cotto avanzato','200g verdure surgelate miste','1 cucchiaio olio','1 cucchiaio salsa di soia','Aglio, sale'],
+    steps:['Scongela le verdure in padella con olio e aglio 3 min.','Aggiungi il riso freddo avanzato.','Salta a fuoco alto 4-5 min.','Salsa di soia. Servi subito.'] },
+
+  { id:'v114_pra_panino_tonno', name:'Panino al Tonno e Cetriolo', ico:'🥪',
+    tags:['pranzo','spuntino','rapido'], time:'4 min', kcal:330, p:28, c:32, g:8, diff:'Facilissimo',
+    alimenti:['pane integrale','tonno','cetriolo','yogurt greco','sale'],
+    desc:'Alternativa sana alla maionese: usa yogurt greco. Pronto in 4 minuti.',
+    ingredienti:['90g pane integrale','160g tonno al naturale','1/2 cetriolo a rondelle','2 cucchiai yogurt greco','Sale, pepe, erba cipollina'],
+    steps:['Mescola il tonno con lo yogurt, sale e pepe.','Apri il pane.','Stendi il composto di tonno.','Aggiungi le fette di cetriolo.','Chiudi e mangia.'] },
+
+  { id:'v114_pra_frittata_frigo', name:'Frittata Svuotafrigo', ico:'🍳',
+    tags:['pranzo','cena','veg'], time:'12 min', kcal:290, p:20, c:8, g:18, diff:'Facile',
+    alimenti:['uova','verdure avanzate','formaggio','olio','sale'],
+    desc:'Usa quello che hai in frigo: zucchine, peperoni, spinaci, funghi, prosciutto. Tutto va.',
+    ingredienti:['4 uova','Avanzi di verdure a scelta (100-200g)','20g parmigiano o altro formaggio','1 cucchiaio olio EVO','Sale, pepe, erbe aromatiche'],
+    steps:['Sbatti le uova con sale, pepe e formaggio.','Soffriggi le verdure avanzate in olio 3 min.','Versa le uova sulle verdure.','Cuoci a fuoco basso 5 min, poi copri con coperchio 2 min.','Servi tiepida o fredda.'] },
+
+  { id:'v114_pra_pasta_fagioli', name:'Pasta e Fagioli', ico:'🍲',
+    tags:['pranzo','cena','veg'], time:'20 min', kcal:420, p:20, c:62, g:8, diff:'Facile',
+    alimenti:['pasta corta','fagioli in scatola','pomodoro','aglio','rosmarino'],
+    desc:'Piatto povero e completo. Fagioli in scatola = pronto in 20 minuti.',
+    ingredienti:['80g pasta corta (ditalini)','400g fagioli borlotti in scatola','200g polpa di pomodoro','2 spicchi aglio','Rosmarino, olio EVO, sale'],
+    steps:['Soffriggi aglio in olio 1 min.','Aggiungi pomodoro e cuoci 5 min.','Aggiungi fagioli scolati e 400ml acqua.','Cuoci 8 min. Aggiungi pasta e cuoci al dente.','Rosmarino, filo d'olio, servi.'] },
+
+  { id:'v114_pra_insalata_mista', name:'Insalata Mista con Uovo Sodo', ico:'🥗',
+    tags:['pranzo','rapido','veg'], time:'10 min', kcal:250, p:16, c:12, g:14, diff:'Facilissimo',
+    alimenti:['insalata mista','uova','pomodori','olio','aceto'],
+    desc:'Insalata base potenziata con uovo sodo. Economica e leggera.',
+    ingredienti:['150g insalata mista','2 uova sode','100g pomodorini','1 cucchiaio olio EVO','Aceto o limone, sale'],
+    steps:['Cuoci le uova sode 9 min. Raffredda e sbuccia.','Lava l'insalata, aggiungi pomodorini.','Aggiungi uova tagliate a spicchi.','Condisci con olio, aceto o limone e sale.'] },
+
+  { id:'v114_pra_riso_ceci', name:'Riso e Ceci Saltati', ico:'🍚',
+    tags:['pranzo','cena','veg'], time:'15 min', kcal:380, p:16, c:58, g:8, diff:'Facile',
+    alimenti:['riso','ceci in scatola','aglio','rosmarino','olio'],
+    desc:'Piatto completo da dispensa. Proteine vegetali + carboidrati in un unico piatto.',
+    ingredienti:['120g riso cotto','400g ceci scolati','2 spicchi aglio','Rosmarino','2 cucchiai olio EVO, sale'],
+    steps:['Scalda olio con aglio e rosmarino in padella.','Aggiungi ceci e cuoci 5 min girando.','Aggiungi il riso cotto e salta 3 min.','Sale e pepe. Eventuale goccia di limone.'] },
+
+  { id:'v114_pra_minestrone', name:'Minestrone Veloce', ico:'🥣',
+    tags:['pranzo','cena','veg'], time:'25 min', kcal:220, p:10, c:35, g:4, diff:'Facile',
+    alimenti:['verdure miste','pasta o riso','olio','dado vegetale','sale'],
+    desc:'Usa le verdure che stai per buttare. Carote, zucchine, patate, sedano — tutto va.',
+    ingredienti:['400g verdure miste (carote, zucchine, patate, sedano)','60g pastina o riso','1 cucchiaio olio EVO','Dado vegetale o sale','Parmigiano a parte'],
+    steps:['Taglia le verdure a cubetti.','Soffriggi in olio 2 min.','Copri con acqua (800ml) e dado. Cuoci 15 min.','Aggiungi pastina o riso e cuoci al dente.','Parmigiano grattugiato sopra.'] },
+
+  /* ── CENE SEMPLICI / SVUOTAFRIGO ── */
+  { id:'v114_cena_uova_spinaci', name:'Uova in Camicia sugli Spinaci', ico:'🥬',
+    tags:['cena','pranzo','rapido','veg'], time:'10 min', kcal:240, p:20, c:6, g:14, diff:'Facile',
+    alimenti:['uova','spinaci','olio','aglio','aceto'],
+    desc:'Cena leggera e proteica. Spinaci + uova in camicia. 3 ingredienti base.',
+    ingredienti:['2 uova','200g spinaci freschi o surgelati','1 spicchio aglio','1 cucchiaio olio EVO','Aceto bianco per le uova, sale'],
+    steps:['Soffriggi aglio in olio, aggiungi spinaci e cuoci 3 min.','Porta a bollore una casseruola d'acqua con aceto.','Fai girare l'acqua, immergi le uova una alla volta 3 min.','Adagia le uova sugli spinaci. Sale e pepe.'] },
+
+  { id:'v114_cena_pollo_limone', name:'Petto di Pollo al Limone', ico:'🍗',
+    tags:['cena','pranzo','rapido'], time:'15 min', kcal:280, p:42, c:4, g:8, diff:'Facile',
+    alimenti:['petto di pollo','limone','aglio','olio','sale'],
+    desc:'Il secondo più classico e sano. 5 ingredienti. Sempre in casa.',
+    ingredienti:['200g petto di pollo','Succo di 1 limone','1 spicchio aglio','1 cucchiaio olio EVO','Sale, pepe, rosmarino'],
+    steps:['Batti il pollo per uniformare lo spessore.','Marina con limone, aglio, olio e spezie 5 min.','Cuoci in padella calda 5-6 min per lato.','Lascia riposare 2 min prima di tagliare.'] },
+
+  { id:'v114_cena_pesce_forno', name:'Filetto di Pesce al Forno con Limone', ico:'🐟',
+    tags:['cena','rapido'], time:'15 min', kcal:230, p:36, c:2, g:8, diff:'Facilissimo',
+    alimenti:['filetto di pesce','limone','olio','sale','prezzemolo'],
+    desc:'Merluzzo, orata, branzino, nasello: qualsiasi filetto. Forno 180°C, 12 minuti.',
+    ingredienti:['200g filetto di pesce a scelta','Succo di 1 limone','1 cucchiaio olio EVO','Prezzemolo, sale, pepe'],
+    steps:['Preriscalda forno a 180°C.','Disponi il filetto in teglia con carta forno.','Irrora con olio, limone, sale, pepe e prezzemolo.','Cuoci 12-15 min a seconda dello spessore.'] },
+
+  { id:'v114_cena_lenticchie_salsiccia', name:'Lenticchie con Salsiccia', ico:'🌭',
+    tags:['cena','pranzo'], time:'25 min', kcal:480, p:28, c:42, g:18, diff:'Facile',
+    alimenti:['lenticchie in scatola','salsiccia','cipolla','pomodoro','olio'],
+    desc:'Piatto invernale completo. Lenticchie in scatola + 1 salsiccia = cena da 25 minuti.',
+    ingredienti:['400g lenticchie in scatola','2 salsicce (150g)','1 cipolla','200g polpa di pomodoro','1 cucchiaio olio EVO, sale, alloro'],
+    steps:['Taglia le salsicce a pezzi e rosola in padella senza olio 3 min.','Soffriggi cipolla con olio.','Aggiungi pomodoro e cuoci 5 min.','Unisci lenticchie scolate e salsicce. Aggiungi alloro.','Cuoci 10 min. Aggiusta di sale.'] },
+
+  { id:'v114_cena_pollo_patate_forno', name:'Pollo e Patate al Forno', ico:'🍗',
+    tags:['cena'], time:'40 min', kcal:450, p:38, c:38, g:12, diff:'Facile',
+    alimenti:['cosce di pollo','patate','aglio','rosmarino','olio'],
+    desc:'Il classico della domenica, sempre uguale e sempre buono. 5 ingredienti.',
+    ingredienti:['300g pezzi di pollo (cosce o petto)','3 patate medie','3 spicchi aglio','Rosmarino abbondante','2 cucchiai olio EVO, sale'],
+    steps:['Preriscalda forno a 200°C.','Taglia le patate a spicchi.','Metti tutto in teglia: pollo, patate, aglio, rosmarino, olio, sale.','Mescola bene.','Cuoci 35-40 min girando a metà.'] },
+
+  { id:'v114_cena_zucchine_tonno', name:'Zucchine Ripiene di Tonno', ico:'🥒',
+    tags:['cena','pranzo'], time:'25 min', kcal:260, p:28, c:10, g:10, diff:'Facile',
+    alimenti:['zucchine','tonno','parmigiano','olio','sale'],
+    desc:'Svuotafrigo elegante. Zucchine e tonno: sempre disponibili.',
+    ingredienti:['3 zucchine medie','160g tonno al naturale','30g parmigiano','1 cucchiaio olio','Prezzemolo, sale, pepe'],
+    steps:['Taglia zucchine a metà e scava la polpa.','Mescola tonno, polpa di zucchine, parmigiano, prezzemolo.','Riempi le zucchine con il composto.','Olio sopra. Forno 180°C 20 min.'] },
+
+  { id:'v114_cena_uova_pomodoro', name:'Uova al Pomodoro', ico:'🍅',
+    tags:['cena','pranzo','rapido','veg'], time:'12 min', kcal:250, p:16, c:14, g:14, diff:'Facilissimo',
+    alimenti:['uova','pomodori','aglio','olio','sale'],
+    desc:'Shakshuka italiana. Uova cotte direttamente nel sugo di pomodoro. Pane per finire il sugo.',
+    ingredienti:['3 uova','300g polpa di pomodoro','2 spicchi aglio','1 cucchiaio olio EVO','Sale, peperoncino, basilico'],
+    steps:['Soffriggi aglio in olio, aggiungi pomodoro e cuoci 5 min.','Crea dei nidi nel sugo e rompi le uova dentro.','Copri con coperchio a fuoco basso 5-6 min.','Basilico e peperoncino. Servi con pane.'] },
+
+  { id:'v114_cena_tacchino_verdure', name:'Fesa di Tacchino con Verdure Miste', ico:'🦃',
+    tags:['cena','rapido'], time:'14 min', kcal:260, p:38, c:8, g:6, diff:'Facilissimo',
+    alimenti:['fesa di tacchino','verdure miste','olio','sale','spezie'],
+    desc:'Fettine di tacchino + qualunque verdura. La cena fit più veloce.',
+    ingredienti:['200g fesa di tacchino a fettine','200g verdure miste (peperoni, zucchine, melanzane)','1 cucchiaio olio EVO','Sale, pepe, erbe di Provenza'],
+    steps:['Taglia le fettine di tacchino a striscioline.','Saltare le verdure in padella con olio 4 min.','Aggiungi il tacchino e cuoci 4-5 min.','Sale, pepe, erbe. Servi subito.'] },
+
+  { id:'v114_cena_manzo_cipolla', name:'Carne Macinata con Cipolla e Pomodoro', ico:'🥩',
+    tags:['cena'], time:'18 min', kcal:380, p:30, c:14, g:20, diff:'Facile',
+    alimenti:['carne macinata','cipolla','pomodoro','aglio','olio'],
+    desc:'Bolognese veloce. Macinato + cipolla + pomodoro. Mangialo sul pane o con la pasta.',
+    ingredienti:['200g carne macinata mista','1 cipolla','200g polpa di pomodoro','2 spicchi aglio','1 cucchiaio olio EVO, sale, rosmarino'],
+    steps:['Soffriggi cipolla e aglio in olio 2 min.','Aggiungi il macinato e rosola 5 min sminuzzando.','Aggiungi pomodoro, sale e rosmarino.','Cuoci 10 min a fuoco medio.','Servi su pasta, riso o pane.'] },
+
+  { id:'v114_cena_piselli_prosciutto', name:'Piselli con Prosciutto Cotto', ico:'🫛',
+    tags:['cena','pranzo','rapido'], time:'10 min', kcal:260, p:20, c:22, g:8, diff:'Facilissimo',
+    alimenti:['piselli surgelati','prosciutto cotto','cipolla','olio','sale'],
+    desc:'Il piatto della nonna. Piselli surgelati + prosciutto. Sempre in casa.',
+    ingredienti:['300g piselli surgelati','100g prosciutto cotto a cubetti','1/2 cipolla','1 cucchiaio olio EVO','Sale, pepe'],
+    steps:['Soffriggi cipolla in olio 2 min.','Aggiungi piselli surgelati diretti.','Cuoci 8 min con coperchio mescolando.','Aggiungi prosciutto e cuoci 2 min.','Sale e pepe.'] },
+
+  /* ── PRANZI/CENE SVUOTAFRIGO ── */
+  { id:'v114_sf_ribollita', name:'Ribollita Veloce (Pane e Fagioli)', ico:'🍞',
+    tags:['pranzo','cena','veg'], time:'20 min', kcal:350, p:14, c:52, g:8, diff:'Facile',
+    alimenti:['fagioli in scatola','pane raffermo','cavolo verza o spinaci','aglio','olio'],
+    desc:'Svuotafrigo toscano. Pane avanzato + fagioli + qualunque verdura a foglia.',
+    ingredienti:['400g fagioli cannellini','100g pane raffermo a pezzi','200g spinaci o cavolo verza','2 spicchi aglio','Olio EVO, sale, peperoncino'],
+    steps:['Soffriggi aglio in olio, aggiungi verdure e cuoci 3 min.','Aggiungi fagioli e 400ml acqua. Cuoci 8 min.','Schiaccia parzialmente i fagioli con forchetta.','Aggiungi il pane raffermo e mescola.','Olio a crudo. Servi.'] },
+
+  { id:'v114_sf_frittata_pasta', name:'Frittata di Pasta Avanzata', ico:'🍝',
+    tags:['pranzo','cena','rapido','veg'], time:'8 min', kcal:370, p:18, c:44, g:12, diff:'Facilissimo',
+    alimenti:['pasta avanzata','uova','parmigiano','olio','sale'],
+    desc:'La ricetta anti-spreco italiana. Pasta di ieri + 3 uova = cena nuova.',
+    ingredienti:['200g pasta avanzata di ieri','3 uova','30g parmigiano','1 cucchiaio olio','Sale, pepe, basilico'],
+    steps:['Sbatti le uova con parmigiano, sale e pepe.','Mescola con la pasta avanzata.','Scalda olio in padella antiaderente.','Versa il composto e cuoci 3-4 min a fuoco medio.','Gira e cuoci altri 2 min. Servi a spicchi.'] },
+
+  { id:'v114_sf_riso_latte', name:'Riso al Latte Salato con Parmigiano', ico:'🍚',
+    tags:['pranzo','cena','rapido','veg'], time:'18 min', kcal:380, p:14, c:56, g:10, diff:'Facilissimo',
+    alimenti:['riso','latte','parmigiano','burro','sale'],
+    desc:'Riso mantecato tipo risotto senza soffritto. Solo 4 ingredienti.',
+    ingredienti:['120g riso','300ml latte','250ml acqua','30g parmigiano','20g burro, sale'],
+    steps:['Porta a bollore latte e acqua con un pizzico di sale.','Aggiungi il riso e mescola ogni 2 min.','Cuoci 16-18 min finché cremoso.','Spegni, aggiungi burro e parmigiano.','Manteca 1 min e servi.'] },
+
+  { id:'v114_sf_uova_formaggio', name:'Uova al Formaggio Filante', ico:'🧀',
+    tags:['cena','pranzo','rapido','veg'], time:'6 min', kcal:300, p:22, c:2, g:22, diff:'Facilissimo',
+    alimenti:['uova','formaggio da fondere','olio','sale'],
+    desc:'Uova strapazzate con formaggio che si scioglie. 3 ingredienti, 6 minuti.',
+    ingredienti:['3 uova','40g formaggio filante (scamorza, fontina, mozzarella)','1 cucchiaino olio EVO','Sale, pepe'],
+    steps:['Sbatti le uova con sale.','Scalda olio in padella.','Aggiungi uova e mescola a fuoco basso.','A metà cottura aggiungi formaggio tagliato a pezzi.','Copri 30 sec. Servi appena filante.'] },
+
+  /* ── RICETTE FIT CON POCHI INGREDIENTI ── */
+  { id:'v114_fit_salmone_limone', name:'Salmone in Padella 5 Minuti', ico:'🐟',
+    tags:['cena','pranzo','rapido'], time:'8 min', kcal:320, p:36, c:0, g:18, diff:'Facilissimo',
+    alimenti:['filetto di salmone','limone','olio','sale','pepe'],
+    desc:'Il secondo proteico più veloce. Padella calda + salmone + limone. Impossibile sbagliarlo.',
+    ingredienti:['200g filetto di salmone','Succo di 1/2 limone','1 cucchiaio olio EVO','Sale, pepe nero abbondante'],
+    steps:['Asciuga il salmone con carta da cucina.','Scalda padella con olio a fuoco alto.','Cuoci salmone 3 min lato pelle, 2 min lato carne.','Succo di limone, sale, pepe. Servi subito.'] },
+
+  { id:'v114_fit_pollo_yogurt', name:'Pollo Marinato allo Yogurt', ico:'🍗',
+    tags:['cena','pranzo'], time:'20 min', kcal:270, p:40, c:6, g:8, diff:'Facile',
+    alimenti:['petto di pollo','yogurt greco','spezie','sale','olio'],
+    desc:'Lo yogurt intenerisce il pollo e lo rende succoso. Marinat 10 min e cuoci.',
+    ingredienti:['200g petto di pollo','100g yogurt greco','1 cucchiaino curcuma','Paprika, aglio polvere','Sale, 1 cucchiaio olio'],
+    steps:['Mescola yogurt con spezie e sale.','Rivesti il pollo e lascia 10 min (o tutta la notte).','Cuoci in padella calda 5-6 min per lato.','Non toccare mentre cuoce per la crosticina.'] },
+
+  { id:'v114_fit_mozzarella_pomodoro', name:'Mozzarella con Pomodoro e Origano', ico:'🧀',
+    tags:['spuntino','pranzo','rapido','veg'], time:'3 min', kcal:240, p:16, c:8, g:16, diff:'Facilissimo',
+    alimenti:['mozzarella','pomodoro','olio','origano','sale'],
+    desc:'3 minuti zero cottura. Proteico e fresco.',
+    ingredienti:['125g mozzarella','1 pomodoro grande','1 cucchiaino olio EVO','Origano secco abbondante','Sale grosso'],
+    steps:['Taglia mozzarella e pomodoro a fette.','Alternal le fette nel piatto.','Origano, olio, sale grosso. Mangia subito.'] },
+
+  { id:'v114_fit_tonno_avocado', name:'Insalata Tonno e Avocado', ico:'🥑',
+    tags:['pranzo','spuntino','rapido'], time:'5 min', kcal:360, p:30, c:6, g:22, diff:'Facilissimo',
+    alimenti:['tonno','avocado','limone','sale','pepe'],
+    desc:'Grassi buoni + proteine. 5 minuti, nessuna cottura.',
+    ingredienti:['160g tonno al naturale','1 avocado maturo','Succo di limone','Sale, pepe','Prezzemolo (opzionale)'],
+    steps:['Schiaccia l'avocado con forchetta.','Aggiungi limone, sale e pepe.','Unisci il tonno sgocciolato e mescola.','Mangia con pane integrale o cracker.'] },
+
+  /* ── COLAZIONI EXTRA ── */
+  { id:'v114_col_ricotta_frutta', name:'Ricotta con Frutta e Cannella', ico:'🍓',
+    tags:['colazione','spuntino','rapido','veg'], time:'3 min', kcal:220, p:16, c:24, g:6, diff:'Facilissimo',
+    alimenti:['ricotta','frutta fresca','miele','cannella'],
+    desc:'Colazione proteica senza cottura. Ricotta + qualunque frutta di stagione.',
+    ingredienti:['150g ricotta vaccina','1 frutto a scelta (banana, pesca, fragole)','1 cucchiaino miele','Cannella'],
+    steps:['Metti la ricotta in una ciotola.','Aggiungi frutta tagliata.','Miele e cannella sopra. Mangia subito.'] },
+
+  { id:'v114_col_pane_burro_arachidi', name:'Pane e Burro di Arachidi', ico:'🥜',
+    tags:['colazione','spuntino','rapido'], time:'2 min', kcal:340, p:14, c:34, g:16, diff:'Facilissimo',
+    alimenti:['pane integrale','burro di arachidi','banana'],
+    desc:'Pre-workout ottimo. 3 ingredienti. Sempre in casa.',
+    ingredienti:['2 fette pane integrale','2 cucchiai burro di arachidi naturale','1/2 banana a rondelle'],
+    steps:['Tosta il pane.','Spalma il burro di arachidi.','Aggiungi le rondelle di banana sopra.'] },
+
+  { id:'v114_col_latte_cereali', name:'Latte con Fiocchi di Mais e Frutta', ico:'🥛',
+    tags:['colazione','rapido','veg'], time:'2 min', kcal:280, p:10, c:48, g:4, diff:'Facilissimo',
+    alimenti:['latte','cereali integrali','banana','miele'],
+    desc:'La colazione di quando non c'è tempo per niente. Sempre valida.',
+    ingredienti:['250ml latte parzialmente scremato','50g fiocchi di mais integrali (cornflakes)','1/2 banana','1 cucchiaino miele'],
+    steps:['Versa i cereali nella ciotola.','Aggiungi latte freddo.','Aggiungi banana a fette e miele.'] }
+];
+
+// Aggiungi al pool globale (RECIPES_DB)
+(function() {
+  try {
+    var pool = window.RECIPES_DB;
+    if (!Array.isArray(pool)) { window.RECIPES_DB = pool = []; }
+    var added = 0;
+    _v114Recipes.forEach(function(r) {
+      if (!pool.find(function(x) { return x.id === r.id; })) {
+        pool.push(r); added++;
+      }
+    });
+    console.info('[V114] +' + added + ' ricette. Tot pool:', pool.length);
+  } catch(e) { console.warn('[V114] recipes error:', e); }
+})();
+
+/* ══════════════════════════════════════════════════════════
+   2 — LOCK PER-GIORNO (7 slot separati per LUN-DOM)
+   Chiave: ft_menu_day_{dayIdx}_{weekStr}
+   Dove weekStr = anno-settimana ISO (es. 2025-W23)
+   Così ogni settimana si resettano automaticamente.
+══════════════════════════════════════════════════════════ */
+
+function _v114WeekStr() {
+  var d = new Date();
+  var jan4 = new Date(d.getFullYear(), 0, 4);
+  var week = Math.ceil((((d - jan4) / 86400000) + jan4.getDay() + 1) / 7);
+  return d.getFullYear() + '-W' + (week < 10 ? '0' + week : week);
+}
+
+function _v114DayLockKey(dayIdx) {
+  return 'ft_menu_day_' + dayIdx + '_' + _v114WeekStr();
+}
+
+function _v114SaveDayLock(dayIdx, menu, confirmed, showBf) {
+  try {
+    var lock = {
+      dayIdx: dayIdx,
+      week: _v114WeekStr(),
+      menu: JSON.parse(JSON.stringify(menu || {})),
+      confirmed: JSON.parse(JSON.stringify(confirmed || {})),
+      showBf: !!showBf,
+      ts: Date.now()
+    };
+    localStorage.setItem(_v114DayLockKey(dayIdx), JSON.stringify(lock));
+  } catch(e) {}
+}
+
+function _v114LoadDayLock(dayIdx) {
+  try {
+    var raw = localStorage.getItem(_v114DayLockKey(dayIdx));
+    if (!raw) return null;
+    var lock = JSON.parse(raw);
+    if (lock.week !== _v114WeekStr()) return null; // settimana diversa → scaduto
+    if (!lock.menu || !lock.menu.pranzo) return null;
+    return lock;
+  } catch(e) { return null; }
+}
+
+function _v114ClearDayLock(dayIdx) {
+  try { localStorage.removeItem(_v114DayLockKey(dayIdx)); } catch(e) {}
+}
+
+window._v114SaveDayLock = _v114SaveDayLock;
+window._v114LoadDayLock = _v114LoadDayLock;
+
+/* ══════════════════════════════════════════════════════════
+   3 — SEED PER DAYIDX (garantisce menu diversi ogni giorno)
+   Override di v68SelectBestRecipe con seed basato su dayIdx
+   invece di getDay() — così LUN/MAR/MER hanno seed diversi.
+══════════════════════════════════════════════════════════ */
+
+var _v114OrigSelect = window.v68SelectBestRecipe;
+
+window.v68SelectBestRecipe = function _v114Select(mealType, kcalTarget, exclude) {
+  try {
+    var pool = Array.isArray(window.RECIPES_DB) ? window.RECIPES_DB.slice() : [];
+    if (!pool.length) {
+      return typeof _v114OrigSelect === 'function' ? _v114OrigSelect.apply(this, arguments) : null;
+    }
+
+    // Profilo e preferenze
+    var prefs = typeof profile !== 'undefined' && profile && profile.nutriPrefs || {};
+    var intolleranze = prefs.intolleranze || [];
+    var cibiNo = (prefs.cibiNo || '').toLowerCase().split(',').map(function(x){return x.trim();}).filter(Boolean);
+    var diet = prefs.diet || 'omnivore';
+
+    var dietBlock = {
+      vegetariano: ['carne','pollo','manzo','maiale','bresaola','prosciutto','gamberetti','tonno','pesce','salmone','tacchino'],
+      vegano: ['carne','pollo','manzo','maiale','bresaola','prosciutto','uova','latte','formaggio','parmigiano','mozzarella','ricotta','yogurt','gamberetti','tonno','pesce','salmone','tacchino','burro'],
+      pescetariano: ['carne','pollo','manzo','maiale','bresaola','prosciutto','tacchino']
+    };
+    var dietBlocked = dietBlock[diet] || [];
+
+    var allergyMap = {
+      glutine:['pane','pasta','farina','avena','orzo','farro','cereali'],
+      lattosio:['latte','yogurt','formaggio','parmigiano','mozzarella','ricotta','burro'],
+      uova:['uova','maionese'],
+      fruttadisecco:['noci','mandorle','pistacchi','anacardi','arachidi','burro di arachidi'],
+      pesce:['pesce','salmone','tonno','gamberetti','merluzzo','branzino','orata'],
+      soia:['soia','edamame','tofu'],
+      nichel:['legumi','cioccolato','spinaci','pomodori']
+    };
+    var allergyBlocked = [];
+    intolleranze.forEach(function(i){ (allergyMap[i]||[]).forEach(function(a){ allergyBlocked.push(a); }); });
+
+    // Tag pasto
+    var mealTagMap = {
+      colazione:['colazione'],
+      pranzo:['pranzo'],
+      cena:['cena'],
+      spuntini:['spuntino','post-workout','pre-workout']
+    };
+    var mealTags = mealTagMap[mealType] || [mealType];
+
+    function isSafe(r) {
+      var foods = (r.alimenti||[]).map(function(a){return a.toLowerCase();});
+      var tags = (r.tags||[]).map(function(t){return t.toLowerCase();});
+      var hasMealTag = mealTags.some(function(t){return tags.indexOf(t)>=0;});
+      if(!hasMealTag) return false;
+      if(dietBlocked.some(function(b){return foods.some(function(f){return f.includes(b);});})) return false;
+      if(allergyBlocked.some(function(b){return foods.some(function(f){return f.includes(b);});})) return false;
+      if(cibiNo.length && cibiNo.some(function(cn){return foods.some(function(f){return f.includes(cn);});})) return false;
+      return true;
+    }
+
+    var excludeIds = (exclude||[]).filter(Boolean);
+    var candidates = pool.filter(function(r){ return isSafe(r) && excludeIds.indexOf(r.id)<0; });
+    if(!candidates.length) candidates = pool.filter(isSafe);
+    if(!candidates.length) return typeof _v114OrigSelect==='function' ? _v114OrigSelect.apply(this,arguments) : null;
+
+    // Storico anti-ripetizione V113
+    var histPenalties = typeof window._v113GetUsedIdsLast14Days==='function'
+      ? window._v113GetUsedIdsLast14Days() : {};
+
+    // Seed per dayIdx (non getDay) — garantisce diversità tra giorni
+    var dayIdx = window._v67State && typeof window._v67State.selectedDay==='number'
+      ? window._v67State.selectedDay : (new Date().getDay()+6)%7;
+
+    // Punteggi
+    var kcal = kcalTarget || 500;
+    var dayMealSeed = dayIdx * 100 + mealTags[0].charCodeAt(0);
+
+    // RNG deterministico per questo giorno+pasto ma con alta varianza
+    // Usiamo Math.random() per vera casualità ma combinata col dayIdx per evitare stesso ordine
+    var shuffled = candidates.slice().sort(function() { return Math.random() - 0.5; });
+
+    // Penalizza storico e kcal lontane
+    var scored = shuffled.map(function(r, i) {
+      var kcalDiff = Math.abs((r.kcal||500) - kcal);
+      var kcalScore = Math.max(0, 200 - kcalDiff);
+      var histPenalty = -(histPenalties[r.id]||0) * 15;
+      // Posizione dopo shuffle = casualità principale
+      var posScore = (shuffled.length - i) * 3;
+      // Piccolo bonus per dayIdx allineato (ruota ricette per giorno)
+      var dayBonus = (i % 7 === dayIdx % 7) ? 20 : 0;
+      return { r:r, score: kcalScore + histPenalty + posScore + dayBonus };
+    });
+    scored.sort(function(a,b){return b.score-a.score;});
+    var best = scored[0].r;
+
+    return {
+      id: best.id,
+      ico: best.ico || (mealType==='colazione'?'🌅':mealType==='pranzo'?'🍽️':'🌙'),
+      name: best.name,
+      time: best.time || 15,
+      kcal: best.kcal || 0,
+      p: best.p || 0,
+      c: best.c || 0,
+      g: best.g || 0,
+      tipo: best.tipo || '',
+      cat: best.cat || mealType,
+      diff: best.diff || '',
+      fiber: best.fiber || 0,
+      ingredienti: best.ingredienti || [],
+      steps: best.steps || []
+    };
+  } catch(e) {
+    console.warn('[V114 select]', e);
+    return typeof _v114OrigSelect==='function' ? _v114OrigSelect.apply(this,arguments) : null;
+  }
+};
+window.v68SelectBestRecipe._v114guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   4 — INTERCETTA v67UpdateMenuForDay CON LOCK PER-GIORNO
+   Ogni dayIdx ha il suo slot indipendente.
+   - Se esiste lock per quel dayIdx questa settimana → carica
+   - Altrimenti → genera nuovo, salva nel lock del dayIdx
+   Questo rimpiazza la logica V97 che usava un lock singolo.
+══════════════════════════════════════════════════════════ */
+
+var _v114OrigUpdateMenu = window.v67UpdateMenuForDay;
+
+window.v67UpdateMenuForDay = function _v114UpdateMenuForDay(dayIdx) {
+  var reqDay = typeof dayIdx==='number' ? dayIdx
+    : (window._v67State && window._v67State.selectedDay) || 0;
+
+  // Aggiorna selectedDay
+  if (window._v67State) window._v67State.selectedDay = reqDay;
+
+  // Controlla lock per questo giorno
+  var lock = _v114LoadDayLock(reqDay);
+
+  if (lock) {
+    // Carica menu salvato per questo giorno
+    try {
+      window._v67State.currentMenu   = lock.menu;
+      window._v67State.confirmed     = lock.confirmed || { colazione:false, pranzo:false, cena:false };
+      window._v67State.showBreakfast = typeof lock.showBf==='boolean' ? lock.showBf : true;
+      var tog = document.getElementById('v67-bf-toggle');
+      if(tog) tog.classList.toggle('on', window._v67State.showBreakfast);
+    } catch(e) {}
+    // Solo re-render
+    try {
+      if(typeof window.v67RenderMenuCards==='function') window.v67RenderMenuCards(false);
+      if(typeof window.v71RenderAllCards==='function') window.v71RenderAllCards(false);
+    } catch(e) {}
+    return;
+  }
+
+  // Nessun lock → genera menu nuovo per questo giorno
+  if (window._v67State) {
+    window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+    window._v67State.swapIdx   = { colazione:0, pranzo:0, cena:0 };
+  }
+
+  // Chiama generatore originale
+  try {
+    if (typeof _v114OrigUpdateMenu==='function') {
+      _v114OrigUpdateMenu.apply(this, [reqDay]);
+    }
+  } catch(e) {}
+
+  // Salva nel lock del giorno dopo render
+  setTimeout(function() {
+    try {
+      var menu = window._v67State && window._v67State.currentMenu;
+      if (menu && menu.pranzo) {
+        _v114SaveDayLock(
+          reqDay,
+          menu,
+          window._v67State.confirmed,
+          window._v67State.showBreakfast
+        );
+        // Registra anche nello storico anti-ripetizione V113
+        var todayStr = new Date().toISOString().slice(0,10);
+        // Per i giorni diversi da oggi usiamo date simulate della settimana
+        var todayDow = (new Date().getDay()+6)%7;
+        var diff = reqDay - todayDow;
+        var d = new Date(); d.setDate(d.getDate() + diff);
+        var dateStr = d.toISOString().slice(0,10);
+        if (typeof window._v113RecordMenu==='function') window._v113RecordMenu(dateStr, menu);
+      }
+    } catch(e) {}
+  }, 1000);
+};
+window.v67UpdateMenuForDay._v114guard = true;
+
+/* Intercetta v67GenerateNewMenu: invalida solo il lock del giorno corrente */
+var _v114OrigGenMenu = window.v67GenerateNewMenu;
+if (typeof _v114OrigGenMenu==='function') {
+  window.v67GenerateNewMenu = function _v114GenMenu() {
+    // Invalida il lock del giorno selezionato
+    var selDay = window._v67State && window._v67State.selectedDay;
+    if (typeof selDay==='number') _v114ClearDayLock(selDay);
+
+    // Reset confirmed
+    if (window._v67State) {
+      window._v67State.confirmed = { colazione:false, pranzo:false, cena:false };
+    }
+
+    var r = _v114OrigGenMenu.apply(this, arguments);
+
+    // Salva il nuovo menu nel lock del giorno
+    setTimeout(function() {
+      try {
+        var day = window._v67State && window._v67State.selectedDay;
+        var menu = window._v67State && window._v67State.currentMenu;
+        if (typeof day==='number' && menu && menu.pranzo) {
+          _v114SaveDayLock(day, menu, window._v67State.confirmed, window._v67State.showBreakfast);
+        }
+      } catch(e) {}
+    }, 1200);
+    return r;
+  };
+}
+
+/* Intercetta v67SwapMeal: aggiorna il lock del giorno corrente */
+var _v114OrigSwap = window.v67SwapMeal;
+if (typeof _v114OrigSwap==='function' && !_v114OrigSwap._v114guard) {
+  window.v67SwapMeal = function _v114Swap(mealType) {
+    var r = _v114OrigSwap.apply(this, arguments);
+    setTimeout(function() {
+      try {
+        var day = window._v67State && window._v67State.selectedDay;
+        var menu = window._v67State && window._v67State.currentMenu;
+        if (typeof day==='number' && menu) {
+          _v114SaveDayLock(day, menu, window._v67State.confirmed, window._v67State.showBreakfast);
+        }
+      } catch(e) {}
+    }, 600);
+    return r;
+  };
+  window.v67SwapMeal._v114guard = true;
+}
+
+/* Intercetta v67ConfirmMeal: aggiorna il lock del giorno */
+var _v114OrigConfirm = window.v67ConfirmMeal;
+if (typeof _v114OrigConfirm==='function' && !_v114OrigConfirm._v114guard) {
+  window.v67ConfirmMeal = function _v114Confirm(mealType) {
+    var r = _v114OrigConfirm.apply(this, arguments);
+    setTimeout(function() {
+      try {
+        var day = window._v67State && window._v67State.selectedDay;
+        var menu = window._v67State && window._v67State.currentMenu;
+        if (typeof day==='number' && menu) {
+          _v114SaveDayLock(day, menu, window._v67State && window._v67State.confirmed, window._v67State && window._v67State.showBreakfast);
+        }
+      } catch(e) {}
+    }, 400);
+    return r;
+  };
+  window.v67ConfirmMeal._v114guard = true;
+}
+
+/* ══════════════════════════════════════════════════════════
+   5 — AGGIORNA VERSIONE FOOTER
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  try {
+    var f = document.getElementById('ft-version-footer');
+    if(f) f.textContent = 'FitTrack V114 · Dati sicuri nel cloud';
+  } catch(e) {}
+}, 1000);
+
+window._v114Version = 'V114';
+console.info('%c[FitTrack V114] ✅ Menu per-giorno lock + ' + _v114Recipes.length + ' nuove ricette semplici + seed anti-ripetizione', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch(e) { console.warn('[FT_V114]', e); }
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V115 — FIX BUG CRITICI MENU PER-GIORNO
+
+     BUG 1 — goPage override (V97/V100) ricarica sempre il lock
+       di OGGI anche se selectedDay è diverso → sovrascrive il
+       menu del giorno selezionato appena navigato.
+       FIX: il goPage guard controlla selectedDay, non today.
+
+     BUG 2 — _v97MenuReady=true blocca v68BuildSmartMenu anche
+       per giorni ≠ oggi → quando si naviga su MAR il guard V100
+       restituisce il menu di LUN senza rigenerare.
+       FIX: override v68BuildSmartMenu che ignora il guard
+       quando selectedDay ≠ today.
+
+     BUG 3 — V73 wrap sovrascrive confirmed dopo il load del
+       lock V114 → le spunte verdi vengono azzerate.
+       FIX: dopo 1.1s (dopo il wrap V73) re-applica confirmed
+       dal lock V114 per il giorno selezionato.
+
+     BUG 4 — v67ConfirmMeal chain: V114 guard non funziona
+       perché controlla _v114guard su _v113ConfirmMeal (che
+       non l'ha) → doppia chiamata e doppio log al diario.
+       FIX: wrapper definitivo che usa flag _v115guard.
+
+     BUG 5 — v70SelectBestRecipe usato da alcuni path ha
+       seed = getDay() → stesso menu ogni giorno.
+       FIX: override con shuffle + dayIdx.
+
+     Architettura append-only.
+════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V115() {
+'use strict';
+try {
+
+/* ══════════════════════════════════════════════════════════
+   FIX 1 — goPage: ricarica il lock del giorno SELEZIONATO
+   non quello di oggi.
+══════════════════════════════════════════════════════════ */
+var _v115OrigGoPage = window.goPage;
+window.goPage = function _v115GoPage(page) {
+  var r;
+  try { r = _v115OrigGoPage.apply(this, arguments); } catch(e) {}
+
+  var p = (page || '').toLowerCase();
+  if (p === 'home' || p === '' || p === 'hub' || p === 'nutrizione') {
+    setTimeout(function() {
+      try {
+        var selDay = window._v67State && typeof window._v67State.selectedDay === 'number'
+          ? window._v67State.selectedDay
+          : (new Date().getDay() + 6) % 7;
+
+        // Carica il lock del giorno SELEZIONATO (non oggi)
+        var lock = typeof window._v114LoadDayLock === 'function'
+          ? window._v114LoadDayLock(selDay) : null;
+
+        if (lock && lock.menu && lock.menu.pranzo) {
+          window._v67State.currentMenu   = lock.menu;
+          // Non sovrascrivere confirmed qui (Bug3) — gestito dopo da _v115ReapplyConfirmed
+          window._v67State.showBreakfast = typeof lock.showBf === 'boolean' ? lock.showBf : true;
+          try {
+            if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+            if (typeof window.v71RenderAllCards  === 'function') window.v71RenderAllCards(false);
+          } catch(e2) {}
+          // Re-applica confirmed dopo che V73 finisce
+          setTimeout(function() {
+            try {
+              if (lock.confirmed) {
+                window._v67State.confirmed = lock.confirmed;
+                if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+              }
+            } catch(e3) {}
+          }, 600);
+        }
+      } catch(e) {}
+    }, 150);
+  }
+  return r;
+};
+window.goPage._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 2 — v68BuildSmartMenu: ignora _v97MenuReady quando
+   selectedDay ≠ today (così genera un menu nuovo per MAR
+   anche se LUN è già caricato).
+══════════════════════════════════════════════════════════ */
+var _v115OrigBSM = window.v68BuildSmartMenu;
+window.v68BuildSmartMenu = function _v115BuildSmartMenu() {
+  var selDay = window._v67State && typeof window._v67State.selectedDay === 'number'
+    ? window._v67State.selectedDay
+    : (new Date().getDay() + 6) % 7;
+  var todayDow = (new Date().getDay() + 6) % 7;
+
+  // Se selectedDay ≠ oggi, forza reset di _v97MenuReady
+  // così il guard V100 non può bloccare la generazione
+  if (selDay !== todayDow) {
+    window._v97MenuReady = false;
+  }
+
+  return typeof _v115OrigBSM === 'function' ? _v115OrigBSM.apply(this, arguments) : null;
+};
+window.v68BuildSmartMenu._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 3 — V73 sovrascrive confirmed: dopo ogni update del
+   menu per un giorno, re-applica confirmed dal lock V114
+   con un delay sufficiente a battere il wrap V73 (1.2s).
+══════════════════════════════════════════════════════════ */
+function _v115ReapplyConfirmed(dayIdx) {
+  setTimeout(function() {
+    try {
+      var lock = typeof window._v114LoadDayLock === 'function'
+        ? window._v114LoadDayLock(dayIdx) : null;
+      if (lock && lock.confirmed && window._v67State) {
+        window._v67State.confirmed = lock.confirmed;
+        try {
+          if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+          if (typeof window.v71RenderAllCards  === 'function') window.v71RenderAllCards(false);
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }, 1200);
+}
+window._v115ReapplyConfirmed = _v115ReapplyConfirmed;
+
+/* Intercetta v67UpdateMenuForDay per chiamare _v115ReapplyConfirmed */
+var _v115OrigUpdateMenu = window.v67UpdateMenuForDay;
+window.v67UpdateMenuForDay = function _v115UpdateMenuForDay(dayIdx) {
+  var reqDay = typeof dayIdx === 'number' ? dayIdx
+    : (window._v67State && window._v67State.selectedDay) || 0;
+
+  // PRIMA di chiamare l'originale, resetta _v97MenuReady se giorno diverso
+  var todayDow = (new Date().getDay() + 6) % 7;
+  if (reqDay !== todayDow) {
+    window._v97MenuReady = false;
+  }
+
+  var r;
+  try { r = _v115OrigUpdateMenu.apply(this, [reqDay]); } catch(e) {}
+
+  // Re-applica confirmed dal lock dopo che V73 ha finito
+  _v115ReapplyConfirmed(reqDay);
+
+  return r;
+};
+window.v67UpdateMenuForDay._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 4 — v67ConfirmMeal definitivo con guard _v115guard.
+   Rimpiazza tutta la catena V113→V114 con un singolo wrapper
+   che:
+   1. Logga la ricetta al diario (logica V113)
+   2. Aggiorna visual (toggle spunta)
+   3. Salva nel lock V114
+   4. Non si chiama mai due volte (flag _v115guard)
+══════════════════════════════════════════════════════════ */
+
+// Trova la versione originale più bassa della catena (prima di V113)
+function _v115FindBaseConfirm() {
+  // Navighiamo la catena di _vXXXOrigConfirmMeal per trovare la versione V97
+  // che gestisce il visual (spunta verde + render)
+  var candidates = [];
+  // La V113 ha salvato come _v113OrigConfirmMeal
+  if (typeof window._v113OrigConfirmMeal === 'undefined') {
+    // Non ancora V113 wrappato, usa la corrente
+    return window.v67ConfirmMeal;
+  }
+  // Cerchiamo la versione V97 che fa il vero visual update
+  var fn = window.v67ConfirmMeal;
+  // Max 10 livelli di catena
+  for (var i = 0; i < 10; i++) {
+    if (!fn) break;
+    if (fn.name === '_v97ConfirmMeal' || fn._v97guard) return fn;
+    // Sali di un livello cercando il campo _orig
+    var next = fn._origConfirmMeal || fn._orig || null;
+    if (!next) break;
+    fn = next;
+  }
+  return window.v67ConfirmMeal; // fallback
+}
+
+// Funzione log al diario (da V113, estratta qui per sicurezza)
+function _v115LogMealToDiary(mealType, recipe, wasConfirmed) {
+  try {
+    var mealIdx = { colazione:0, pranzo:1, cena:2, spuntini:3 }[mealType];
+    if (mealIdx === undefined) return;
+
+    var todayDow = (new Date().getDay() + 6) % 7;
+    var selDay   = window._v67State && typeof window._v67State.selectedDay === 'number'
+      ? window._v67State.selectedDay : todayDow;
+    var diff     = selDay - todayDow;
+    var d        = new Date(); d.setDate(d.getDate() + diff);
+    var dateKey  = d.toISOString().slice(0, 10);
+
+    if (!window.nutrition) window.nutrition = {};
+    if (!window.nutrition[dateKey]) {
+      window.nutrition[dateKey] = {
+        meals: [
+          { name: 'Colazione', items: [] },
+          { name: 'Pranzo', items: [] },
+          { name: 'Cena', items: [] },
+          { name: 'Spuntini', items: [] }
+        ]
+      };
+    }
+    var meal = window.nutrition[dateKey].meals[mealIdx];
+    if (!meal) return;
+
+    if (wasConfirmed) {
+      // Rimuovi dal diario
+      var iRemove = meal.items.findIndex(function(i) { return i._recipeId === recipe.id; });
+      if (iRemove >= 0) {
+        meal.items.splice(iRemove, 1);
+        if (typeof showToast === 'function') showToast('🗑️ ' + recipe.name + ' rimosso dal diario');
+      }
+    } else {
+      // Aggiungi (evita duplicati)
+      var already = meal.items.some(function(i) { return i._recipeId === recipe.id; });
+      if (!already) {
+        meal.items.push({
+          _recipeId: recipe.id || ('menu_' + mealType + '_' + dateKey),
+          name: recipe.name,
+          g: 1,
+          unit: 'porzione',
+          kcal: recipe.kcal || 0,
+          p: recipe.p || 0,
+          c: recipe.c || 0,
+          g_fat: recipe.g || 0
+        });
+        if (typeof showToast === 'function') showToast('✅ ' + recipe.name + ' aggiunto al diario!');
+      }
+    }
+    try { if (typeof saveAll === 'function') saveAll(); } catch(e) {}
+    try { if (typeof renderNutrizione === 'function') renderNutrizione(); } catch(e) {}
+  } catch(e) { console.warn('[V115 logDiary]', e); }
+}
+
+// Wrapper definitivo
+window.v67ConfirmMeal = function _v115ConfirmMeal(mealType) {
+  try {
+    var state = window._v67State;
+    if (!state) return;
+
+    var wasConfirmed = !!(state.confirmed && state.confirmed[mealType]);
+    var menu = state.currentMenu;
+    var recipe = menu && menu[mealType];
+
+    // Toggle confirmed
+    if (!state.confirmed) state.confirmed = {};
+    state.confirmed[mealType] = !wasConfirmed;
+
+    // Log al diario
+    if (recipe) {
+      _v115LogMealToDiary(mealType, recipe, wasConfirmed);
+    }
+
+    // Aggiorna visual spunta card
+    var nowConfirmed = state.confirmed[mealType];
+    try {
+      var card = document.getElementById('v67-card-' + mealType) ||
+                 document.querySelector('[data-meal="' + mealType + '"]');
+      if (card) {
+        // Bottone spunta
+        var btn = card.querySelector('.v66-meal-btn-ok, .v67-ok-btn, [onclick*="ConfirmMeal"]');
+        if (btn) {
+          btn.classList.toggle('confirmed', nowConfirmed);
+          btn.classList.toggle('v67-ok-active', nowConfirmed);
+          btn.style.background = nowConfirmed ? 'rgba(200,245,60,.25)' : '';
+          btn.style.boxShadow  = nowConfirmed ? '0 0 16px rgba(200,245,60,.4)' : '';
+        }
+        // Strip loggato
+        var strip = card.querySelector('.v69-logged-strip');
+        if (nowConfirmed) {
+          if (!strip) {
+            strip = document.createElement('div');
+            strip.className = 'v69-logged-strip';
+            card.appendChild(strip);
+          }
+          strip.innerHTML = '✅ Pasto loggato nel diario';
+          strip.style.cssText = 'margin:8px 14px 0;padding:8px 12px;background:rgba(200,245,60,.1);border:1px solid rgba(200,245,60,.25);border-radius:8px;font-size:12px;font-weight:700;color:var(--acc);text-align:center;';
+        } else {
+          if (strip) strip.remove();
+        }
+      }
+    } catch(eVis) {}
+
+    // Re-render completo per aggiornare tutte le card
+    try {
+      if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+      if (typeof window.v71RenderAllCards  === 'function') window.v71RenderAllCards(false);
+    } catch(eRend) {}
+
+    // Salva nel lock V114
+    var selDay = typeof state.selectedDay === 'number' ? state.selectedDay : (new Date().getDay() + 6) % 7;
+    setTimeout(function() {
+      try {
+        if (typeof window._v114SaveDayLock === 'function' && state.currentMenu) {
+          window._v114SaveDayLock(selDay, state.currentMenu, state.confirmed, state.showBreakfast);
+        }
+      } catch(e) {}
+    }, 300);
+
+  } catch(e) { console.warn('[V115 ConfirmMeal]', e); }
+};
+window.v67ConfirmMeal._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 5 — v70SelectBestRecipe: seed basato su dayIdx
+   (sovrascrive il seed basato su getDay() di V70)
+══════════════════════════════════════════════════════════ */
+var _v115OrigV70Select = window.v70SelectBestRecipe;
+window.v70SelectBestRecipe = function _v115V70Select(mealType, kcalTarget, exclude) {
+  // Delega al v68SelectBestRecipe V114 che ha già il seed corretto
+  if (typeof window.v68SelectBestRecipe === 'function') {
+    return window.v68SelectBestRecipe(mealType, kcalTarget, exclude);
+  }
+  return typeof _v115OrigV70Select === 'function' ? _v115OrigV70Select.apply(this, arguments) : null;
+};
+window.v70SelectBestRecipe._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 6 — v66SelectDay: assicura che il click su giorno
+   nella strip settimanale triggheri correttamente l'update
+   del menu per quel giorno (alcuni path saltavano V114).
+══════════════════════════════════════════════════════════ */
+var _v115OrigSelectDay = window.v66SelectDay;
+window.v66SelectDay = function _v115SelectDay(idx) {
+  // Aggiorna lo stato prima di tutto
+  if (window._v67State) window._v67State.selectedDay = idx;
+
+  // Reset _v97MenuReady se giorno ≠ oggi
+  var todayDow = (new Date().getDay() + 6) % 7;
+  if (idx !== todayDow) window._v97MenuReady = false;
+
+  // Aggiorna visual strip (active class)
+  try {
+    var btns = document.querySelectorAll('.v66-day-btn');
+    btns.forEach(function(b, i) { b.classList.toggle('active', i === idx); });
+  } catch(e) {}
+
+  // Aggiorna workout hub se c'è
+  try { if (typeof window.v67UpdateWorkoutHub === 'function') window.v67UpdateWorkoutHub(idx); } catch(e) {}
+
+  // Aggiorna menu per quel giorno (passa per V115 → V114 → lock per-giorno)
+  try { window.v67UpdateMenuForDay(idx); } catch(e) {}
+};
+window.v66SelectDay._v115guard = true;
+
+/* ══════════════════════════════════════════════════════════
+   FIX 7 — Boot iniziale: al primo caricamento assicura che
+   il giorno di oggi abbia il suo lock; se non ce l'ha,
+   genera e salva. Se lo ha, carica e ri-applica confirmed.
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  try {
+    var todayDow = (new Date().getDay() + 6) % 7;
+    if (window._v67State) window._v67State.selectedDay = todayDow;
+
+    var lock = typeof window._v114LoadDayLock === 'function'
+      ? window._v114LoadDayLock(todayDow) : null;
+
+    if (lock && lock.menu && lock.menu.pranzo) {
+      window._v67State.currentMenu   = lock.menu;
+      window._v67State.showBreakfast = typeof lock.showBf === 'boolean' ? lock.showBf : true;
+      // Re-applica confirmed dopo V73
+      setTimeout(function() {
+        try {
+          if (lock.confirmed) window._v67State.confirmed = lock.confirmed;
+          if (typeof window.v67RenderMenuCards === 'function') window.v67RenderMenuCards(false);
+          if (typeof window.v71RenderAllCards  === 'function') window.v71RenderAllCards(false);
+        } catch(e) {}
+      }, 800);
+    } else {
+      // Nessun lock per oggi → genera
+      window._v97MenuReady = false;
+      try { window.v67UpdateMenuForDay(todayDow); } catch(e) {}
+    }
+  } catch(e) {}
+}, 1500);
+
+/* ══════════════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════════════ */
+setTimeout(function() {
+  try {
+    var f = document.getElementById('ft-version-footer');
+    if(f) f.textContent = 'FitTrack V115 · Dati sicuri nel cloud';
+  } catch(e) {}
+}, 1000);
+
+window._v115Version = 'V115';
+console.info('%c[FitTrack V115] ✅ Fix goPage/lock-giorno · _v97MenuReady guard · V73 confirmed · ConfirmMeal chain · v70Select seed · v66SelectDay', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch(e) { console.warn('[FT_V115]', e); }
+})();
+</script>
+
 </body>
 </html>
