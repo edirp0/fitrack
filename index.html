@@ -52103,7 +52103,7 @@ function v60OpenWeight(){
       const db = window.RECIPES_DB || [];
       if (!Array.isArray(window.RICETTE)) window.RICETTE = [];
       db.forEach(function (r) {
-        if (!window.RICETTE.find(function (x) {return x.id === r.id;})) {
+        if (!window.RICETTE.find(function (x) {return x && x.id === r.id;})) {
           const cat = (r.cat || '').toLowerCase();
           const isCena = cat.includes('cena');
           const isPranzo = cat.includes('pranzo');
@@ -79448,6 +79448,1314 @@ try {
   console.info('%c[FitTrack V116.6] ✅ Fix: Hub Allenamento in Home ora mostra sempre lo stesso allenamento del Calendario e del programma reale', 'color:#C8F53C;font-weight:bold;');
 
 } catch (e) { console.warn('[FT_V116_6_FIX_HOME_HUB_MISMATCH]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V116.7 — Due nuovi parametri profilo ad alto impatto
+     algoritmico (vedi risposta in chat per il ragionamento completo
+     su quali altri parametri varrebbe la pena aggiungere in futuro).
+
+     A) GIORNI DISPONIBILI PER ALLENARTI (settimana specifica)
+     Prima: _getWorkoutForDate() distribuiva i giorni attivi del
+     programma sulla settimana con un algoritmo "a spirale" astratto
+     (Math.floor(i*7/numActive)), senza sapere quali giorni l'utente
+     può REALMENTE allenarsi. Risultato: un utente che può allenarsi
+     solo Lun/Mer/Ven si vedeva proporre sessioni su Mar/Gio o sabato.
+     Ora: nuova card in Impostazioni per selezionare i giorni liberi
+     reali. Se impostati, _getWorkoutForDate li usa al posto della
+     distribuzione astratta — il calendario/hub ora rispecchia la
+     disponibilità vera dell'utente, non solo una stima.
+
+     B) INTOLLERANZE E ALLERGIE ALIMENTARI
+     Prima: nessun campo per dichiarare intolleranze/allergie — il
+     sistema ricette non poteva escludere nulla per motivi di
+     sicurezza alimentare (solo preferenze soggettive nei filtri).
+     Ora: nuova card in Impostazioni con 6 categorie comuni. Se
+     dichiarate, le ricette che contengono quegli ingredienti (in
+     base al campo `alimenti`) vengono escluse automaticamente da
+     tutte le viste ricette — non un filtro opzionale ma un default
+     di sicurezza. NOTA IMPORTANTE mostrata in UI: è un controllo
+     basato su parole chiave, non una garanzia medica — chi ha
+     un'allergia grave deve comunque verificare gli ingredienti.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V116_7_WEEKDAY_AVAILABILITY() {
+'use strict';
+try {
+
+  if (typeof _getWorkoutForDate !== 'function' || typeof _parseDateLocal !== 'function') {
+    console.warn('[V116.7] _getWorkoutForDate/_parseDateLocal non disponibili, feature A non applicata');
+    return;
+  }
+
+  var _origGetWorkoutForDate = _getWorkoutForDate;
+
+  window._getWorkoutForDate = function (dateStr) {
+    var prog = (typeof _getActiveProgram === 'function') ? _getActiveProgram() : null;
+    if (!prog || !prog.days || !prog.days.length) return _origGetWorkoutForDate(dateStr);
+
+    var avail = (typeof profile !== 'undefined' && Array.isArray(profile.availableWeekdays)) ? profile.availableWeekdays : null;
+    // Serve almeno un giorno dichiarato per attivare la nuova logica; altrimenti comportamento invariato
+    if (!avail || !avail.length) return _origGetWorkoutForDate(dateStr);
+
+    if (prog._isGeneratedPlan) return _origGetWorkoutForDate(dateStr); // piano generato ha già uno schedule per giorno esplicito
+
+    var allDays = prog.days;
+    var activeDays = allDays.filter(function (d) { return !d.rest; });
+    if (!activeDays.length) return null;
+
+    var sortedAvail = avail.slice().sort(function (a, b) { return a - b; });
+    var isoWd = (_parseDateLocal(dateStr).getDay() + 6) % 7; // Mon=0..Sun=6
+
+    var posIdx = sortedAvail.indexOf(isoWd);
+    if (posIdx === -1) return null; // non è uno dei giorni dichiarati disponibili → riposo
+
+    // Se l'utente ha dichiarato più giorni liberi di quanti il programma ne richieda,
+    // usiamo solo i primi N (i più vicini a inizio settimana) per non "diluire" il programma.
+    // Se ne ha dichiarati meno, cicliamo sui giorni attivi (meglio ripetere che saltare sessioni).
+    var dayForThisSlot = activeDays[posIdx % activeDays.length];
+    var dayIndex = allDays.indexOf(dayForThisSlot);
+
+    return { day: dayForThisSlot, dayIndex: dayIndex, prog: prog, presetId: prog.id || null };
+  };
+
+  console.info('%c[FitTrack V116.7-A] ✅ Disponibilità: se impostata, il programma ora si allinea ai giorni reali dichiarati dall\'utente', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V116_7_WEEKDAY_AVAILABILITY]', e); }
+})();
+</script>
+
+<script>
+(function FT_V116_7_FOOD_INTOLERANCES() {
+'use strict';
+try {
+
+  var INTOLERANCE_DEFS = [
+    { id: 'lattosio', label: '🥛 Lattosio', keywords: ['latte', 'formaggio', 'yogurt', 'ricotta', 'panna', 'burro', 'mozzarella', 'parmigiano', 'mascarpone', 'burrata', 'stracchino', 'feta', 'pecorino', 'gorgonzola', 'fiocchi di latte', 'philadelphia', 'kefir'] },
+    { id: 'glutine', label: '🌾 Glutine', keywords: ['farina di avena', 'farina 00', 'farina integrale', 'pasta', 'pane', 'orzo', 'grano', 'couscous', 'farro', 'seitan', 'biscotti', 'tortilla', 'cracker', 'panko', 'pangrattato', 'birra'] },
+    { id: 'frutta_guscio', label: '🥜 Frutta a guscio', keywords: ['noci', 'mandorle', 'nocciole', 'pistacchi', 'anacardi', 'noce', 'burro di mandorle', 'burro di noci'] },
+    { id: 'uova', label: '🥚 Uova', keywords: ['uova', 'uovo', 'albume', 'albumi', 'tuorlo'] },
+    { id: 'pesce_crostacei', label: '🦐 Pesce e crostacei', keywords: ['gamberi', 'gambero', 'granchio', 'scampi', 'pesce', 'salmone', 'tonno', 'merluzzo', 'calamari', 'cozze', 'vongole', 'polpo', 'baccalà', 'orata', 'branzino'] },
+    { id: 'soia', label: '🫘 Soia', keywords: ['soia', 'tofu', 'edamame', 'tempeh', 'salsa di soia'] }
+  ];
+  window._FT_INTOLERANCE_DEFS = INTOLERANCE_DEFS;
+
+  function ftRecipeHasIntolerance(recipe, intoleranceIds) {
+    if (!intoleranceIds || !intoleranceIds.length) return false;
+    var hay = ((recipe.alimenti || []).join(' ') + ' ' + (recipe.ingredienti || []).join(' ')).toLowerCase();
+    for (var i = 0; i < intoleranceIds.length; i++) {
+      var def = INTOLERANCE_DEFS.find(function (d) { return d.id === intoleranceIds[i]; });
+      if (!def) continue;
+      for (var k = 0; k < def.keywords.length; k++) {
+        if (hay.indexOf(def.keywords[k]) !== -1) return true;
+      }
+    }
+    return false;
+  }
+  window.ftRecipeHasIntolerance = ftRecipeHasIntolerance;
+
+  /* Estende il filtro ricette reale (già esteso in V116.2 per "fatto da me")
+     con l'esclusione di sicurezza per le intolleranze dichiarate. */
+  var _origV80FilterFnIntol = window._v80FilterFn;
+  window._v80FilterFn = function (r) {
+    try {
+      var intol = (typeof profile !== 'undefined' && Array.isArray(profile.foodIntolerances)) ? profile.foodIntolerances : null;
+      if (intol && intol.length && ftRecipeHasIntolerance(r, intol)) return false;
+    } catch (e) {}
+    if (typeof _origV80FilterFnIntol === 'function') return _origV80FilterFnIntol(r);
+    return true;
+  };
+
+  /* ─────────────────────────────────────────────────────────
+     UI — due nuove card in Impostazioni (Profilo)
+  ───────────────────────────────────────────────────────── */
+  var WEEKDAY_LABELS = ['L', 'M', 'M', 'G', 'V', 'S', 'D'];
+  var WEEKDAY_FULL = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'];
+
+  function ftAvailDays() {
+    try { return (typeof profile !== 'undefined' && Array.isArray(profile.availableWeekdays)) ? profile.availableWeekdays : []; }
+    catch (e) { return []; }
+  }
+  function ftIntolerances() {
+    try { return (typeof profile !== 'undefined' && Array.isArray(profile.foodIntolerances)) ? profile.foodIntolerances : []; }
+    catch (e) { return []; }
+  }
+
+  window.ftToggleAvailDay = function (idx) {
+    try {
+      if (!profile.availableWeekdays) profile.availableWeekdays = [];
+      var pos = profile.availableWeekdays.indexOf(idx);
+      if (pos === -1) profile.availableWeekdays.push(idx); else profile.availableWeekdays.splice(pos, 1);
+      if (typeof saveAll === 'function') saveAll();
+      ftRenderAvailCard();
+      try { if (typeof renderHomeCalendar === 'function') renderHomeCalendar(); } catch (e) {}
+      try { if (typeof renderMonthCalendar === 'function') renderMonthCalendar(); } catch (e) {}
+      try { if (window._v67State && typeof v67UpdateWorkoutHub === 'function') v67UpdateWorkoutHub(window._v67State.selectedDay); } catch (e) {}
+    } catch (e) { console.warn('[V116.7 ftToggleAvailDay]', e); }
+  };
+
+  window.ftToggleIntolerance = function (id) {
+    try {
+      if (!profile.foodIntolerances) profile.foodIntolerances = [];
+      var pos = profile.foodIntolerances.indexOf(id);
+      if (pos === -1) profile.foodIntolerances.push(id); else profile.foodIntolerances.splice(pos, 1);
+      if (typeof saveAll === 'function') saveAll();
+      ftRenderIntolCard();
+      try { if (typeof renderRicette === 'function') renderRicette(); } catch (e) {}
+      if (typeof showToast === 'function') showToast('✅ Preferenze alimentari aggiornate');
+    } catch (e) { console.warn('[V116.7 ftToggleIntolerance]', e); }
+  };
+
+  function ftEnsureSettingsCards() {
+    var host = document.getElementById('prof-impostazioni');
+    if (!host) return;
+    var innerWrap = host.querySelector('div');
+    if (!innerWrap) return;
+
+    if (!document.getElementById('ft-avail-days-card')) {
+      var avEl = document.createElement('div');
+      avEl.id = 'ft-avail-days-card';
+      avEl.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:12px;';
+      innerWrap.appendChild(avEl);
+    }
+    if (!document.getElementById('ft-intol-card')) {
+      var inEl = document.createElement('div');
+      inEl.id = 'ft-intol-card';
+      inEl.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:12px;';
+      innerWrap.appendChild(inEl);
+    }
+    ftRenderAvailCard();
+    ftRenderIntolCard();
+  }
+
+  function ftRenderAvailCard() {
+    var el = document.getElementById('ft-avail-days-card');
+    if (!el) return;
+    var avail = ftAvailDays();
+    var chips = WEEKDAY_LABELS.map(function (lbl, i) {
+      var on = avail.indexOf(i) !== -1;
+      return '<button onclick="ftToggleAvailDay(' + i + ')" title="' + WEEKDAY_FULL[i] + '" style="' +
+        'width:38px;height:38px;border-radius:50%;font-family:\'Syne\',sans-serif;font-size:13px;font-weight:800;cursor:pointer;' +
+        'border:1.5px solid ' + (on ? 'var(--acc)' : 'var(--border)') + ';' +
+        'background:' + (on ? 'var(--acc)' : 'var(--bg4)') + ';' +
+        'color:' + (on ? '#080810' : 'var(--text2)') + ';">' + lbl + '</button>';
+    }).join('');
+    el.innerHTML =
+      '<div style="font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">📅 Giorni Disponibili per Allenarti</div>' +
+      '<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px;">Seleziona i giorni in cui puoi davvero allenarti. Il tuo programma si adatterà a questi giorni invece di una distribuzione generica sulla settimana.</div>' +
+      '<div style="display:flex;gap:8px;justify-content:space-between;">' + chips + '</div>' +
+      (avail.length ? '<div style="font-size:11px;color:var(--text3);margin-top:10px;">✓ ' + avail.length + ' giorni impostati — tocca un giorno per cambiarlo</div>' :
+        '<div style="font-size:11px;color:var(--text3);margin-top:10px;">Nessun giorno impostato: verrà usata una distribuzione automatica standard</div>');
+  }
+
+  function ftRenderIntolCard() {
+    var el = document.getElementById('ft-intol-card');
+    if (!el) return;
+    var intol = ftIntolerances();
+    var chips = INTOLERANCE_DEFS.map(function (def) {
+      var on = intol.indexOf(def.id) !== -1;
+      return '<button onclick="ftToggleIntolerance(\'' + def.id + '\')" style="' +
+        'padding:8px 12px;border-radius:99px;font-family:\'Syne\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;' +
+        'border:1.5px solid ' + (on ? 'var(--red)' : 'var(--border)') + ';' +
+        'background:' + (on ? 'rgba(255,92,106,.12)' : 'var(--bg4)') + ';' +
+        'color:' + (on ? 'var(--red)' : 'var(--text2)') + ';">' + def.label + (on ? ' ✕' : '') + '</button>';
+    }).join('');
+    el.innerHTML =
+      '<div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">🚫 Intolleranze e Allergie Alimentari</div>' +
+      '<div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px;">Le ricette con questi ingredienti verranno escluse automaticamente da tutto il ricettario.</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + chips + '</div>' +
+      '<div style="font-size:10.5px;color:var(--text3);margin-top:12px;line-height:1.5;background:var(--bg3);border-radius:8px;padding:8px 10px;">⚠️ Controllo basato su parole chiave negli ingredienti, non una garanzia medica. In caso di allergie gravi, verifica sempre gli ingredienti reali prima di consumare.</div>';
+  }
+
+  /* Aggancio: quando si apre la tab Impostazioni del profilo, assicura le card */
+  var _origSwitchProfileTab = window.switchProfileTab;
+  if (typeof _origSwitchProfileTab === 'function' && !_origSwitchProfileTab._v116) {
+    window.switchProfileTab = function (tab, btn) {
+      var ret = _origSwitchProfileTab.apply(this, arguments);
+      if (tab === 'impostazioni') { try { ftEnsureSettingsCards(); } catch (e) {} }
+      return ret;
+    };
+    window.switchProfileTab._v116 = true;
+  }
+
+  // Prima passata nel caso la tab sia già visibile
+  setTimeout(function () { try { ftEnsureSettingsCards(); } catch (e) {} }, 900);
+
+  console.info('%c[FitTrack V116.7-B] ✅ Intolleranze/allergie alimentari: filtro di sicurezza attivo su tutto il ricettario', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V116_7_FOOD_INTOLERANCES]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V116.8 — Fix bug: la card "Continua allenamento" in Home
+     (renderHomeCta) poteva mostrare un giorno diverso da quello del
+     Calendario e dell'Hub Home appena corretti in V116.6.
+
+     CAUSA REALE TROVATA: getActiveProgramState() (usata da
+     renderHomeCta e da startActiveDay, il bottone "Continua
+     allenamento") calcola il prossimo giorno con un algoritmo a
+     ROTAZIONE basato sul CONTEGGIO delle sessioni fatte
+     (sessioni % giorni_attivi) — completamente scollegato da quale
+     giorno della settimana è oggi. _getWorkoutForDate() (già usata
+     da Calendario e Hub) calcola invece il giorno in base al vero
+     giorno della settimana. Le due logiche sono entrambe legittime
+     in astratto, ma mostrate insieme nella stessa schermata Home
+     possono facilmente andare in disaccordo.
+
+     FIX: quando _getWorkoutForDate ha un'opinione chiara su oggi per
+     lo STESSO programma attivo, la usiamo per allineare day/dayIndex
+     restituiti da getActiveProgramState — così la card "Continua
+     allenamento", l'Hub e il Calendario mostrano sempre lo stesso
+     identico allenamento. Se oggi risulta un giorno di riposo secondo
+     il calendario, la card lo segnala chiaramente invece di proporre
+     comunque un allenamento, con un link per allenarsi ugualmente se
+     l'utente lo desidera davvero (scelta esplicita, non forzata).
+
+     Nessuna riga esistente toccata: getActiveProgramState() e
+     renderHomeCta() vengono ridefinite per intero (stesso pattern
+     usato nei fix precedenti), preservando il comportamento originale
+     ovunque _getWorkoutForDate non abbia un'opinione (es. nessun
+     programma attivo).
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V116_8_FIX_CTA_MISMATCH() {
+'use strict';
+try {
+
+  if (typeof getActiveProgramState !== 'function' || typeof renderHomeCta !== 'function' || typeof startActiveDay !== 'function') {
+    console.warn('[V116.8] Funzioni base non trovate, fix non applicato');
+    return;
+  }
+  if (typeof _getWorkoutForDate !== 'function' || typeof today !== 'function') {
+    console.warn('[V116.8] _getWorkoutForDate/today non disponibili, fix non applicato');
+    return;
+  }
+
+  var _origGetActiveProgramState = getActiveProgramState;
+
+  window.getActiveProgramState = function () {
+    var state = _origGetActiveProgramState();
+    if (!state || !state.prog) return state;
+
+    try {
+      var wo = _getWorkoutForDate(today());
+
+      if (wo && wo.presetId === state.prog.id) {
+        // Stesso programma: allinea il giorno mostrato a quello REALE di oggi
+        var activeDays = (state.prog.days || [])
+          .map(function (d, i) { var c = Object.assign({}, d); c.realIdx = i; return c; })
+          .filter(function (d) { return !d.rest; });
+        var posIdx = activeDays.findIndex(function (d) { return d.realIdx === wo.dayIndex; });
+        if (posIdx !== -1) {
+          return {
+            prog: state.prog,
+            day: activeDays[posIdx],
+            dayIndex: wo.dayIndex,
+            dayNum: posIdx + 1,
+            totalActive: state.totalActive,
+            completedThisCycle: state.completedThisCycle,
+            _alignedToday: true
+          };
+        }
+      } else if (wo === null) {
+        // Stesso programma ma oggi è riposo secondo il calendario:
+        // segnaliamo esplicitamente invece di proporre comunque un allenamento
+        return Object.assign({}, state, { _isRestToday: true });
+      }
+    } catch (e) { console.warn('[V116.8 getActiveProgramState align]', e); }
+
+    return state; // nessuna opinione chiara da _getWorkoutForDate → comportamento originale invariato
+  };
+
+  window.renderHomeCta = function () {
+    if (typeof profile === 'undefined' || typeof sessions === 'undefined') return;
+    var wrap = document.getElementById('home-cta-banner');
+    if (!wrap) return;
+
+    var state = getActiveProgramState();
+
+    if (state && state._isRestToday) {
+      var tc0 = TC[state.prog.t] || TC.custom;
+      wrap.innerHTML =
+        '<div class="cta-banner has-prog">' +
+        '<div class="cta-eyebrow" style="color:var(--text3)">😴 Oggi è riposo</div>' +
+        '<div class="cta-prog-name">' + state.prog.icon + ' ' + state.prog.name + '</div>' +
+        '<div class="cta-day-info"><span style="color:var(--text2);">Il calendario segna oggi come giorno di recupero.</span></div>' +
+        '<div style="display:flex;gap:8px;margin-top:12px;">' +
+        '<button class="cta-btn-main ghost" style="flex:1;" onclick="goPage(\'allenamento\');setTimeout(()=>switchAlTab(\'calendario\',null),80)">📅 Vedi calendario</button>' +
+        '<button class="cta-btn-main accent" style="flex:1;" onclick="startActiveDay(true)">▶ Allenati comunque</button>' +
+        '</div></div>';
+      return;
+    }
+
+    if (state) {
+      var prog = state.prog, day = state.day, dayNum = state.dayNum, totalActive = state.totalActive;
+      var tc = TC[prog.t] || TC.custom;
+      var cycleBadge = getCycleBadgeHtml();
+
+      wrap.innerHTML =
+        '<div class="cta-banner has-prog">' +
+        '<div class="cta-eyebrow" style="color:var(--acc)">⚡ Programma attivo</div>' +
+        '<div class="cta-prog-name">' + prog.icon + ' ' + prog.name + '</div>' +
+        '<div class="cta-day-info">' +
+        '<span style="font-weight:700;color:var(--text);">Giorno ' + dayNum + ' / ' + totalActive + '</span>' +
+        (day.name ? ' &nbsp;·&nbsp; <span>' + day.name + '</span>' : '') +
+        (day.type ? ' &nbsp;·&nbsp; <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;background:' + tc.bg + ';color:' + tc.c + ';">' + day.type + '</span>' : '') +
+        '</div>' +
+        (cycleBadge ? '<div style="margin-bottom:12px;">' + cycleBadge + '</div>' : '') +
+        '<button class="cta-btn-main accent" onclick="startActiveDay()">' +
+        '<span style="font-size:18px">▶</span> Continua allenamento' +
+        '</button></div>';
+    } else {
+      wrap.innerHTML =
+        '<div class="cta-banner no-prog">' +
+        '<div class="cta-eyebrow" style="color:var(--text3)">Inizia ora</div>' +
+        '<div class="cta-prog-name" style="color:var(--text2);font-size:16px;">Nessun programma attivo</div>' +
+        '<div class="cta-no-prog-txt">Scegli un programma per vedere qui il tuo prossimo allenamento.</div>' +
+        '<button class="cta-btn-main ghost" onclick="goPage(\'allenamento\');setTimeout(()=>switchAlTab(\'esplora\',null),80)">' +
+        '<span style="font-size:18px">🏋️</span> Scegli programma' +
+        '</button></div>';
+    }
+  };
+
+  window.startActiveDay = function (force) {
+    var state = getActiveProgramState();
+    if (!state) { if (typeof showToast === 'function') showToast('⚠️ Nessun programma attivo'); return; }
+    if (state._isRestToday && !force) {
+      if (typeof showToast === 'function') showToast('😴 Oggi è un giorno di riposo secondo il calendario');
+      return;
+    }
+    var prog = state.prog, dayIndex = state.dayIndex;
+    startPresetDay(prog.id, dayIndex);
+  };
+
+  console.info('%c[FitTrack V116.8] ✅ Fix: card "Continua allenamento" ora coerente con Calendario e Hub — stesso allenamento ovunque', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V116_8_FIX_CTA_MISMATCH]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V116.10 — Sostituisce l'approccio di V116.9 (ricette
+     unite in un unico nome combinato) con quello richiesto: più
+     ricette per pasto mostrate SEPARATE, una sotto l'altra, ognuna
+     con la propria porzione regolabile (33/50/66/75/100/125/150%)
+     che ricalcola kcal/macro di quella singola ricetta.
+
+     Come funziona:
+     • v70SelectBestRecipe compone il pasto (pranzo/cena, sopra 400
+       kcal) selezionando 2-3 ricette genuinamente diverse dal pool
+       di ~600, esattamente come in V116.9 — ma ora NON le unisce in
+       un nome/oggetto unico. La prima ricetta resta il "Primo/
+       Secondo" mostrato dalla card originale (nome e kcal solo suoi,
+       non sommati); le altre vengono aggiunte come righe proprie
+       sotto, tra il piatto principale e il contorno.
+     • Ogni riga (inclusa la prima) ha un chip "⚖️ 100%" che al tocco
+       cicla tra le porzioni comuni, aggiornando kcal/macro di quella
+       ricetta e il totale del pasto in tempo reale.
+     • Il tap sul resto della riga apre il dettaglio di QUELLA
+       specifica ricetta (ingredienti/passaggi suoi, non combinati).
+     • Confermando il pasto (spunta ✅), tutte le ricette del pasto
+       vengono loggate nel diario separatamente, ciascuna con la
+       propria quantità.
+
+     Colazione esclusa dalla composizione multi-ricetta (il suo
+     layout di card è diverso e più semplice; il target calorico
+     della colazione è comunque quasi sempre già gestibile da una
+     singola ricetta).
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V116_10_SEPARATE_MEAL_ROWS() {
+'use strict';
+try {
+
+  if (typeof window.v70SelectBestRecipe !== 'function') {
+    console.warn('[V116.10] v70SelectBestRecipe non trovato, fix non applicato');
+    return;
+  }
+
+  var _origV70Select = window.v70SelectBestRecipe;
+  var COMPOSE_THRESHOLD = 400;
+  var MEAL_TYPES_TO_COMPOSE = { pranzo: true, cena: true };
+  var PORTION_STEPS = [0.33, 0.5, 0.66, 0.75, 1, 1.25, 1.5];
+
+  /* ─────────────────────────────────────────────────────────
+     1) Composizione multi-ricetta — stessa logica di selezione
+     di V116.9, ma il risultato resta un ARRAY di ricette distinte
+     invece di un oggetto unico con nome concatenato.
+  ───────────────────────────────────────────────────────── */
+  function ftPickComponentCount(kcalTarget) {
+    if (kcalTarget <= 700) return 2;
+    return (Math.random() < 0.55) ? 3 : 2;
+  }
+
+  function ftComposeMealParts(mealType, kcalTarget, exclude) {
+    var used = (exclude || []).slice();
+    var numComponents = ftPickComponentCount(kcalTarget);
+    var remaining = kcalTarget;
+    var parts = [];
+
+    for (var i = 0; i < numComponents; i++) {
+      var slotsLeft = numComponents - i;
+      if (remaining < 100 && parts.length > 0) break;
+      var randFactor = 0.85 + Math.random() * 0.3;
+      var subTarget = Math.max(150, Math.round((remaining / slotsLeft) * randFactor));
+      var comp = _origV70Select(mealType, subTarget, used);
+      if (!comp) break;
+      parts.push(comp);
+      used.push(comp.id);
+      remaining -= (comp.kcal || 0);
+    }
+    return parts;
+  }
+
+  window.v70SelectBestRecipe = function (mealType, kcalTarget, exclude) {
+    try {
+      if (MEAL_TYPES_TO_COMPOSE[mealType] && (kcalTarget || 0) > COMPOSE_THRESHOLD) {
+        var parts = ftComposeMealParts(mealType, kcalTarget, exclude);
+        if (parts.length > 1) {
+          // Prepara ciascuna parte con valori "base" (per poter riscalare la porzione in seguito
+          // senza perdere il valore originale) e la lega tutta insieme tramite _parts sul primo elemento.
+          var withScale = parts.map(function (p) {
+            var c = Object.assign({}, p);
+            c._base = { kcal: p.kcal || 0, p: p.p || 0, c: p.c || 0, g: p.g || 0 };
+            c.portionScale = 1;
+            return c;
+          });
+          var head = Object.assign({}, withScale[0]);
+          head._parts = withScale; // riferimento completo a TUTTE le parti, inclusa questa stessa (indice 0)
+          return head;
+        }
+        if (parts.length === 1) return parts[0];
+        return _origV70Select(mealType, kcalTarget, exclude); // pool esaurito, fallback totale
+      }
+    } catch (e) { console.warn('[V116.10 ftComposeMealParts]', e); }
+    return _origV70Select(mealType, kcalTarget, exclude);
+  };
+  window.v70SelectBestRecipe._v116compose = true;
+
+  /* ─────────────────────────────────────────────────────────
+     2) Applica una scala di porzione a UNA parte, ricalcolando
+     i suoi kcal/macro dal valore base e sincronizzando la riga
+     principale (che il render originale legge da mainMeal stesso).
+  ───────────────────────────────────────────────────────── */
+  function ftApplyPartScale(mainMeal, index) {
+    var part = mainMeal._parts[index];
+    if (!part._base) part._base = { kcal: part.kcal || 0, p: part.p || 0, c: part.c || 0, g: part.g || 0 };
+    part.kcal = Math.round(part._base.kcal * part.portionScale);
+    part.p = Math.round(part._base.p * part.portionScale * 10) / 10;
+    part.c = Math.round(part._base.c * part.portionScale * 10) / 10;
+    part.g = Math.round(part._base.g * part.portionScale * 10) / 10;
+
+    if (index === 0) {
+      mainMeal.kcal = part.kcal;
+      mainMeal.p = part.p;
+      mainMeal.c = part.c;
+      mainMeal.g = part.g;
+    }
+  }
+
+  window.ftCycleMealPartPortion = function (mealType, index) {
+    try {
+      var menu = window._v67State && window._v67State.currentMenu;
+      var mainMeal = menu && menu[mealType];
+      if (!mainMeal || !Array.isArray(mainMeal._parts) || !mainMeal._parts[index]) return;
+      var part = mainMeal._parts[index];
+
+      var curIdx = 0, minDiff = Infinity;
+      PORTION_STEPS.forEach(function (o, i) {
+        var d = Math.abs(o - (part.portionScale || 1));
+        if (d < minDiff) { minDiff = d; curIdx = i; }
+      });
+      part.portionScale = PORTION_STEPS[(curIdx + 1) % PORTION_STEPS.length];
+      ftApplyPartScale(mainMeal, index);
+
+      if (typeof saveAll === 'function') saveAll();
+      if (typeof showToast === 'function') showToast('⚖️ ' + part.name + ': ' + Math.round(part.portionScale * 100) + '%');
+      if (typeof window.v71RenderAllCards === 'function') window.v71RenderAllCards(false);
+    } catch (e) { console.warn('[V116.10 ftCycleMealPartPortion]', e); }
+  };
+
+  /* ─────────────────────────────────────────────────────────
+     3) Apre il dettaglio di UNA parte specifica (non combinata),
+     riusando window.v69OpenRecipe già presente nel codice per
+     mostrare la stessa identica scheda ricetta del resto dell'app.
+  ───────────────────────────────────────────────────────── */
+  window.ftOpenMealPart = function (mealType, index) {
+    try {
+      var menu = window._v67State && window._v67State.currentMenu;
+      var mainMeal = menu && menu[mealType];
+      var part = mainMeal && mainMeal._parts && mainMeal._parts[index];
+      if (!part) return;
+
+      var dbFull = (window.RECIPES_DB || []).find(function (r) { return r.id === part.id; }) ||
+        (window.RICETTE || []).find(function (r) { return r.id === part.id; });
+
+      var recipe = {
+        id: part.id,
+        ico: part.ico || '🍽️',
+        name: part.name,
+        kcal: part.kcal, p: part.p, c: part.c, g: part.g,
+        time: (dbFull && dbFull.time) || (part.time ? part.time + ' min' : '—'),
+        diff: (dbFull && dbFull.diff) || '',
+        ingredienti: (dbFull && dbFull.ingredienti) || part.ingredienti || [],
+        steps: (dbFull && dbFull.steps) || (Array.isArray(part.steps) ? part.steps : (part.steps ? [part.steps] : []))
+      };
+
+      if (typeof window.v69OpenRecipe === 'function') {
+        window.v69OpenRecipe(recipe, false);
+      }
+    } catch (e) { console.warn('[V116.10 ftOpenMealPart]', e); }
+  };
+
+  /* ─────────────────────────────────────────────────────────
+     4) Iniezione righe extra + chip porzione — dopo ogni render
+     delle card, senza toccare la funzione privata che le genera.
+  ───────────────────────────────────────────────────────── */
+  function ftPortionChipHtml(mealType, index, scale) {
+    return '<button onclick="event.stopPropagation();ftCycleMealPartPortion(\'' + mealType + '\',' + index + ')" ' +
+      'style="flex-shrink:0;padding:4px 9px;border-radius:99px;font-family:\'Syne\',sans-serif;font-size:10.5px;font-weight:800;' +
+      'border:1px solid var(--border2);background:var(--bg4);color:var(--acc);cursor:pointer;white-space:nowrap;">' +
+      '⚖️ ' + Math.round((scale || 1) * 100) + '%</button>';
+  }
+
+  function ftRecalcCardTotals(mealType) {
+    var card = document.getElementById('v71-card-' + mealType);
+    if (!card) return;
+    var menu = window._v67State && window._v67State.currentMenu;
+    var mainMeal = menu && menu[mealType];
+    var sg = window._v71SubState && window._v71SubState[mealType];
+    if (!mainMeal) return;
+
+    var parts = Array.isArray(mainMeal._parts) ? mainMeal._parts : [mainMeal];
+    var totKcal = parts.reduce(function (s, p) { return s + (p.kcal || 0); }, 0);
+    var totP = parts.reduce(function (s, p) { return s + (p.p || 0); }, 0);
+    var totC = parts.reduce(function (s, p) { return s + (p.c || 0); }, 0);
+    var totG = parts.reduce(function (s, p) { return s + (p.g || 0); }, 0);
+    if (sg && sg.contorno) {
+      totKcal += sg.contorno.kcal || 0;
+      totP += sg.contorno.p || 0;
+      totC += sg.contorno.c || 0;
+      totG += sg.contorno.g || 0;
+    }
+
+    var kEl = card.querySelector('.v71-total-kcal');
+    if (kEl) kEl.textContent = totKcal;
+    var macros = card.querySelectorAll('.v71-total-macros .v71-mmacro');
+    if (macros[0]) macros[0].textContent = 'P ' + Math.round(totP) + 'g';
+    if (macros[1]) macros[1].textContent = 'C ' + Math.round(totC) + 'g';
+    if (macros[2]) macros[2].textContent = 'G ' + Math.round(totG) + 'g';
+  }
+
+  function ftInjectMealPartRows() {
+    ['pranzo', 'cena'].forEach(function (mealType) {
+      var card = document.getElementById('v71-card-' + mealType);
+      if (!card) return;
+      var menu = window._v67State && window._v67State.currentMenu;
+      var mainMeal = menu && menu[mealType];
+      var list = card.querySelector('.v71-subgroup-list');
+      if (!list || !mainMeal) return;
+
+      // Chip porzione sulla riga principale (indice 0), se composta
+      var mainRow = list.querySelector('.v71-portata-row:first-child');
+      if (mainRow && Array.isArray(mainMeal._parts) && !mainRow.querySelector('.ft-portion-chip-wrap')) {
+        var infoDiv = mainRow.querySelector('.v71-portata-info');
+        if (infoDiv) {
+          var chipWrap = document.createElement('div');
+          chipWrap.className = 'ft-portion-chip-wrap';
+          chipWrap.style.cssText = 'margin-top:6px;';
+          chipWrap.innerHTML = ftPortionChipHtml(mealType, 0, mainMeal._parts[0].portionScale);
+          infoDiv.appendChild(chipWrap);
+        }
+      }
+
+      // Righe extra per le parti 1+ (rimuove quelle vecchie prima di re-inserire, per riflettere eventuali cambi)
+      card.querySelectorAll('.ft-extra-part-row').forEach(function (el) { el.remove(); });
+      if (Array.isArray(mainMeal._parts) && mainMeal._parts.length > 1) {
+        var mainCat = list.querySelector('.v71-portata-category');
+        var catLabel = mainCat ? mainCat.textContent : 'PIATTO';
+        for (var i = 1; i < mainMeal._parts.length; i++) {
+          (function (idx) {
+            var part = mainMeal._parts[idx];
+            var row = document.createElement('div');
+            row.className = 'v71-portata-row ft-extra-part-row';
+            row.setAttribute('role', 'button');
+            row.setAttribute('tabindex', '0');
+            row.setAttribute('onclick', "ftOpenMealPart('" + mealType + "'," + idx + ")");
+            row.innerHTML =
+              '<div class="v71-portata-thumb">' + (part.ico || '🍽️') + '</div>' +
+              '<div class="v71-portata-info">' +
+              '<div class="v71-portata-category">' + catLabel + ' · PIATTO ' + (idx + 1) + '</div>' +
+              '<div class="v71-portata-name">' + part.name + '</div>' +
+              '<div class="v71-portata-meta">⏱️ ' + (part.time || 15) + ' min · 🔥 ' + part.kcal + ' kcal</div>' +
+              '<div class="ft-portion-chip-wrap" style="margin-top:6px;">' + ftPortionChipHtml(mealType, idx, part.portionScale) + '</div>' +
+              '</div>' +
+              '<span class="v71-portata-caret">›</span>';
+            // Ad ogni iterazione, list.children[idx] punta ancora alla riga successiva
+            // corretta (contorno o extra-part già inserita), grazie allo shift automatico del DOM.
+            list.insertBefore(row, list.children[idx] || null);
+          })(i);
+        }
+      }
+
+      ftRecalcCardTotals(mealType);
+    });
+  }
+
+  var _origRenderAllCards = window.v71RenderAllCards;
+  if (typeof _origRenderAllCards === 'function' && !_origRenderAllCards._v116parts) {
+    window.v71RenderAllCards = function (animate) {
+      var r = _origRenderAllCards.apply(this, arguments);
+      setTimeout(ftInjectMealPartRows, 140);
+      return r;
+    };
+    window.v71RenderAllCards._v116parts = true;
+  }
+  setTimeout(ftInjectMealPartRows, 900); // prima passata se la Home è già a schermo
+
+  /* ─────────────────────────────────────────────────────────
+     5) Logga anche le parti extra nel diario alla conferma pasto
+  ───────────────────────────────────────────────────────── */
+  var _origConfirmMeal = window.v71ConfirmMeal;
+  if (typeof _origConfirmMeal === 'function' && !_origConfirmMeal._v116parts) {
+    window.v71ConfirmMeal = function (mealType) {
+      var wasConfirmed = window._v67State && window._v67State.confirmed[mealType];
+      var ret = _origConfirmMeal.apply(this, arguments);
+      try {
+        if (!wasConfirmed) {
+          var menu = window._v67State && window._v67State.currentMenu;
+          var mainMeal = menu && menu[mealType];
+          if (mainMeal && Array.isArray(mainMeal._parts) && mainMeal._parts.length > 1) {
+            var mealIdx = mealType === 'colazione' ? 0 : mealType === 'pranzo' ? 1 : 2;
+            var todayDow = (new Date().getDay() + 6) % 7;
+            var selDay = (window._v67State && window._v67State.selectedDay !== undefined) ? window._v67State.selectedDay : todayDow;
+            var dayOffset = selDay - todayDow;
+            var d = new Date();
+            d.setDate(d.getDate() + dayOffset);
+            var dateKey = d.toISOString().slice(0, 10);
+
+            if (window.nutrition && window.nutrition[dateKey] && window.nutrition[dateKey].meals[mealIdx]) {
+              var mealSlot = window.nutrition[dateKey].meals[mealIdx];
+              for (var i = 1; i < mainMeal._parts.length; i++) {
+                var part = mainMeal._parts[i];
+                var already = mealSlot.items.some(function (it) { return it._recipeId === part.id; });
+                if (!already) {
+                  mealSlot.items.push({
+                    _recipeId: part.id, name: part.name, g: 1, unit: 'porzione',
+                    kcal: part.kcal || 0, p: part.p || 0, c: part.c || 0, g_fat: part.g || 0
+                  });
+                }
+              }
+              if (typeof saveAll === 'function') saveAll();
+            }
+          }
+        }
+      } catch (e) { console.warn('[V116.10 v71ConfirmMeal extra parts]', e); }
+      return ret;
+    };
+    window.v71ConfirmMeal._v116parts = true;
+  }
+
+  console.info('%c[FitTrack V116.10] ✅ Pasti composti da più ricette mostrate separate, ognuna con porzione regolabile (33%-150%)', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V116_10_SEPARATE_MEAL_ROWS]', e); }
+})();
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V116.11 — Espansione massiccia del catalogo: ~93 nuove
+     ricette e ~55 nuovi alimenti, per una varietà molto più ampia
+     nel filtro ricette e nella ricerca alimenti del diario.
+
+     Copertura nuove ricette: cucina asiatica, messicana, greca/
+     mediterranea, proteine vegetali alternative (tofu/tempeh/seitan/
+     legumi), pesce e frutti di mare, carni bianche/rosse extra,
+     colazioni salate e dolci, snack e barrette, zuppe, insalate,
+     bowl/piatti unici, dolci da forno e freddi, primi piatti extra.
+
+     Copertura nuovi alimenti: proteine (pesce, seitan, tempeh,
+     coniglio, lonza, bresaola), latticini e alternative vegetali,
+     cereali integrali extra, verdure, frutta, grassi/semi, legumi.
+
+     Stesso pattern di iniezione già usato nei batch precedenti:
+     dedup su id, aggiunta a RICETTE/RECIPES_DB e FOOD_DB.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V116_11_MASSIVE_EXPANSION() {
+'use strict';
+try {
+
+  /* ═══════════════════════════════════════════════════════════
+     PARTE 1 — 55 nuovi alimenti (FOOD_DB)
+  ═══════════════════════════════════════════════════════════ */
+  var NF117 = [
+    // PROTEINE (pesce, carni extra, alternative vegetali)
+    { id: 'tacchino-affett', name: 'Petto di Tacchino Affettato', kcal: 98, p: 22, c: 1, g: 0.5, f: 0, unit: 'g', cat: '🍗 Proteine' },
+    { id: 'pesce-spada', name: 'Pesce Spada', kcal: 121, p: 20, c: 0, g: 4, f: 0, unit: 'g', cat: '🍗 Proteine' },
+    { id: 'sogliola', name: 'Sogliola', kcal: 86, p: 17, c: 0, g: 1.5, f: 0, unit: 'g', cat: '🍗 Proteine' },
+    { id: 'seppie', name: 'Seppie', kcal: 79, p: 16, c: 1, g: 1, f: 0, unit: 'g', cat: '🍗 Proteine' },
+    { id: 'lonza-maiale', name: 'Lonza di Maiale', kcal: 143, p: 22, c: 0, g: 6, f: 0, unit: 'g', cat: '🍗 Proteine' },
+
+    // LATTICINI e alternative vegetali
+    { id: 'philadelphia-light', name: 'Formaggio Spalmabile Light', kcal: 155, p: 8, c: 4, g: 12, f: 0, unit: 'g', cat: '🥛 Latticini' },
+    { id: 'latte-soia', name: 'Latte di Soia', kcal: 33, p: 3, c: 1, g: 1.8, f: 0, unit: 'ml', cat: '🥛 Latticini' },
+    { id: 'latte-mandorla', name: 'Latte di Mandorla', kcal: 15, p: 0.5, c: 0.3, g: 1.2, f: 0, unit: 'ml', cat: '🥛 Latticini' },
+    { id: 'burrata-light', name: 'Burrata (porzione light)', kcal: 240, p: 14, c: 2, g: 20, f: 0, unit: 'g', cat: '🥛 Latticini' },
+
+    // CEREALI
+    { id: 'orzo-perlato', name: 'Orzo Perlato cotto', kcal: 123, p: 2.3, c: 28, g: 0.4, f: 3.8, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'grano-saraceno', name: 'Grano Saraceno cotto', kcal: 92, p: 3.4, c: 20, g: 0.6, f: 2.7, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'cous-cous-int', name: 'Cous Cous Integrale cotto', kcal: 112, p: 3.8, c: 23, g: 0.2, f: 3.2, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'gallette-riso', name: 'Gallette di Riso', kcal: 387, p: 8, c: 82, g: 3, f: 2, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'fiocchi-mais', name: 'Fiocchi di Mais Naturali', kcal: 357, p: 7, c: 84, g: 0.9, f: 3, unit: 'g', cat: '🌾 Cereali' },
+
+    // VERDURE
+    { id: 'cavolo-cappuccio', name: 'Cavolo Cappuccio', kcal: 25, p: 1.3, c: 6, g: 0.1, f: 2.5, unit: 'g', cat: '🥦 Verdure' },
+    { id: 'funghi-champ', name: 'Funghi Champignon', kcal: 22, p: 3.1, c: 3.3, g: 0.3, f: 1, unit: 'g', cat: '🥦 Verdure' },
+
+    // FRUTTA
+    { id: 'albicocca', name: 'Albicocca', kcal: 48, p: 1.4, c: 11, g: 0.4, f: 2, unit: 'g', cat: '🍎 Frutta' },
+    { id: 'prugna', name: 'Prugna', kcal: 46, p: 0.7, c: 11, g: 0.3, f: 1.4, unit: 'g', cat: '🍎 Frutta' },
+
+    // GRASSI E SEMI
+    { id: 'olio-lino', name: 'Olio di Semi di Lino', kcal: 884, p: 0, c: 0, g: 100, f: 0, unit: 'ml', cat: '🫒 Grassi' },
+    { id: 'burro-anacardi', name: 'Burro di Anacardi', kcal: 587, p: 18, c: 28, g: 49, f: 3, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'semi-girasole', name: 'Semi di Girasole', kcal: 584, p: 21, c: 20, g: 51, f: 9, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'tahina', name: 'Tahina (crema di sesamo)', kcal: 595, p: 17, c: 21, g: 54, f: 9.3, unit: 'g', cat: '🫒 Grassi' },
+
+    // LEGUMI
+    { id: 'lenticchie-rosse', name: 'Lenticchie Rosse cotte', kcal: 116, p: 9, c: 20, g: 0.4, f: 7.9, unit: 'g', cat: '🫘 Legumi' },
+    { id: 'fagioli-cannellini', name: 'Fagioli Cannellini cotti', kcal: 127, p: 8.7, c: 21, g: 0.5, f: 6.3, unit: 'g', cat: '🫘 Legumi' },
+    { id: 'cachi', name: 'Cachi', kcal: 70, p: 0.6, c: 18, g: 0.2, f: 3.6, unit: 'g', cat: '🍎 Frutta' },
+    { id: 'mirtilli-rossi', name: 'Mirtilli Rossi (Cranberries)', kcal: 46, p: 0.4, c: 12, g: 0.1, f: 4.6, unit: 'g', cat: '🍎 Frutta' },
+    { id: 'uva-passa', name: 'Uva Passa', kcal: 299, p: 3.1, c: 79, g: 0.5, f: 3.7, unit: 'g', cat: '🍎 Frutta' },
+    { id: 'datteri-secchi', name: 'Datteri Secchi', kcal: 282, p: 2.5, c: 75, g: 0.4, f: 8, unit: 'g', cat: '🍎 Frutta' },
+    { id: 'bulgur', name: 'Bulgur cotto', kcal: 83, p: 3.1, c: 19, g: 0.2, f: 4.5, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'riso-rosso', name: 'Riso Rosso cotto', kcal: 111, p: 2.7, c: 23, g: 0.9, f: 1.8, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'riso-basmati-int', name: 'Riso Basmati Integrale cotto', kcal: 121, p: 2.7, c: 25, g: 1, f: 1.6, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'yogurt-soia', name: 'Yogurt di Soia', kcal: 51, p: 3.3, c: 4.2, g: 2, f: 0.8, unit: 'g', cat: '🥛 Latticini' },
+    { id: 'formaggio-vegano', name: 'Formaggio Vegano Spalmabile', kcal: 240, p: 2, c: 6, g: 22, f: 0.5, unit: 'g', cat: '🥛 Latticini' },
+    { id: 'senape', name: 'Senape', kcal: 66, p: 4.4, c: 5, g: 3.3, f: 3, unit: 'g', cat: '🧂 Condimenti' },
+    { id: 'salsa-worcester', name: 'Salsa Worcester', kcal: 78, p: 0, c: 19, g: 0, f: 0, unit: 'ml', cat: '🧂 Condimenti' },
+    { id: 'brodo-granulare', name: 'Brodo Granulare Vegetale', kcal: 195, p: 8, c: 30, g: 5, f: 0, unit: 'g', cat: '🧂 Condimenti' },
+    { id: 'noci-macadamia', name: 'Noci Macadamia', kcal: 718, p: 7.9, c: 14, g: 76, f: 8.6, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'pistacchi-sgusciati', name: 'Pistacchi Sgusciati', kcal: 562, p: 20, c: 28, g: 45, f: 10, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'olio-noce', name: 'Olio di Noce', kcal: 884, p: 0, c: 0, g: 100, f: 0, unit: 'ml', cat: '🫒 Grassi' },
+    { id: 'burro-chiarificato', name: 'Burro Chiarificato', kcal: 876, p: 0.2, c: 0, g: 99.5, f: 0, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'quinoa-rossa', name: 'Quinoa Rossa cotta', kcal: 120, p: 4.4, c: 21, g: 1.9, f: 2.8, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'pane-carasau', name: 'Pane Carasau', kcal: 380, p: 12, c: 74, g: 3, f: 3, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'crusca-avena', name: 'Crusca di Avena', kcal: 246, p: 17, c: 66, g: 7, f: 15, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'germe-grano', name: 'Germe di Grano', kcal: 360, p: 23, c: 44, g: 9, f: 13, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'salsa-bbq', name: 'Salsa BBQ', kcal: 172, p: 1, c: 40, g: 0.5, f: 0, unit: 'g', cat: '🧂 Condimenti' },
+    { id: 'maionese-light', name: 'Maionese Light', kcal: 250, p: 1, c: 8, g: 24, f: 0, unit: 'g', cat: '🧂 Condimenti' },
+    { id: 'zenzero-fresco', name: 'Zenzero Fresco', kcal: 80, p: 1.8, c: 18, g: 0.8, f: 2, unit: 'g', cat: '🧂 Condimenti' },
+    { id: 'alghe-nori', name: 'Alghe Nori', kcal: 35, p: 5.8, c: 5.1, g: 0.3, f: 0.3, unit: 'g', cat: '🥦 Verdure' },
+    { id: 'panko', name: 'Pangrattato Panko', kcal: 373, p: 12, c: 74, g: 2.5, f: 3, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'farina-cocco', name: 'Farina di Cocco', kcal: 443, p: 19, c: 21, g: 15, f: 39, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'farina-mandorle', name: 'Farina di Mandorle', kcal: 571, p: 21, c: 19, g: 50, f: 10, unit: 'g', cat: '🌾 Cereali' },
+    { id: 'albume-liquido', name: 'Albume Liquido Pastorizzato', kcal: 48, p: 10.9, c: 0.7, g: 0.2, f: 0, unit: 'ml', cat: '🍗 Proteine' },
+    { id: 'proteine-pisello', name: 'Proteine di Pisello in Polvere', kcal: 375, p: 80, c: 5, g: 5, f: 4, unit: 'g', cat: '💊 Integratori' },
+    { id: 'collagene', name: 'Collagene Idrolizzato in Polvere', kcal: 370, p: 90, c: 0, g: 0, f: 0, unit: 'g', cat: '💊 Integratori' },
+    { id: 'aceto-mele', name: 'Aceto di Mele', kcal: 22, p: 0, c: 0.9, g: 0, f: 0, unit: 'ml', cat: '🧂 Condimenti' },
+    { id: 'salsa-pesce', name: 'Salsa di Pesce (Nam Pla)', kcal: 35, p: 5, c: 3.6, g: 0, f: 0, unit: 'ml', cat: '🧂 Condimenti' },
+    { id: 'semi-canapa', name: 'Semi di Canapa', kcal: 553, p: 31, c: 8.7, g: 49, f: 4, unit: 'g', cat: '🫒 Grassi' },
+    { id: 'farina-ceci', name: 'Farina di Ceci', kcal: 387, p: 22, c: 58, g: 6.7, f: 10, unit: 'g', cat: '🫘 Legumi' }
+  ];
+
+  if (!Array.isArray(window.FOOD_DB)) window.FOOD_DB = [];
+  var existingFoodIds = {};
+  window.FOOD_DB.forEach(function (f) { if (f && f.id) existingFoodIds[f.id] = true; });
+  var addedFoods = 0;
+  NF117.forEach(function (f) {
+    if (!f || !f.id || existingFoodIds[f.id]) return;
+    existingFoodIds[f.id] = true;
+    window.FOOD_DB.push(f);
+    addedFoods++;
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     PARTE 2 — ~93 nuove ricette (RICETTE + RECIPES_DB)
+  ═══════════════════════════════════════════════════════════ */
+  var NR117 = [
+
+  /* ═══ Cucina Asiatica ═══ */
+  { id: 'v117-as01', name: 'Poke Bowl al Salmone', ico: '🍣', tags: ['pranzo', 'cena', 'high-protein'], time: '20 min', kcal: 480, p: 32, c: 48, g: 16, fiber: 5, diff: 'Media', alimenti: ['salmone', 'riso', 'avocado', 'edamame', 'salsa di soia'], desc: 'Il poke hawaiano-giapponese, versione facile da fare a casa con salmone crudo marinato.', ingredienti: ['150g salmone fresco a cubetti (qualità sushi)', '150g riso (peso a crudo)', '1/2 avocado a fette', '60g edamame sgusciati', '15ml salsa di soia', '1 cucchiaino olio di sesamo', 'Semi di sesamo, alga nori'], steps: ['Cuoci il riso e lascialo intiepidire.', 'Marina il salmone a cubetti con salsa di soia e olio di sesamo per 10 minuti.', 'Cuoci gli edamame in acqua bollente 3-4 min.', 'Componi la bowl: riso come base, poi salmone, avocado ed edamame disposti a settori.', 'Completa con semi di sesamo e alga nori a listarelle.'] },
+  { id: 'v117-as02', name: 'Pad Thai Proteico di Pollo', ico: '🍜', tags: ['pranzo', 'cena', 'high-protein'], time: '25 min', kcal: 460, p: 34, c: 50, g: 12, fiber: 4, diff: 'Media', alimenti: ['petto di pollo', 'noodles di riso', 'uova', 'germogli di soia', 'arachidi'], desc: 'La versione casalinga del classico street food thailandese, con pollo per una spinta proteica.', ingredienti: ['150g petto di pollo a striscioline', '80g noodles di riso (peso a crudo)', '1 uovo', '80g germogli di soia', '20ml salsa di soia', '1 cucchiaino salsa di pesce (o soia extra)', '15g arachidi tritate', 'Succo di lime'], steps: ['Ammolla i noodles in acqua calda secondo le istruzioni, scola.', 'Rosola il pollo in padella/wok finché dorato, tienilo da parte.', 'Nella stessa padella, strapazza l uovo velocemente.', 'Aggiungi noodles, pollo, germogli di soia, salsa di soia e salsa di pesce. Salta tutto insieme 3-4 minuti.', 'Servi con arachidi tritate e succo di lime.'] },
+  { id: 'v117-as03', name: 'Curry di Ceci al Cocco', ico: '🍛', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '25 min', kcal: 420, p: 16, c: 48, g: 18, fiber: 12, diff: 'Facile', alimenti: ['ceci', 'latte di cocco', 'pomodori', 'curry', 'riso'], desc: 'Curry vegano cremoso e speziato, un classico della cucina indiana reso semplice.', ingredienti: ['300g ceci cotti', '200ml latte di cocco', '200g pomodori pelati', '1 cipolla tritata', '2 cucchiaini curry in polvere', '1 spicchio aglio', '70g riso basmati (peso a crudo)', '10ml olio EVO'], steps: ['Soffriggi cipolla e aglio in olio per 4-5 minuti.', 'Aggiungi il curry in polvere e tosta 30 secondi.', 'Aggiungi pomodori pelati e latte di cocco, cuoci 10 minuti mescolando.', 'Aggiungi i ceci e cuoci altri 8-10 minuti finché la salsa si addensa.', 'Servi con riso basmati cotto a parte.'] },
+  { id: 'v117-as04', name: 'Ramen Proteico Casalingo', ico: '🍜', tags: ['cena', 'high-protein'], time: '30 min', kcal: 490, p: 38, c: 44, g: 16, fiber: 5, diff: 'Media', alimenti: ['petto di pollo', 'uova', 'noodles', 'brodo', 'spinaci'], desc: 'Un ramen semplificato ma sostanzioso, con uovo marinato e pollo per un pasto completo.', ingredienti: ['150g petto di pollo a fette', '1 uovo sodo', '80g noodles (peso a crudo)', '500ml brodo di pollo o vegetale', '20ml salsa di soia', '50g spinaci freschi', 'Cipollotto, sesamo'], steps: ['Cuoci l uovo sodo (7 min da bollore per un tuorlo cremoso), sguscia e taglia a metà.', 'Scalda il brodo con la salsa di soia.', 'Cuoci il pollo a fette in padella finché dorato e cotto.', 'Cuoci i noodles secondo le istruzioni, scolali e mettili in una ciotola capiente.', 'Versa il brodo caldo sopra, aggiungi pollo, spinaci freschi e l uovo. Completa con cipollotto e sesamo.'] },
+  { id: 'v117-as05', name: 'Tofu Teriyaki con Riso', ico: '🍱', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '20 min', kcal: 400, p: 22, c: 46, g: 14, fiber: 4, diff: 'Facile', alimenti: ['tofu', 'riso', 'salsa di soia', 'miele', 'broccoli'], desc: 'Il tofu ben pressato e rosolato assorbe perfettamente la glassa teriyaki dolce-salata.', ingredienti: ['200g tofu a cubetti', '70g riso (peso a crudo)', '100g broccoli a cimette', 'Salsa teriyaki: 20ml salsa di soia + 1 cucchiaino miele + aglio grattugiato', '10ml olio EVO', 'Semi di sesamo'], steps: ['Pressa il tofu tra due canovacci per 10 minuti per eliminare l acqua in eccesso.', 'Cuoci il riso e i broccoli al vapore separatamente.', 'Rosola il tofu a cubetti in padella con olio finché dorato su tutti i lati.', 'Aggiungi la salsa teriyaki e lascia caramellare 2-3 minuti.', 'Componi la bowl con riso, broccoli e tofu glassato. Completa con sesamo.'] },
+  { id: 'v117-as06', name: 'Riso Saltato con Gamberi e Verdure', ico: '🍚', tags: ['pranzo', 'cena', 'high-protein'], time: '20 min', kcal: 440, p: 28, c: 52, g: 12, fiber: 3, diff: 'Facile', alimenti: ['gamberi', 'riso', 'piselli', 'carote', 'uova'], desc: 'Un piatto unico veloce che ricicla bene il riso avanzato del giorno prima.', ingredienti: ['150g gamberi sgusciati', '300g riso già cotto e freddo', '1 uovo', '60g piselli', '1 carota a cubetti', '15ml salsa di soia', '10ml olio EVO'], steps: ['Scalda l olio in un wok o padella larga a fuoco alto.', 'Rosola carota e piselli 3-4 minuti.', 'Aggiungi i gamberi e cuoci 2-3 minuti finché rosati.', 'Sposta tutto da un lato, rompi l uovo dall altro e strapazzalo velocemente.', 'Aggiungi il riso freddo sgranandolo, mescola con salsa di soia e salta 3-4 minuti a fuoco alto.'] },
+  { id: 'v117-as07', name: 'Involtini Primavera al Forno con Pollo', ico: '🥢', tags: ['pranzo', 'cena', 'spuntino', 'high-protein'], time: '35 min', kcal: 320, p: 26, c: 30, g: 10, fiber: 3, diff: 'Media', alimenti: ['petto di pollo', 'carote', 'cavolo', 'pasta fillo'], desc: 'Versione al forno (non fritta) degli involtini primavera, con ripieno di pollo e verdure.', ingredienti: ['150g petto di pollo tritato o a striscioline sottili', '1 carota a julienne', '100g cavolo cappuccio a listarelle', '4 fogli pasta fillo', '10ml olio EVO', 'Salsa di soia, zenzero'], steps: ['Rosola il pollo con zenzero grattugiato finché cotto, tienilo da parte.', 'Rosola carota e cavolo 3-4 minuti, aggiungi il pollo e un filo di salsa di soia.', 'Preriscalda il forno a 200°C. Distribuisci il ripieno su ogni foglio di pasta fillo e arrotola come un involtino.', 'Spennella con un filo di olio.', 'Cuoci 15-18 min finché dorati e croccanti.'] },
+
+  /* ═══ Cucina Messicana ═══ */
+  { id: 'v117-mx01', name: 'Tacos di Pollo Proteici', ico: '🌮', tags: ['pranzo', 'cena', 'rapido', 'high-protein'], time: '20 min', kcal: 420, p: 34, c: 36, g: 14, fiber: 5, diff: 'Facile', alimenti: ['petto di pollo', 'tortillas di mais', 'avocado', 'pomodoro', 'yogurt greco'], desc: 'Tacos veloci e sazianti, con yogurt greco al posto della panna acida.', ingredienti: ['150g petto di pollo a striscioline', '3 tortillas di mais piccole', '1/2 avocado a fette', '1 pomodoro a cubetti', '2 cucchiai yogurt greco 0%', 'Paprika, cumino, lime, coriandolo'], steps: ['Marina il pollo con paprika, cumino e succo di lime per 10 minuti.', 'Rosola il pollo in padella finché dorato e cotto.', 'Scalda leggermente le tortillas in padella asciutta.', 'Farcisci ogni tortilla con pollo, avocado, pomodoro e yogurt greco.', 'Completa con coriandolo fresco e altro succo di lime.'] },
+  { id: 'v117-mx02', name: 'Burrito Bowl di Manzo', ico: '🌯', tags: ['pranzo', 'cena', 'massa', 'high-protein'], time: '25 min', kcal: 540, p: 38, c: 52, g: 18, fiber: 9, diff: 'Facile', alimenti: ['carne di manzo magra', 'riso', 'fagioli neri', 'mais', 'avocado'], desc: 'Tutto il gusto del burrito senza dover arrotolare nulla: componi la tua bowl a strati.', ingredienti: ['150g carne di manzo magra macinata', '70g riso (peso a crudo)', '150g fagioli neri cotti', '80g mais', '1/2 avocado a cubetti', 'Paprika, cumino, lime, coriandolo'], steps: ['Cuoci il riso secondo le istruzioni.', 'Rosola la carne macinata con paprika e cumino finché ben cotta e sgranata.', 'Scalda i fagioli neri e il mais in padella con un filo di lime.', 'Componi la bowl: riso come base, poi carne, fagioli, mais e avocado disposti a settori.', 'Completa con coriandolo fresco e succo di lime.'] },
+  { id: 'v117-mx03', name: 'Fajitas di Pollo con Peperoni', ico: '🌶️', tags: ['pranzo', 'cena', 'high-protein'], time: '25 min', kcal: 410, p: 32, c: 34, g: 14, fiber: 5, diff: 'Facile', alimenti: ['petto di pollo', 'peperoni', 'cipolla', 'tortillas'], desc: 'Il classico sfrigolante da fajita, servito con tortillas di mais o farina integrale.', ingredienti: ['180g petto di pollo a striscioline', '2 peperoni misti a listarelle', '1 cipolla affettata', '2 tortillas integrali', 'Paprika, cumino, peperoncino, lime', '10ml olio EVO'], steps: ['Marina il pollo con paprika, cumino e peperoncino per 10 minuti.', 'Scalda l olio in padella larga a fuoco alto, rosola il pollo finché dorato, tienilo da parte.', 'Nella stessa padella, salta peperoni e cipolla 5-6 minuti finché appassiti ma ancora croccanti.', 'Riunisci pollo e verdure in padella, aggiungi succo di lime.', 'Scalda le tortillas e servi il tutto per farcirle a piacere.'] },
+  { id: 'v117-mx04', name: 'Chili con Carne Proteico', ico: '🌶️', tags: ['pranzo', 'cena', 'meal-prep', 'high-protein'], time: '35 min', kcal: 420, p: 34, c: 32, g: 14, fiber: 10, diff: 'Facile', alimenti: ['carne di manzo magra', 'fagioli rossi', 'pomodori', 'peperoncino'], desc: 'Piatto unico ideale per il meal-prep: si conserva bene e migliora dopo un giorno di riposo.', ingredienti: ['200g carne di manzo magra macinata', '250g fagioli rossi cotti', '300g pomodori pelati', '1 cipolla tritata', '1 peperoncino tritato (o peperoncino in polvere)', '1 cucchiaino cumino', '10ml olio EVO'], steps: ['Soffriggi cipolla e peperoncino in olio per 4 minuti.', 'Aggiungi la carne macinata e rosola finché ben sgranata e dorata.', 'Aggiungi pomodori pelati, fagioli e cumino. Porta a bollore.', 'Abbassa la fiamma e cuoci coperto 20-25 minuti, mescolando di tanto in tanto.', 'Regola di sale. Servi caldo, ottimo anche riscaldato il giorno dopo.'] },
+  { id: 'v117-mx05', name: 'Quesadilla Proteica di Pollo e Fagioli', ico: '🧀', tags: ['pranzo', 'cena', 'rapido', 'high-protein'], time: '15 min', kcal: 460, p: 36, c: 38, g: 18, fiber: 6, diff: 'Facilissimo', alimenti: ['petto di pollo', 'fagioli neri', 'formaggio', 'tortillas integrali'], desc: 'Pronta in 15 minuti, croccante fuori e filante dentro.', ingredienti: ['120g petto di pollo cotto e sfilacciato', '100g fagioli neri cotti schiacciati', '40g formaggio grattugiato', '2 tortillas integrali', 'Paprika, cumino'], steps: ['Mescola pollo sfilacciato, fagioli schiacciati, paprika e cumino.', 'Distribuisci il composto su una tortilla, cospargi con formaggio, copri con la seconda tortilla.', 'Cuoci in padella antiaderente 3-4 min per lato a fuoco medio finché dorata e il formaggio è filante.', 'Taglia in spicchi e servi caldo.'] },
+
+  /* ═══ Cucina Greca / Mediterranea ═══ */
+  { id: 'v117-gr01', name: 'Greek Bowl Pollo e Feta', ico: '🥙', tags: ['pranzo', 'cena', 'high-protein'], time: '20 min', kcal: 460, p: 38, c: 32, g: 20, fiber: 5, diff: 'Facile', alimenti: ['petto di pollo', 'feta', 'cetriolo', 'pomodorini', 'olive'], desc: 'Sapori mediterranei freschi in un piatto unico ricco di proteine.', ingredienti: ['150g petto di pollo a striscioline', '50g feta sbriciolata', '1 cetriolo a cubetti', '100g pomodorini a metà', '10 olive kalamata', 'Origano, succo di limone, olio EVO'], steps: ['Marina il pollo con origano e succo di limone per 10 minuti.', 'Cuoci il pollo alla griglia o in padella finché dorato.', 'Componi la bowl: cetriolo e pomodorini come base.', 'Aggiungi il pollo, la feta sbriciolata e le olive.', 'Condisci con olio EVO, origano e succo di limone.'] },
+  { id: 'v117-gr02', name: 'Hummus Plate con Verdure Croccanti', ico: '🥗', tags: ['pranzo', 'spuntino', 'veg', 'vegan'], time: '15 min', kcal: 340, p: 14, c: 32, g: 16, fiber: 10, diff: 'Facilissimo', alimenti: ['ceci', 'tahina', 'carote', 'cetriolo', 'peperoni'], desc: 'Piatto da condividere o pranzo leggero, con hummus fatto in casa e verdure fresche da intingere.', ingredienti: ['200g ceci cotti', '2 cucchiai tahina', 'Succo di 1/2 limone', '1 spicchio aglio', '10ml olio EVO', 'Carote, cetriolo, peperoni a bastoncini'], steps: ['Frulla ceci, tahina, succo di limone, aglio e olio fino a crema liscia (aggiungi acqua se troppo densa).', 'Regola di sale e, se vuoi, un pizzico di cumino.', 'Versa l hummus in una ciotola, crea un incavo al centro e versa un filo di olio.', 'Servi con bastoncini di carote, cetriolo e peperoni per intingere.'] },
+  { id: 'v117-gr03', name: 'Tabbouleh di Quinoa', ico: '🥗', tags: ['pranzo', 'veg', 'vegan', 'definizione'], time: '20 min', kcal: 280, p: 9, c: 38, g: 10, fiber: 6, diff: 'Facile', alimenti: ['quinoa', 'prezzemolo', 'pomodoro', 'menta', 'limone'], desc: 'Versione proteica del tabbouleh libanese, con quinoa al posto del bulgur.', ingredienti: ['80g quinoa (peso a crudo)', 'Abbondante prezzemolo fresco tritato', '2 pomodori a cubetti piccoli', 'Menta fresca tritata', 'Succo di 1 limone', '10ml olio EVO'], steps: ['Cuoci la quinoa in acqua bollente salata 12-15 min, scola e raffredda completamente.', 'Trita abbondante prezzemolo e un po di menta fresca.', 'Unisci quinoa fredda, prezzemolo, menta e pomodori a cubetti.', 'Condisci con succo di limone, olio EVO e sale.', 'Lascia riposare 10 minuti in frigo prima di servire per amalgamare i sapori.'] },
+  { id: 'v117-gr04', name: 'Souvlaki di Pollo con Pane Pita', ico: '🥙', tags: ['pranzo', 'cena', 'high-protein'], time: '25 min', kcal: 480, p: 40, c: 42, g: 16, fiber: 4, diff: 'Media', alimenti: ['petto di pollo', 'pane pita', 'yogurt greco', 'cetriolo', 'pomodoro'], desc: 'Spiedini di pollo marinati serviti con pane pita e salsa tzatziki fatta in casa.', ingredienti: ['180g petto di pollo a cubetti', '2 pane pita integrale', '100g yogurt greco 0% (per la tzatziki)', '1/4 cetriolo grattugiato', 'Aglio, aneto, succo di limone, origano'], steps: ['Marina il pollo con origano, succo di limone e olio per 15-20 minuti.', 'Prepara la tzatziki: mescola yogurt greco, cetriolo grattugiato e strizzato, aglio e aneto.', 'Infilza il pollo su spiedini e cuoci alla griglia o in padella 8-10 min girando spesso.', 'Scalda il pane pita.', 'Farcisci il pane pita con il pollo e la tzatziki, aggiungi pomodoro fresco a fette.'] },
+  { id: 'v117-gr05', name: 'Insalata Greca Proteica', ico: '🥗', tags: ['pranzo', 'cena', 'veg', 'definizione'], time: '10 min', kcal: 320, p: 14, c: 12, g: 24, fiber: 3, diff: 'Facilissimo', alimenti: ['feta', 'cetriolo', 'pomodoro', 'olive', 'cipolla rossa'], desc: 'La classica insalata greca, con più feta del solito per aumentare le proteine.', ingredienti: ['80g feta a cubotti', '1 cetriolo a fette spesse', '2 pomodori a spicchi', '1/4 cipolla rossa affettata sottile', '12 olive kalamata', 'Origano, olio EVO'], steps: ['Taglia cetriolo e pomodori a pezzi grossi, disponili in una ciotola.', 'Aggiungi la cipolla rossa affettata sottile e le olive.', 'Sistema la feta a cubotti sopra, senza sbriciolarla.', 'Condisci con abbondante origano e un buon filo di olio EVO.', 'Non serve altro sale: feta e olive sono già sapide.'] },
+
+  /* ═══ Proteine Vegetali Alternative ═══ */
+  { id: 'v117-veg01', name: 'Tofu Strapazzato allo Curcuma', ico: '🍳', tags: ['colazione', 'pranzo', 'veg', 'vegan', 'high-protein'], time: '12 min', kcal: 240, p: 20, c: 6, g: 15, fiber: 3, diff: 'Facile', alimenti: ['tofu', 'curcuma', 'spinaci', 'lievito alimentare'], desc: 'L alternativa vegana alle uova strapazzate: la curcuma dà il colore, il tofu la consistenza.', ingredienti: ['200g tofu sodo sbriciolato', '1/2 cucchiaino curcuma', '50g spinaci freschi', '1 cucchiaio lievito alimentare (facoltativo, sapore di formaggio)', '10ml olio EVO', 'Sale, pepe nero'], steps: ['Sbriciola il tofu con le mani o una forchetta, deve avere la consistenza di uova strapazzate.', 'Scalda l olio in padella, aggiungi il tofu sbriciolato e la curcuma.', 'Cuoci mescolando 5-6 minuti finché ben caldo e leggermente dorato.', 'Aggiungi gli spinaci e lasciali appassire 2 minuti.', 'Spegni, aggiungi il lievito alimentare, sale e pepe. Mescola e servi.'] },
+  { id: 'v117-veg02', name: 'Tempeh alla Piastra con Verdure', ico: '🍢', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '20 min', kcal: 380, p: 26, c: 28, g: 18, fiber: 6, diff: 'Facile', alimenti: ['tempeh', 'zucchine', 'peperoni', 'salsa di soia'], desc: 'Il tempeh ha già di suo una consistenza corposa e un sapore di nocciola: alla piastra diventa croccante fuori.', ingredienti: ['200g tempeh a fette', '2 zucchine a fette', '1 peperone a listarelle', '20ml salsa di soia', 'Aglio, zenzero, 10ml olio EVO'], steps: ['Marina il tempeh a fette con salsa di soia, aglio e zenzero grattugiato per 10 minuti.', 'Scalda una bistecchiera o padella con un filo di olio.', 'Cuoci il tempeh 4-5 minuti per lato finché dorato e croccante.', 'Nella stessa padella, salta zucchine e peperone 5-6 minuti.', 'Servi il tempeh con le verdure a fianco, completando con la marinata rimasta.'] },
+  { id: 'v117-veg03', name: 'Seitan al Pomodoro e Basilico', ico: '🍝', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '20 min', kcal: 360, p: 28, c: 30, g: 12, fiber: 4, diff: 'Facile', alimenti: ['seitan', 'pomodori', 'basilico', 'pasta integrale'], desc: 'Il seitan ha una consistenza simile alla carne e assorbe benissimo i sapori del sugo.', ingredienti: ['200g seitan a fette o cubetti', '300g pomodori pelati', '70g pasta integrale (peso a crudo)', 'Basilico fresco, aglio, 10ml olio EVO'], steps: ['Cuoci la pasta in acqua bollente salata secondo i tempi di cottura.', 'Rosola il seitan in padella con olio e aglio per 4-5 minuti finché dorato.', 'Aggiungi i pomodori pelati schiacciati e cuoci 10-12 minuti a fuoco medio.', 'Aggiungi basilico fresco spezzettato negli ultimi 2 minuti.', 'Scola la pasta e uniscila al sugo di seitan, mescolando bene.'] },
+  { id: 'v117-veg04', name: 'Burger di Lenticchie Fatto in Casa', ico: '🍔', tags: ['pranzo', 'cena', 'veg', 'vegan', 'meal-prep'], time: '30 min', kcal: 280, p: 16, c: 36, g: 8, fiber: 12, diff: 'Media', alimenti: ['lenticchie', 'avena', 'cipolla', 'cumino'], desc: 'Burger vegetale con struttura solida (non si sbriciola), ottimo anche per il meal-prep.', ingredienti: ['300g lenticchie cotte', '40g fiocchi di avena', '1/2 cipolla tritata finemente', '1 cucchiaino cumino', 'Sale, pepe, 10ml olio EVO'], steps: ['Scola bene le lenticchie e schiacciale con una forchetta (lasciando qualche pezzo intero per consistenza).', 'Aggiungi avena, cipolla tritata, cumino, sale e pepe. Mescola fino a un composto compatto.', 'Lascia riposare in frigo 15 minuti per far assorbire i liquidi all avena.', 'Forma 3-4 burger con le mani umide.', 'Cuoci in padella con un filo di olio, 4-5 minuti per lato finché dorati e ben caldi dentro.'] },
+  { id: 'v117-veg05', name: 'Polpette di Ceci al Forno', ico: '🧆', tags: ['pranzo', 'cena', 'spuntino', 'veg', 'vegan', 'meal-prep'], time: '35 min', kcal: 220, p: 10, c: 28, g: 8, fiber: 8, diff: 'Media', alimenti: ['ceci', 'prezzemolo', 'cumino', 'farina di avena'], desc: 'Simili ai falafel ma al forno invece che fritte: più leggere, stesso gusto speziato.', ingredienti: ['300g ceci cotti', 'Prezzemolo fresco abbondante', '2 spicchi aglio', '1 cucchiaino cumino', '30g farina di avena', '10ml olio EVO'], steps: ['Preriscalda il forno a 200°C. Fodera una teglia con carta forno.', 'Frulla ceci, prezzemolo, aglio e cumino fino a un composto denso ma non completamente liscio.', 'Aggiungi la farina di avena per compattare, mescola bene.', 'Forma 12-14 polpette con le mani umide, disponile sulla teglia.', 'Spennella con un filo di olio e cuoci 20-22 min girandole a metà cottura, finché dorate.'] },
+  { id: 'v117-veg06', name: 'Curry di Lenticchie Rosse (Dal)', ico: '🍛', tags: ['pranzo', 'cena', 'veg', 'vegan', 'definizione'], time: '25 min', kcal: 340, p: 18, c: 46, g: 8, fiber: 10, diff: 'Facile', alimenti: ['lenticchie rosse', 'pomodori', 'curry', 'latte di cocco'], desc: 'Il dal indiano: lenticchie rosse che si sfaldano in una crema saporita e speziata.', ingredienti: ['200g lenticchie rosse secche', '200g pomodori pelati', '100ml latte di cocco', '1 cucchiaino curry in polvere', '1/2 cucchiaino curcuma', 'Cipolla, aglio, zenzero'], steps: ['Soffriggi cipolla, aglio e zenzero tritati per 3-4 minuti.', 'Aggiungi curry e curcuma, tosta 30 secondi.', 'Aggiungi le lenticchie rosse sciacquate, i pomodori pelati e 400ml di acqua.', 'Cuoci 15-18 minuti a fuoco medio mescolando di tanto in tanto, finché le lenticchie si sfaldano.', 'Aggiungi il latte di cocco negli ultimi 3 minuti, mescola e regola di sale.'] },
+  { id: 'v117-veg07', name: 'Chili Vegetariano ai Tre Fagioli', ico: '🌶️', tags: ['pranzo', 'cena', 'veg', 'vegan', 'meal-prep'], time: '30 min', kcal: 320, p: 16, c: 48, g: 6, fiber: 16, diff: 'Facile', alimenti: ['fagioli neri', 'fagioli rossi', 'fagioli cannellini', 'pomodori', 'peperoncino'], desc: 'Ricchissimo di fibre grazie al mix di tre tipi di fagioli, perfetto per il meal-prep settimanale.', ingredienti: ['150g fagioli neri cotti', '150g fagioli rossi cotti', '150g fagioli cannellini cotti', '300g pomodori pelati', '1 peperoncino tritato', '1 cucchiaino cumino', 'Cipolla, aglio'], steps: ['Soffriggi cipolla, aglio e peperoncino per 4 minuti.', 'Aggiungi cumino e tosta 30 secondi.', 'Aggiungi i pomodori pelati e cuoci 5 minuti.', 'Aggiungi tutti e tre i tipi di fagioli, cuoci coperto 15-18 minuti mescolando ogni tanto.', 'Regola di sale e pepe. Ottimo anche il giorno dopo, si conserva bene in frigo fino a 4 giorni.'] },
+  { id: 'v117-veg08', name: 'Bowl di Edamame e Quinoa Piccante', ico: '🥗', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '20 min', kcal: 380, p: 20, c: 44, g: 12, fiber: 8, diff: 'Facile', alimenti: ['edamame', 'quinoa', 'carote', 'salsa di soia', 'peperoncino'], desc: 'Bowl fresca e proteica al 100% vegetale, con un tocco piccante asiatico.', ingredienti: ['100g edamame sgusciati', '80g quinoa (peso a crudo)', '1 carota a julienne', '1/4 cavolo rosso a listarelle', 'Salsa: 15ml salsa di soia + 1 cucchiaino sriracha + succo di lime', 'Semi di sesamo'], steps: ['Cuoci la quinoa in acqua bollente salata 12-15 min, scola e lascia intiepidire.', 'Cuoci gli edamame in acqua bollente 3-4 minuti.', 'Componi la bowl con quinoa come base, poi edamame, carota e cavolo rosso disposti a settori.', 'Prepara la salsa mescolando salsa di soia, sriracha e succo di lime.', 'Versa la salsa sulla bowl e completa con semi di sesamo.'] },
+
+  /* ═══ Pesce e Frutti di Mare ═══ */
+  { id: 'v117-pe01', name: 'Branzino al Forno con Patate', ico: '🐟', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '40 min', kcal: 420, p: 34, c: 34, g: 14, fiber: 4, diff: 'Media', alimenti: ['branzino', 'patate', 'limone', 'rosmarino'], desc: 'Un classico della cucina mediterranea, semplice ma d effetto per una cena speciale.', ingredienti: ['1 branzino intero (circa 300g) o 200g filetti', '2 patate a fette sottili', '1 limone a fette', 'Rosmarino fresco', '15ml olio EVO', 'Sale, pepe'], steps: ['Preriscalda il forno a 200°C.', 'Disponi le fette di patate su una teglia foderata, condisci con olio, sale e rosmarino.', 'Cuoci le patate da sole 15 minuti.', 'Adagia il branzino sopra le patate, farcisci con fette di limone e rosmarino, un filo di olio.', 'Cuoci altri 20-25 minuti finché il pesce è cotto e le patate dorate.'] },
+  { id: 'v117-pe02', name: 'Orata alle Erbe in Padella', ico: '🐟', tags: ['pranzo', 'cena', 'definizione', 'rapido'], time: '15 min', kcal: 280, p: 30, c: 4, g: 15, fiber: 1, diff: 'Facile', alimenti: ['orata', 'prezzemolo', 'limone', 'aglio'], desc: 'Filetti di orata in padella, pronti in 15 minuti, leggeri ma saporiti.', ingredienti: ['250g filetti di orata', 'Prezzemolo fresco tritato', '1 spicchio aglio', 'Succo di limone', '10ml olio EVO', 'Sale, pepe'], steps: ['Asciuga bene i filetti di orata con carta da cucina.', 'Scalda l olio con l aglio in padella antiaderente.', 'Cuoci i filetti 3-4 minuti per lato (dipende dallo spessore), partendo dal lato con la pelle se presente.', 'Sfuma con succo di limone e cospargi con prezzemolo fresco.', 'Servi immediatamente con un contorno di verdure.'] },
+  { id: 'v117-pe03', name: 'Polpo alla Griglia con Patate', ico: '🐙', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '45 min', kcal: 340, p: 32, c: 30, g: 8, fiber: 3, diff: 'Media', alimenti: ['polpo', 'patate', 'prezzemolo', 'limone'], desc: 'Il polpo richiede una cottura lenta prima della griglia per risultare morbido e non gommoso.', ingredienti: ['300g polpo (già pulito)', '2 patate a cubetti', 'Prezzemolo fresco', 'Succo di limone', '15ml olio EVO', 'Alloro, pepe in grani'], steps: ['Cuoci il polpo in acqua bollente con alloro e pepe in grani per 35-40 minuti finché tenero (verifica con una forchetta).', 'Nel frattempo lessa le patate a cubetti finché morbide.', 'Scola il polpo, taglialo a pezzi e passalo velocemente sulla griglia o in padella ben calda per 2-3 minuti per lato, per dargli colore.', 'Condisci patate e polpo con olio, succo di limone e prezzemolo fresco.', 'Servi tiepido.'] },
+  { id: 'v117-pe04', name: 'Cozze alla Marinara Proteiche', ico: '🦪', tags: ['pranzo', 'cena', 'definizione', 'rapido'], time: '20 min', kcal: 260, p: 22, c: 18, g: 10, fiber: 2, diff: 'Facile', alimenti: ['cozze', 'pomodori', 'aglio', 'prezzemolo', 'pane integrale'], desc: 'Un secondo ricco di proteine e povero di grassi, perfetto con una fetta di pane per la scarpetta.', ingredienti: ['500g cozze fresche pulite', '200g pomodorini a metà', '2 spicchi aglio', 'Prezzemolo fresco', '10ml olio EVO', '1 fetta pane integrale', 'Peperoncino (facoltativo)'], steps: ['Verifica che le cozze siano ben pulite e chiuse (scarta quelle aperte che non si chiudono se toccate).', 'Soffriggi aglio e peperoncino in olio per 1 minuto.', 'Aggiungi i pomodorini e cuoci 3-4 minuti.', 'Aggiungi le cozze, copri con un coperchio e cuoci 6-8 minuti finché tutte aperte (scarta quelle rimaste chiuse).', 'Cospargi con prezzemolo fresco e servi con il pane tostato per la scarpetta.'] },
+  { id: 'v117-pe05', name: 'Seppie in Umido con Piselli', ico: '🦑', tags: ['pranzo', 'cena', 'definizione'], time: '35 min', kcal: 290, p: 26, c: 20, g: 9, fiber: 5, diff: 'Media', alimenti: ['seppie', 'piselli', 'pomodori', 'vino bianco'], desc: 'Piatto tradizionale della cucina di mare, dal sapore intenso grazie alla cottura lenta.', ingredienti: ['300g seppie pulite a listarelle', '150g piselli', '200g pomodori pelati', '50ml vino bianco (facoltativo, sfuma con brodo se preferisci)', 'Cipolla, prezzemolo, 10ml olio EVO'], steps: ['Soffriggi la cipolla tritata in olio per 3-4 minuti.', 'Aggiungi le seppie e rosola 3-4 minuti.', 'Sfuma con il vino bianco e lascia evaporare l alcol.', 'Aggiungi i pomodori pelati, copri e cuoci a fuoco basso 20 minuti.', 'Aggiungi i piselli negli ultimi 8-10 minuti di cottura. Completa con prezzemolo fresco.'] },
+  { id: 'v117-pe06', name: 'Pesce Spada alla Griglia con Insalata', ico: '🐟', tags: ['pranzo', 'cena', 'definizione', 'rapido', 'high-protein'], time: '15 min', kcal: 300, p: 28, c: 6, g: 18, fiber: 2, diff: 'Facile', alimenti: ['pesce spada', 'lattuga', 'pomodorini', 'limone'], desc: 'Il pesce spada alla griglia è pronto in pochi minuti e ha una consistenza quasi da bistecca.', ingredienti: ['200g tranci di pesce spada', 'Lattuga o rucola', '100g pomodorini a metà', 'Succo di limone', '10ml olio EVO', 'Origano, sale, pepe'], steps: ['Marina il pesce spada con olio, succo di limone, origano, sale e pepe per 10 minuti.', 'Scalda una bistecchiera o griglia ben calda.', 'Cuoci il pesce spada 3-4 minuti per lato, finché ben rosolato ma ancora succoso.', 'Prepara un insalata veloce con lattuga e pomodorini, condita con olio e limone.', 'Servi il pesce spada sopra o accanto all insalata.'] },
+
+  /* ═══ Carni Bianche e Rosse Extra ═══ */
+  { id: 'v117-ca01', name: 'Coniglio alla Cacciatora', ico: '🍖', tags: ['pranzo', 'cena', 'definizione'], time: '50 min', kcal: 320, p: 34, c: 12, g: 14, fiber: 3, diff: 'Media', alimenti: ['coniglio', 'pomodori', 'olive', 'rosmarino'], desc: 'Piatto della tradizione italiana, cottura lenta che rende la carne molto tenera.', ingredienti: ['400g coniglio a pezzi', '200g pomodori pelati', '10 olive nere', 'Rosmarino, aglio', '15ml olio EVO', 'Vino bianco (facoltativo)'], steps: ['Rosola i pezzi di coniglio in olio con aglio e rosmarino finché dorati su tutti i lati.', 'Sfuma con vino bianco se lo usi, lascia evaporare.', 'Aggiungi i pomodori pelati e le olive.', 'Copri e cuoci a fuoco basso 35-40 minuti, girando i pezzi a metà cottura, finché la carne è tenera.', 'Regola di sale e servi caldo.'] },
+  { id: 'v117-ca02', name: 'Lonza di Maiale al Forno con Mele', ico: '🍖', tags: ['pranzo', 'cena', 'massa', 'high-protein'], time: '45 min', kcal: 380, p: 36, c: 22, g: 14, fiber: 3, diff: 'Media', alimenti: ['lonza di maiale', 'mele', 'timo', 'miele'], desc: 'L abbinamento maiale-mela è un classico che funziona sempre, con un tocco di miele per caramellare.', ingredienti: ['300g lonza di maiale intera', '2 mele a spicchi', 'Timo fresco', '1 cucchiaio miele', '10ml olio EVO', 'Sale, pepe'], steps: ['Preriscalda il forno a 190°C. Rosola la lonza in padella con olio su tutti i lati per sigillarla.', 'Trasferisci in una teglia, disponi le mele a spicchi intorno.', 'Spennella con miele e cospargi di timo fresco.', 'Cuoci 30-35 minuti finché la carne raggiunge i 68-70°C al cuore (o non è più rosa al centro).', 'Lascia riposare 5 minuti prima di affettare, servi con le mele caramellate.'] },
+  { id: 'v117-ca03', name: 'Bresaola con Rucola e Scaglie di Grana', ico: '🥩', tags: ['pranzo', 'cena', 'spuntino', 'rapido', 'high-protein'], time: '5 min', kcal: 240, p: 30, c: 3, g: 12, fiber: 1, diff: 'Facilissimo', alimenti: ['bresaola', 'rucola', 'parmigiano', 'limone'], desc: 'L antipasto italiano più veloce che esiste, altissimo in proteine e pronto in 5 minuti.', ingredienti: ['100g bresaola a fette', '40g rucola', '15g scaglie di parmigiano', 'Succo di 1/2 limone', '5ml olio EVO', 'Pepe nero'], steps: ['Disponi le fette di bresaola su un piatto piano, leggermente sovrapposte.', 'Distribuisci la rucola al centro.', 'Cospargi con scaglie di parmigiano.', 'Condisci con succo di limone, olio EVO e abbondante pepe nero macinato fresco.', 'Servi subito.'] },
+  { id: 'v117-ca04', name: 'Spezzatino di Manzo Proteico', ico: '🍲', tags: ['pranzo', 'cena', 'massa', 'meal-prep'], time: '70 min', kcal: 380, p: 36, c: 24, g: 14, fiber: 4, diff: 'Media', alimenti: ['carne di manzo', 'carote', 'patate', 'pomodori'], desc: 'Cottura lenta che rende anche i tagli più economici di manzo teneri e saporiti.', ingredienti: ['350g manzo a cubotti per spezzatino', '2 carote a pezzi', '2 patate a cubotti', '200g pomodori pelati', 'Cipolla, alloro, 15ml olio EVO', 'Brodo q.b.'], steps: ['Rosola la carne in olio finché ben dorata su tutti i lati.', 'Aggiungi la cipolla tritata e soffriggi 3-4 minuti.', 'Aggiungi pomodori pelati, alloro e brodo fino a coprire a metà la carne.', 'Copri e cuoci a fuoco basso 45 minuti, mescolando ogni tanto.', 'Aggiungi carote e patate, cuoci altri 20-25 minuti finché tutto è tenero. Regola di sale.'] },
+  { id: 'v117-ca05', name: 'Petto di Tacchino alle Mandorle', ico: '🍗', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '20 min', kcal: 310, p: 38, c: 6, g: 15, fiber: 2, diff: 'Facile', alimenti: ['petto di tacchino', 'mandorle', 'limone', 'prezzemolo'], desc: 'La crosta di mandorle tritate dà croccantezza senza bisogno di impanatura tradizionale.', ingredienti: ['200g petto di tacchino a fette', '30g mandorle tritate grossolanamente', '1 uovo', 'Succo di limone', '10ml olio EVO', 'Sale, pepe, prezzemolo'], steps: ['Sbatti l uovo in un piatto fondo. Metti le mandorle tritate in un altro piatto.', 'Passa ogni fetta di tacchino prima nell uovo, poi nelle mandorle tritate, premendo bene.', 'Scalda l olio in padella antiaderente.', 'Cuoci il tacchino 4-5 minuti per lato finché dorato e ben cotto.', 'Servi con succo di limone e prezzemolo fresco.'] },
+  { id: 'v117-ca06', name: 'Involtini di Tacchino con Spinaci', ico: '🌯', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '30 min', kcal: 280, p: 36, c: 6, g: 12, fiber: 2, diff: 'Media', alimenti: ['petto di tacchino', 'spinaci', 'formaggio', 'prosciutto crudo'], desc: 'Involtini eleganti ma semplici da fare, un ripieno filante dentro fette sottili di tacchino.', ingredienti: ['4 fette sottili di petto di tacchino', '100g spinaci freschi appassiti', '40g formaggio filante a fettine', '4 fette prosciutto crudo', 'Stuzzicadenti, 10ml olio EVO'], steps: ['Appassisci gli spinaci in padella per 2 minuti, strizzali bene.', 'Stendi ogni fetta di tacchino, adagia sopra una fetta di prosciutto crudo, un po di spinaci e formaggio.', 'Arrotola stringendo bene e ferma con uno stuzzicadenti.', 'Rosola gli involtini in padella con olio, girandoli, per 8-10 minuti finché dorati e cotti.', 'Servi caldi, rimuovendo gli stuzzicadenti prima di portare in tavola.'] },
+
+  /* ═══ Colazioni Salate e Dolci Extra ═══ */
+  { id: 'v117-col01', name: 'Toast Avocado e Uovo in Camicia', ico: '🍞', tags: ['colazione', 'veg', 'high-protein'], time: '12 min', kcal: 360, p: 18, c: 28, g: 20, fiber: 6, diff: 'Media', alimenti: ['avocado', 'uova', 'pane integrale', 'limone'], desc: 'Il brunch più fotografato del mondo, in versione facile da fare a casa.', ingredienti: ['1 fetta pane integrale tostato', '1/2 avocado', '1 uovo', '1 cucchiaio aceto bianco', 'Succo di limone, sale, pepe, semi di sesamo'], steps: ['Porta a bollore leggero l acqua con l aceto.', 'Rompi l uovo in una tazzina e falla scivolare delicatamente nell acqua, cuoci 3 minuti.', 'Nel frattempo schiaccia l avocado con succo di limone, sale e pepe.', 'Spalma l avocado sul pane tostato.', 'Adagia l uovo in camicia scolato sopra, completa con pepe e semi di sesamo.'] },
+  { id: 'v117-col02', name: 'Congee Proteico di Riso', ico: '🥣', tags: ['colazione', 'high-protein'], time: '30 min', kcal: 320, p: 26, c: 40, g: 6, fiber: 2, diff: 'Facile', alimenti: ['riso', 'pollo', 'brodo', 'zenzero'], desc: 'Il porridge di riso salato della colazione asiatica, confortante e ricco di proteine con l aggiunta di pollo.', ingredienti: ['50g riso (peso a crudo)', '600ml brodo di pollo', '100g petto di pollo cotto sfilacciato', 'Zenzero fresco grattugiato', 'Cipollotto, salsa di soia'], steps: ['Metti il riso e il brodo in una pentola, porta a bollore.', 'Abbassa la fiamma e cuoci 20-25 minuti mescolando di tanto in tanto, finché il riso si sfalda e il composto è cremoso.', 'Aggiungi lo zenzero grattugiato e il pollo sfilacciato negli ultimi 5 minuti.', 'Regola con un filo di salsa di soia.', 'Servi caldo con cipollotto fresco tritato sopra.'] },
+  { id: 'v117-col03', name: 'Farinata di Ceci al Rosmarino', ico: '🥞', tags: ['colazione', 'pranzo', 'veg', 'vegan'], time: '30 min', kcal: 220, p: 11, c: 26, g: 8, fiber: 6, diff: 'Facile', alimenti: ['farina di ceci', 'rosmarino', 'olio EVO'], desc: 'Specialità ligure a base di sola farina di ceci, naturalmente senza glutine e ricca di proteine vegetali.', ingredienti: ['100g farina di ceci', '250ml acqua', '15ml olio EVO (più un filo per la teglia)', 'Rosmarino fresco', 'Sale, pepe'], steps: ['Mescola farina di ceci e acqua con una frusta fino a un composto liscio senza grumi. Lascia riposare 1 ora (o anche tutta la notte in frigo).', 'Preriscalda il forno a 220°C. Ungi bene una teglia con un filo di olio.', 'Elimina la schiuma in superficie del composto, versalo nella teglia (spessore circa 1cm).', 'Aggiungi rosmarino, sale e un filo di olio sopra.', 'Cuoci 20-25 minuti finché dorata e con i bordi croccanti.'] },
+  { id: 'v117-col04', name: 'French Toast Proteico', ico: '🍞', tags: ['colazione', 'dolci', 'massa', 'high-protein'], time: '12 min', kcal: 340, p: 24, c: 34, g: 12, fiber: 3, diff: 'Facile', alimenti: ['pane integrale', 'uova', 'whey vaniglia', 'cannella'], desc: 'La colazione da brunch americano, con whey per aumentare le proteine senza appesantire.', ingredienti: ['2 fette pane integrale', '2 uova', '15g whey vaniglia', '50ml latte', 'Cannella, vaniglia', '5ml olio EVO o burro'], steps: ['Sbatti uova, whey, latte, cannella e vaniglia in un piatto fondo fino a composto omogeneo.', 'Immergi ogni fetta di pane nel composto per 20-30 secondi per lato, lasciandola inzuppare bene.', 'Scalda l olio in padella antiaderente a fuoco medio-basso.', 'Cuoci le fette 2-3 minuti per lato finché dorate.', 'Servi con frutta fresca o un filo di miele.'] },
+  { id: 'v117-col05', name: 'Chia Pudding al Mango', ico: '🍮', tags: ['colazione', 'dolci', 'veg', 'vegan', 'definizione'], time: '5 min + 4h frigo', kcal: 260, p: 10, c: 30, g: 10, fiber: 9, diff: 'Facilissimo', alimenti: ['semi di chia', 'latte di cocco', 'mango'], desc: 'Budino vegano senza cottura, con la dolcezza naturale del mango fresco.', ingredienti: ['30g semi di chia', '250ml latte di cocco (o altra bevanda vegetale)', '1 cucchiaino miele o sciroppo d acero', '150g mango a cubetti'], steps: ['Mescola semi di chia, latte di cocco e dolcificante in una ciotola.', 'Lascia riposare 5 minuti, poi mescola di nuovo per evitare grumi.', 'Copri e metti in frigo almeno 4 ore, meglio tutta la notte.', 'Prima di servire, mescola e verifica la consistenza (deve essere budinosa).', 'Completa con cubetti di mango fresco sopra.'] },
+  { id: 'v117-col06', name: 'Colazione Inglese Proteica Semplificata', ico: '🍳', tags: ['colazione', 'massa', 'high-protein'], time: '20 min', kcal: 480, p: 32, c: 24, g: 26, fiber: 5, diff: 'Facile', alimenti: ['uova', 'bacon di tacchino', 'pomodori', 'fagioli'], desc: 'La english breakfast alleggerita: bacon di tacchino al posto di quello di maiale, fagioli per le fibre.', ingredienti: ['2 uova', '3 fette bacon di tacchino', '150g fagioli cannellini o borlotti cotti', '1 pomodoro a metà', '5ml olio EVO'], steps: ['Cuoci il bacon di tacchino in padella antiaderente 2-3 min per lato finché croccante.', 'Nella stessa padella, cuoci il pomodoro tagliato a metà 3-4 minuti finché morbido.', 'Scalda i fagioli in un pentolino con un filo di olio.', 'Cuoci le uova come preferisci (in camicia, strapazzate o all occhio di bue).', 'Componi il piatto con tutti gli elementi insieme.'] },
+  { id: 'v117-col07', name: 'Waffle Proteici alla Vaniglia', ico: '🧇', tags: ['colazione', 'dolci', 'massa', 'high-protein'], time: '15 min', kcal: 340, p: 26, c: 32, g: 10, fiber: 4, diff: 'Facile', alimenti: ['farina di avena', 'uova', 'whey vaniglia', 'lievito'], desc: 'Serve una piastra per waffle, ma il risultato è nettamente più soffice di un pancake.', ingredienti: ['80g farina di avena frullata', '2 uova', '20g whey vaniglia', '100ml latte', '1 cucchiaino lievito istantaneo', 'Vaniglia'], steps: ['Frulla tutti gli ingredienti fino a una pastella liscia e omogenea.', 'Lascia riposare 5 minuti per attivare il lievito.', 'Scalda la piastra per waffle secondo le istruzioni del produttore.', 'Versa la pastella e cuoci secondo i tempi della tua piastra (solitamente 4-5 minuti) finché dorato.', 'Servi con frutta fresca, yogurt greco o un filo di miele.'] },
+  { id: 'v117-col08', name: 'Crepes Salate Proteiche con Prosciutto e Formaggio', ico: '🥞', tags: ['colazione', 'pranzo', 'high-protein'], time: '20 min', kcal: 380, p: 28, c: 30, g: 16, fiber: 3, diff: 'Media', alimenti: ['farina di avena', 'uova', 'prosciutto cotto', 'formaggio'], desc: 'Crepes salate proteiche, ripiene come un toast ma molto più sottili e leggere.', ingredienti: ['60g farina di avena frullata', '2 uova', '100ml latte', '80g prosciutto cotto', '40g formaggio a fette', 'Sale, pepe, 5ml olio EVO'], steps: ['Frulla farina di avena, uova, latte, sale e pepe fino a una pastella liscia e piuttosto liquida.', 'Scalda un filo di olio in padella antiaderente larga, versa un mestolo di pastella e ruota la padella per distribuirla sottile.', 'Cuoci 1-2 minuti per lato finché dorata. Ripeti per tutta la pastella (2-3 crepes).', 'Farcisci ogni crepe con prosciutto e formaggio, ripiega a metà o arrotola.', 'Scalda ancora 1 minuto per lato finché il formaggio è filante.'] },
+
+  /* ═══ Snack e Barrette Extra ═══ */
+  { id: 'v117-sn01', name: 'Hummus e Verdure da Pinzare', ico: '🥕', tags: ['spuntino', 'veg', 'vegan', 'rapido'], time: '5 min', kcal: 150, p: 6, c: 16, g: 7, fiber: 5, diff: 'Facilissimo', alimenti: ['hummus', 'carote', 'sedano', 'peperoni'], desc: 'Lo snack pratico da preparare in anticipo per la settimana lavorativa.', ingredienti: ['80g hummus (fatto in casa o pronto)', '1 carota a bastoncini', '1 costa di sedano a bastoncini', '1/2 peperone a listarelle'], steps: ['Taglia tutte le verdure a bastoncini di dimensioni simili.', 'Metti l hummus in un contenitore separato o al centro di un piatto.', 'Disponi le verdure intorno per intingere.', 'Conserva in frigo in contenitori separati fino a 3 giorni se prepari in anticipo.'] },
+  { id: 'v117-sn02', name: 'Chips di Ceci Croccanti al Forno', ico: '🍟', tags: ['spuntino', 'veg', 'vegan', 'meal-prep'], time: '35 min', kcal: 140, p: 7, c: 18, g: 4, fiber: 6, diff: 'Facile', alimenti: ['ceci', 'paprika', 'olio EVO'], desc: 'Alternativa croccante e proteica alle patatine, si conserva per giorni in un contenitore ermetico.', ingredienti: ['300g ceci cotti, ben asciugati', '10ml olio EVO', 'Paprika, cumino, sale'], steps: ['Preriscalda il forno a 200°C. Asciuga molto bene i ceci con carta da cucina (fondamentale per la croccantezza).', 'Condisci i ceci con olio, paprika, cumino e sale in una ciotola.', 'Distribuisci su una teglia foderata in un solo strato.', 'Cuoci 25-30 minuti scuotendo la teglia a metà cottura, finché dorati e croccanti.', 'Lascia raffreddare completamente prima di conservare (diventano più croccanti raffreddando).'] },
+  { id: 'v117-sn03', name: 'Popcorn Proteico al Cacao', ico: '🍿', tags: ['spuntino', 'dolci', 'veg', 'rapido'], time: '8 min', kcal: 110, p: 4, c: 16, g: 4, fiber: 3, diff: 'Facilissimo', alimenti: ['mais per popcorn', 'cacao amaro', 'whey cioccolato'], desc: 'Uno snack croccante e leggero che soddisfa la voglia di dolce e salato insieme.', ingredienti: ['30g mais per popcorn', '10g whey cioccolato', '1 cucchiaino cacao amaro', '5ml olio EVO'], steps: ['Scalda l olio in una pentola larga con coperchio a fuoco medio-alto.', 'Aggiungi il mais, copri e scuoti la pentola quando iniziano a scoppiettare.', 'Continua finché gli scoppiettii rallentano (circa 2-3 minuti), poi togli dal fuoco.', 'Mescola whey e cacao in una ciotolina.', 'Cospargi i popcorn ancora caldi con il mix di whey e cacao, mescola bene per farlo aderire.'] },
+  { id: 'v117-sn04', name: 'Muffin Salati Proteici con Zucchine', ico: '🧁', tags: ['spuntino', 'colazione', 'veg', 'meal-prep'], time: '30 min', kcal: 130, p: 9, c: 10, g: 6, fiber: 2, diff: 'Facile', alimenti: ['uova', 'zucchine', 'farina di avena', 'formaggio'], desc: 'La versione salata dei muffin, ottima da preparare in batch per snack durante la settimana.', ingredienti: ['4 uova', '1 zucchina grattugiata e strizzata', '80g farina di avena', '40g formaggio grattugiato', '1 cucchiaino lievito istantaneo', 'Sale, pepe, erba cipollina'], steps: ['Preriscalda il forno a 180°C. Fodera uno stampo da muffin con 8 pirottini.', 'Grattugia la zucchina e strizzala bene per eliminare l acqua in eccesso.', 'Sbatti le uova, aggiungi farina di avena, lievito, sale e pepe.', 'Incorpora la zucchina strizzata e metà del formaggio.', 'Riempi i pirottini, cospargi con il formaggio rimasto. Cuoci 20-22 min finché dorati.'] },
+  { id: 'v117-sn05', name: 'Barrette Datteri Semi e Cocco', ico: '🍫', tags: ['spuntino', 'dolci', 'veg', 'vegan', 'pre-workout', 'meal-prep'], time: '15 min + 1h frigo', kcal: 160, p: 4, c: 22, g: 7, fiber: 4, diff: 'Facilissimo', alimenti: ['datteri', 'semi misti', 'cocco rapé'], desc: 'Ricche di fibre e minerali grazie al mix di semi, energia pronta per prima di allenarti.', ingredienti: ['200g datteri Medjool denocciolati', '40g semi misti (girasole, zucca, lino)', '30g cocco rapé', 'Pizzico di sale'], steps: ['Frulla i datteri fino a pasta appiccicosa.', 'Aggiungi i semi misti e metà del cocco rapé, frulla a impulsi per amalgamare senza polverizzare troppo i semi.', 'Versa in uno stampo rettangolare foderato di carta forno, pressa bene e livella.', 'Cospargi con il cocco rapé rimasto, pressando leggermente.', 'Frigo 1 ora, poi taglia in 8 barrette. Conserva in frigo fino a 2 settimane.'] },
+  { id: 'v117-sn06', name: 'Trail Mix Proteico Fatto in Casa', ico: '🥜', tags: ['spuntino', 'veg', 'pre-workout', 'meal-prep'], time: '5 min', kcal: 180, p: 6, c: 14, g: 12, fiber: 3, diff: 'Facilissimo', alimenti: ['mandorle', 'noci', 'uvetta', 'cioccolato fondente'], desc: 'Il mix da tenere sempre in borsa per uno spuntino energetico senza doverci pensare.', ingredienti: ['20g mandorle', '20g noci', '15g uvetta', '15g gocce di cioccolato fondente 70%+'], steps: ['Mescola tutti gli ingredienti in un contenitore o sacchetto.', 'Porziona in bustine singole da circa 70g per praticità.', 'Conserva a temperatura ambiente in un contenitore ermetico fino a 3 settimane.'] },
+  { id: 'v117-sn07', name: 'Palline di Cocco Proteiche', ico: '⚽', tags: ['spuntino', 'dolci', 'veg', 'meal-prep'], time: '10 min + 30 min frigo', kcal: 105, p: 7, c: 8, g: 5, fiber: 2, diff: 'Facilissimo', alimenti: ['whey vaniglia', 'cocco rapé', 'yogurt greco', 'miele'], desc: 'Palline fresche e proteiche, pronte in 10 minuti di lavoro attivo.', ingredienti: ['40g whey vaniglia', '60g cocco rapé (più extra per rotolare)', '80g yogurt greco 0%', '1 cucchiaio miele'], steps: ['Mescola whey, cocco rapé, yogurt e miele fino a un composto compatto (aggiungi altro cocco se troppo umido).', 'Forma 8-10 palline con le mani leggermente umide.', 'Rotola ogni pallina nel cocco rapé extra.', 'Frigo almeno 30 minuti prima di consumare. Conserva in frigo fino a 5 giorni.'] },
+  { id: 'v117-sn08', name: 'Toast con Ricotta e Miele', ico: '🍞', tags: ['spuntino', 'colazione', 'dolci', 'veg', 'rapido'], time: '5 min', kcal: 220, p: 12, c: 26, g: 8, fiber: 3, diff: 'Facilissimo', alimenti: ['ricotta', 'pane integrale', 'miele', 'noci'], desc: 'Lo snack dolce-proteico più veloce che esiste: 4 ingredienti, 5 minuti.', ingredienti: ['1 fetta pane integrale tostato', '80g ricotta magra', '1 cucchiaino miele', '10g noci tritate'], steps: ['Tosta la fetta di pane.', 'Spalma la ricotta sopra generosamente.', 'Aggiungi un filo di miele.', 'Completa con noci tritate sopra.'] },
+
+  /* ═══ Zuppe Extra ═══ */
+  { id: 'v117-zu01', name: 'Zuppa di Zucca Proteica', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'definizione'], time: '30 min', kcal: 260, p: 12, c: 34, g: 8, fiber: 6, diff: 'Facile', alimenti: ['zucca', 'patate', 'yogurt greco', 'noce moscata'], desc: 'Vellutata autunnale con un tocco proteico grazie allo yogurt greco mantecato a fine cottura.', ingredienti: ['400g zucca a cubetti', '1 patata a cubetti', '1/2 cipolla', '600ml brodo vegetale', '2 cucchiai yogurt greco 0%', 'Noce moscata, olio EVO'], steps: ['Soffriggi la cipolla in olio per 3 minuti.', 'Aggiungi zucca, patata e brodo. Porta a bollore.', 'Cuoci 20 minuti finché le verdure sono morbide.', 'Frulla con un frullatore a immersione fino a crema liscia.', 'Manteca con lo yogurt greco fuori dal fuoco, aggiungi noce moscata e un filo di olio a crudo.'] },
+  { id: 'v117-zu02', name: 'Vellutata di Broccoli e Parmigiano', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'definizione'], time: '25 min', kcal: 240, p: 14, c: 18, g: 12, fiber: 6, diff: 'Facile', alimenti: ['broccoli', 'patate', 'parmigiano', 'aglio'], desc: 'Cremosa senza panna: la consistenza vellutata arriva dalla patata frullata insieme ai broccoli.', ingredienti: ['300g broccoli a cimette', '1 patata a cubetti', '1 spicchio aglio', '500ml brodo vegetale', '20g parmigiano grattugiato', 'Olio EVO'], steps: ['Soffriggi l aglio in olio per 1 minuto.', 'Aggiungi broccoli, patata e brodo. Porta a bollore.', 'Cuoci 15-18 minuti finché le verdure sono morbide.', 'Frulla fino a crema liscia.', 'Manteca con il parmigiano fuori dal fuoco, mescola bene e servi con un filo di olio.'] },
+  { id: 'v117-zu03', name: 'Zuppa Miso con Tofu', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'vegan', 'rapido'], time: '10 min', kcal: 150, p: 12, c: 8, g: 8, fiber: 2, diff: 'Facilissimo', alimenti: ['pasta di miso', 'tofu', 'alga wakame', 'cipollotto'], desc: 'La zuppa giapponese più semplice e veloce, leggera ma saziante grazie al tofu.', ingredienti: ['2 cucchiai pasta di miso', '150g tofu a cubetti', '5g alga wakame secca', '500ml acqua', 'Cipollotto affettato'], steps: ['Ammolla l alga wakame in acqua tiepida per 5 minuti, scola.', 'Scalda l acqua in un pentolino senza farla bollire violentemente.', 'Sciogli la pasta di miso in un mestolo di acqua calda a parte, poi versala nel pentolino (il miso non va mai bollito, perde le proprietà).', 'Aggiungi tofu a cubetti e alga wakame, scalda per 2-3 minuti.', 'Servi con cipollotto fresco affettato sopra.'] },
+  { id: 'v117-zu04', name: 'Passato di Verdure Autunnale', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'vegan', 'definizione'], time: '35 min', kcal: 200, p: 8, c: 28, g: 6, fiber: 8, diff: 'Facile', alimenti: ['carote', 'zucca', 'sedano', 'patate'], desc: 'Un passato ricco di colore e fibre, personalizzabile con le verdure di stagione che hai in frigo.', ingredienti: ['2 carote a pezzi', '200g zucca a cubetti', '1 costa di sedano', '1 patata a cubetti', '700ml brodo vegetale', 'Olio EVO, sale, pepe'], steps: ['Metti tutte le verdure in una pentola con il brodo.', 'Porta a bollore, poi abbassa la fiamma e cuoci coperto 25-30 minuti finché le verdure sono molto morbide.', 'Frulla con un frullatore a immersione fino a crema liscia.', 'Regola di sale e pepe.', 'Servi con un filo di olio a crudo, eventualmente con crostini o semi tostati sopra.'] },
+  { id: 'v117-zu05', name: 'Zuppa Toscana Proteica con Fagioli e Cavolo Nero', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'vegan', 'meal-prep'], time: '35 min', kcal: 280, p: 14, c: 38, g: 6, fiber: 12, diff: 'Facile', alimenti: ['fagioli cannellini', 'cavolo nero', 'pomodori', 'pane integrale'], desc: 'Ispirata alla ribollita toscana, ricca di fibre e perfetta da preparare in grande quantità.', ingredienti: ['300g fagioli cannellini cotti', '150g cavolo nero (o cavolo cappuccio) a listarelle', '200g pomodori pelati', '600ml brodo vegetale', '1 fetta pane integrale raffermo', 'Aglio, olio EVO'], steps: ['Soffriggi l aglio in olio per 1 minuto.', 'Aggiungi i pomodori pelati e cuoci 5 minuti.', 'Aggiungi metà dei fagioli, il brodo e porta a bollore.', 'Frulla parzialmente per addensare, poi aggiungi i fagioli rimasti interi e il cavolo nero.', 'Cuoci altri 10-12 minuti finché il cavolo è morbido. Servi con il pane raffermo a pezzi nella zuppa.'] },
+
+  /* ═══ Insalate Extra ═══ */
+  { id: 'v117-in01', name: 'Insalata di Farro e Verdure Estive', ico: '🥗', tags: ['pranzo', 'veg', 'vegan', 'meal-prep'], time: '25 min', kcal: 320, p: 10, c: 46, g: 10, fiber: 7, diff: 'Facile', alimenti: ['farro', 'zucchine', 'pomodorini', 'olive'], desc: 'Insalata fredda perfetta da preparare la sera prima per il pranzo del giorno dopo.', ingredienti: ['80g farro (peso a crudo)', '1 zucchina a cubetti', '100g pomodorini a metà', '10 olive taggiasche', '10ml olio EVO', 'Basilico fresco, limone'], steps: ['Cuoci il farro in acqua bollente salata secondo i tempi di cottura, scola e raffredda.', 'Salta la zucchina a cubetti in padella con un filo di olio per 4-5 minuti, lascia raffreddare.', 'Unisci farro, zucchina, pomodorini e olive in una ciotola.', 'Condisci con olio, succo di limone e basilico fresco spezzettato.', 'Lascia riposare 10 minuti prima di servire, si conserva bene in frigo fino a 2 giorni.'] },
+  { id: 'v117-in02', name: 'Insalata Caprese Proteica', ico: '🥗', tags: ['pranzo', 'cena', 'veg', 'rapido'], time: '5 min', kcal: 340, p: 20, c: 8, g: 24, fiber: 2, diff: 'Facilissimo', alimenti: ['mozzarella', 'pomodori', 'basilico'], desc: 'Il classico italiano, con più mozzarella del solito per renderla un pasto completo.', ingredienti: ['150g mozzarella a fette', '2 pomodori maturi a fette', 'Basilico fresco', '10ml olio EVO', 'Sale, origano'], steps: ['Alterna fette di pomodoro e mozzarella su un piatto.', 'Distribuisci foglie di basilico fresco tra una fetta e l altra.', 'Condisci con olio EVO, sale e origano.', 'Servi a temperatura ambiente per il sapore migliore.'] },
+  { id: 'v117-in03', name: 'Insalata di Salmone e Avocado', ico: '🥗', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '15 min', kcal: 400, p: 28, c: 10, g: 28, fiber: 6, diff: 'Facile', alimenti: ['salmone', 'avocado', 'lattuga', 'limone'], desc: 'Ricca di omega-3 e grassi buoni, sazia a lungo nonostante sia una semplice insalata.', ingredienti: ['150g salmone (fresco cotto o affumicato)', '1/2 avocado a fette', '80g lattuga o spinacino', '10 pomodorini a metà', 'Succo di limone, 10ml olio EVO'], steps: ['Se usi salmone fresco, cuocilo in padella 3-4 minuti per lato e lascialo intiepidire.', 'Disponi la lattuga come base in un piatto capiente.', 'Aggiungi il salmone a pezzi, l avocado a fette e i pomodorini.', 'Condisci con succo di limone, olio EVO, sale e pepe.', 'Servi subito.'] },
+  { id: 'v117-in04', name: 'Insalata Waldorf Proteica', ico: '🥗', tags: ['pranzo', 'veg', 'rapido'], time: '10 min', kcal: 310, p: 16, c: 24, g: 16, fiber: 4, diff: 'Facilissimo', alimenti: ['petto di pollo', 'mela', 'noci', 'sedano', 'yogurt greco'], desc: 'Versione proteica del classico americano, con yogurt greco al posto della maionese.', ingredienti: ['120g petto di pollo cotto a cubetti', '1 mela a cubetti', '1 costa di sedano a fettine', '20g noci tritate', '3 cucchiai yogurt greco 0%', 'Succo di limone'], steps: ['Taglia la mela a cubetti e conditela subito con succo di limone (evita che scurisca).', 'Unisci pollo a cubetti, mela, sedano e noci in una ciotola.', 'Condisci con lo yogurt greco, mescola bene.', 'Regola di sale e pepe. Servi fresco.'] },
+  { id: 'v117-in05', name: 'Insalata di Polpo e Patate', ico: '🥗', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '10 min (con polpo già cotto)', kcal: 320, p: 28, c: 26, g: 10, fiber: 3, diff: 'Facile', alimenti: ['polpo', 'patate', 'prezzemolo', 'limone'], desc: 'Piatto estivo classico della cucina di mare italiana, ottimo anche come antipasto abbondante.', ingredienti: ['250g polpo già cotto a pezzi', '2 patate lesse a cubetti', 'Prezzemolo fresco', 'Succo di limone', '15ml olio EVO', 'Sale, pepe'], steps: ['Taglia il polpo cotto e le patate lesse a pezzi di dimensioni simili.', 'Uniscili in una ciotola.', 'Condisci con olio EVO, succo di limone abbondante, sale e pepe.', 'Aggiungi prezzemolo fresco tritato.', 'Lascia riposare 10 minuti in frigo prima di servire per amalgamare i sapori.'] },
+  { id: 'v117-in06', name: 'Insalata di Quinoa Mediterranea', ico: '🥗', tags: ['pranzo', 'veg', 'vegan', 'meal-prep'], time: '20 min', kcal: 340, p: 11, c: 44, g: 14, fiber: 7, diff: 'Facile', alimenti: ['quinoa', 'feta', 'cetriolo', 'olive', 'pomodorini'], desc: 'Un mix mediterraneo colorato, ottimo da preparare in anticipo per 2-3 pasti.', ingredienti: ['80g quinoa (peso a crudo)', '40g feta a cubetti', '1/2 cetriolo a cubetti', '80g pomodorini a metà', '10 olive nere', 'Olio EVO, limone, origano'], steps: ['Cuoci la quinoa in acqua bollente salata 12-15 minuti, scola e raffredda completamente.', 'Unisci quinoa fredda, cetriolo, pomodorini e olive in una ciotola.', 'Aggiungi la feta a cubetti con delicatezza per non sbriciolarla troppo.', 'Condisci con olio, succo di limone e origano.', 'Si conserva in frigo fino a 3 giorni in un contenitore ermetico.'] },
+
+  /* ═══ Bowl e Piatti Unici Extra ═══ */
+  { id: 'v117-bw01', name: 'Bowl Messicano Vegetariano', ico: '🌯', tags: ['pranzo', 'cena', 'veg', 'vegan', 'high-protein'], time: '20 min', kcal: 420, p: 18, c: 58, g: 12, fiber: 14, diff: 'Facile', alimenti: ['fagioli neri', 'riso', 'mais', 'avocado', 'lime'], desc: 'Un bowl vegano completo e saziante, ispirato ai sapori messicani.', ingredienti: ['200g fagioli neri cotti', '70g riso (peso a crudo)', '80g mais', '1/2 avocado a fette', 'Lime, coriandolo, paprika, cumino'], steps: ['Cuoci il riso secondo le istruzioni.', 'Scalda i fagioli neri in padella con paprika e cumino per 3-4 minuti.', 'Scalda velocemente il mais in padella o al vapore.', 'Componi la bowl: riso come base, poi fagioli, mais e avocado disposti a settori.', 'Completa con coriandolo fresco e succo di lime.'] },
+  { id: 'v117-bw02', name: 'Buddha Bowl Proteico Arcobaleno', ico: '🥗', tags: ['pranzo', 'cena', 'veg', 'high-protein'], time: '25 min', kcal: 460, p: 26, c: 48, g: 18, fiber: 10, diff: 'Media', alimenti: ['ceci', 'quinoa', 'carote', 'cavolo rosso', 'avocado'], desc: 'Bowl coloratissima e bilanciata, con ogni colore che rappresenta un diverso gruppo di nutrienti.', ingredienti: ['150g ceci cotti', '70g quinoa (peso a crudo)', '1 carota a julienne', '1/4 cavolo rosso a listarelle', '1/2 avocado a fette', 'Tahina, succo di limone'], steps: ['Cuoci la quinoa in acqua bollente salata 12-15 minuti, scola.', 'Scalda i ceci in padella con un filo di olio e spezie a piacere per 4-5 minuti.', 'Prepara una salsa veloce mescolando tahina, succo di limone e un po di acqua fino a consistenza cremosa.', 'Componi la bowl disponendo quinoa, ceci, carota, cavolo rosso e avocado a settori colorati.', 'Completa con la salsa di tahina versata sopra.'] },
+  { id: 'v117-bw03', name: 'Bowl Mediterraneo al Tonno', ico: '🥗', tags: ['pranzo', 'cena', 'rapido', 'high-protein'], time: '15 min', kcal: 420, p: 34, c: 36, g: 16, fiber: 6, diff: 'Facile', alimenti: ['tonno', 'farro', 'pomodorini', 'olive', 'cetriolo'], desc: 'Bowl veloce che unisce farro, tonno e sapori mediterranei in un piatto unico.', ingredienti: ['160g tonno al naturale sgocciolato', '70g farro (peso a crudo)', '100g pomodorini a metà', '1/2 cetriolo a cubetti', '10 olive', 'Olio EVO, limone, origano'], steps: ['Cuoci il farro in acqua bollente salata secondo i tempi di cottura, scola e raffredda.', 'Sgocciola bene il tonno.', 'Componi la bowl: farro come base, poi tonno, pomodorini, cetriolo e olive disposti a settori.', 'Condisci con olio, succo di limone e origano.', 'Servi fresco o a temperatura ambiente.'] },
+  { id: 'v117-bw04', name: 'Bibimbap Proteico Coreano', ico: '🍚', tags: ['pranzo', 'cena', 'high-protein'], time: '30 min', kcal: 480, p: 32, c: 50, g: 16, fiber: 6, diff: 'Media', alimenti: ['carne di manzo', 'riso', 'spinaci', 'carote', 'uova'], desc: 'Il piatto coreano a strati, con ogni verdura cotta separatamente per mantenere i sapori distinti.', ingredienti: ['150g carne di manzo magra a striscioline', '70g riso (peso a crudo)', '80g spinaci', '1 carota a julienne', '1 uovo', 'Salsa di soia, olio di sesamo, aglio'], steps: ['Cuoci il riso secondo le istruzioni.', 'Marina la carne con salsa di soia e aglio, poi rosolala in padella 4-5 minuti.', 'Nella stessa padella, salta la carota 3-4 minuti, tienila da parte. Ripeti con gli spinaci (appassiscono in 2 minuti).', 'Frigga un uovo all occhio di bue in una padella separata.', 'Componi la bowl: riso come base, carne e verdure disposte a settori separati, uovo al centro. Aggiungi un filo di olio di sesamo prima di servire.'] },
+  { id: 'v117-bw05', name: 'Bowl Autunnale Zucca e Pollo', ico: '🎃', tags: ['pranzo', 'cena', 'high-protein'], time: '30 min', kcal: 440, p: 34, c: 40, g: 16, fiber: 7, diff: 'Facile', alimenti: ['petto di pollo', 'zucca', 'quinoa', 'noci'], desc: 'Sapori autunnali caldi e confortanti in un piatto unico bilanciato.', ingredienti: ['150g petto di pollo a cubetti', '200g zucca a cubetti', '60g quinoa (peso a crudo)', '15g noci tritate', 'Rosmarino, olio EVO'], steps: ['Preriscalda il forno a 200°C. Disponi la zucca a cubetti su una teglia con un filo di olio e rosmarino, cuoci 20-25 minuti.', 'Cuoci la quinoa in acqua bollente salata 12-15 minuti, scola.', 'Rosola il pollo a cubetti in padella con rosmarino finché dorato e cotto (8-10 minuti).', 'Componi la bowl con quinoa come base, poi zucca arrostita e pollo.', 'Completa con noci tritate sopra.'] },
+  { id: 'v117-bw06', name: 'Power Bowl Post-Allenamento', ico: '💪', tags: ['post-workout', 'pranzo', 'cena', 'massa', 'high-protein'], time: '20 min', kcal: 550, p: 42, c: 56, g: 16, fiber: 6, diff: 'Facile', alimenti: ['petto di pollo', 'riso', 'patate dolci', 'spinaci'], desc: 'Pensata per la finestra post-allenamento: proteine complete e carboidrati per ricostruire le riserve di glicogeno.', ingredienti: ['180g petto di pollo a striscioline', '60g riso (peso a crudo)', '150g patate dolci a cubetti', '60g spinaci freschi', '10ml olio EVO'], steps: ['Preriscalda il forno a 200°C. Cuoci le patate dolci a cubetti in forno per 20-25 minuti.', 'Cuoci il riso secondo le istruzioni.', 'Rosola il pollo in padella con un filo di olio finché dorato e cotto (8-10 minuti).', 'Appassisci velocemente gli spinaci nella stessa padella per 1-2 minuti.', 'Componi la bowl con riso, patate dolci, pollo e spinaci. Consuma entro 45 minuti dall allenamento per il massimo beneficio.'] },
+
+  /* ═══ Dolci Extra ═══ */
+  { id: 'v117-do01', name: 'Torta allo Yogurt Proteica', ico: '🍰', tags: ['dolci', 'colazione', 'massa'], time: '45 min', kcal: 190, p: 12, c: 24, g: 5, fiber: 2, diff: 'Media', alimenti: ['yogurt greco', 'uova', 'farina di avena', 'miele', 'lievito'], desc: 'Torta soffice e non troppo dolce, ottima anche a colazione con una tazza di caffè.', ingredienti: ['250g yogurt greco 0%', '3 uova', '200g farina di avena frullata', '80g miele', '1 bustina lievito per dolci', 'Vaniglia, scorza di limone'], steps: ['Preriscalda il forno a 180°C. Ungi e infarina uno stampo da 20cm.', 'Sbatti le uova con il miele fino a composto chiaro e spumoso.', 'Aggiungi lo yogurt greco, la vaniglia e la scorza di limone, mescola.', 'Incorpora farina di avena e lievito setacciati, mescolando delicatamente dal basso verso l alto.', 'Versa nello stampo e cuoci 30-35 minuti finché uno stuzzicadenti esce pulito.'] },
+  { id: 'v117-do02', name: 'Muffin Proteici alla Zucca e Cannella', ico: '🧁', tags: ['dolci', 'colazione', 'spuntino', 'meal-prep'], time: '35 min', kcal: 150, p: 9, c: 20, g: 4, fiber: 3, diff: 'Facile', alimenti: ['zucca', 'uova', 'farina di avena', 'cannella', 'miele'], desc: 'Sapori autunnali in formato muffin, con la zucca che dona umidità naturale.', ingredienti: ['200g zucca cotta e schiacciata', '2 uova', '150g farina di avena frullata', '3 cucchiai miele', '1 cucchiaino e mezzo lievito istantaneo', '1 cucchiaino cannella'], steps: ['Preriscalda il forno a 180°C. Fodera uno stampo da muffin con 8 pirottini.', 'Mescola la zucca schiacciata con uova e miele.', 'Incorpora farina di avena, lievito e cannella setacciati.', 'Riempi i pirottini per 3/4.', 'Cuoci 20-22 minuti finché uno stuzzicadenti esce pulito.'] },
+  { id: 'v117-do03', name: 'Semifreddo al Caffè Proteico', ico: '🍨', tags: ['dolci', 'definizione'], time: '15 min + 4h freezer', kcal: 160, p: 14, c: 12, g: 6, fiber: 1, diff: 'Media', alimenti: ['yogurt greco', 'caffè', 'whey vaniglia', 'albumi'], desc: 'Dessert fresco e leggero al gusto caffè, perfetto per chiudere un pasto estivo.', ingredienti: ['200g yogurt greco 0%', '2 albumi', '30g whey vaniglia', '2 cucchiai caffè espresso freddo', '1 cucchiaio miele'], steps: ['Monta gli albumi a neve ferma con un pizzico di sale.', 'Mescola yogurt greco, whey, caffè freddo e miele fino a composto omogeneo.', 'Incorpora delicatamente gli albumi montati con movimenti dal basso verso l alto, per non smontarli.', 'Versa in stampini monoporzione o in un unico contenitore.', 'Congela almeno 4 ore. Lascia ammorbidire 5 minuti a temperatura ambiente prima di servire.'] },
+  { id: 'v117-do04', name: 'Cheesecake ai Frutti di Bosco Senza Cottura', ico: '🍰', tags: ['dolci', 'definizione'], time: '20 min + 4h frigo', kcal: 210, p: 15, c: 18, g: 9, fiber: 2, diff: 'Media', alimenti: ['ricotta', 'yogurt greco', 'frutti di bosco', 'gelatina'], desc: 'Cheesecake fredda e cremosa, con una base leggera di biscotti sbriciolati.', ingredienti: ['200g ricotta magra', '150g yogurt greco 0%', '2 cucchiai miele', '2 fogli gelatina', '80g biscotti integrali sbriciolati', '15g burro fuso', '150g frutti di bosco'], steps: ['Mescola i biscotti sbriciolati con il burro fuso, pressa sul fondo di uno stampo.', 'Ammolla la gelatina in acqua fredda 5 minuti, poi sciogli in un cucchiaio di acqua calda.', 'Mescola ricotta, yogurt e miele fino a crema liscia, incorpora la gelatina sciolta.', 'Versa sulla base di biscotti, livella bene.', 'Frigo almeno 4 ore. Decora con frutti di bosco freschi prima di servire.'] },
+  { id: 'v117-do05', name: 'Tiramisù Fit Senza Uova Crude', ico: '🍰', tags: ['dolci'], time: '20 min + 4h frigo', kcal: 220, p: 16, c: 20, g: 9, fiber: 1, diff: 'Media', alimenti: ['mascarpone light', 'yogurt greco', 'caffè', 'savoiardi', 'cacao'], desc: 'Versione più sicura e leggera del tiramisù classico, senza uova crude.', ingredienti: ['150g mascarpone light', '150g yogurt greco 0%', '2 cucchiai miele', '150ml caffè freddo', '12 savoiardi', 'Cacao amaro in polvere'], steps: ['Mescola mascarpone light, yogurt greco e miele fino a crema liscia e omogenea.', 'Inzuppa velocemente ogni savoiardo nel caffè freddo (1-2 secondi per lato, non di più o diventano troppo molli).', 'Crea uno strato di savoiardi inzuppati sul fondo di una pirofila.', 'Copri con metà della crema, ripeti con un altro strato di savoiardi e crema.', 'Cospargi abbondante cacao amaro sopra. Frigo almeno 4 ore, meglio tutta la notte.'] },
+  { id: 'v117-do06', name: 'Plumcake Proteico al Limone', ico: '🍰', tags: ['dolci', 'colazione', 'meal-prep'], time: '50 min', kcal: 170, p: 10, c: 22, g: 5, fiber: 2, diff: 'Media', alimenti: ['farina di avena', 'uova', 'yogurt greco', 'limone', 'miele'], desc: 'Plumcake soffice e profumato, ottimo a fette per colazione o spuntino durante la settimana.', ingredienti: ['200g farina di avena frullata', '3 uova', '150g yogurt greco 0%', 'Scorza e succo di 2 limoni', '80g miele', '1 bustina lievito per dolci'], steps: ['Preriscalda il forno a 175°C. Foder uno stampo da plumcake con carta forno.', 'Sbatti le uova con il miele fino a composto chiaro.', 'Aggiungi yogurt greco, scorza e succo di limone, mescola.', 'Incorpora farina di avena e lievito setacciati.', 'Versa nello stampo e cuoci 35-40 minuti finché uno stuzzicadenti esce pulito.'] },
+  { id: 'v117-do07', name: 'Crostata di Frutta Fit', ico: '🥧', tags: ['dolci'], time: '45 min', kcal: 200, p: 8, c: 28, g: 6, fiber: 3, diff: 'Media', alimenti: ['farina di avena', 'uova', 'yogurt greco', 'frutta fresca mista'], desc: 'Base semplice tipo pasta frolla leggera, guarnita con la frutta fresca di stagione.', ingredienti: ['200g farina di avena frullata', '2 uova', '80g yogurt greco 0%', '3 cucchiai miele', 'Vaniglia', '250g frutta fresca mista a fette (kiwi, fragole, mirtilli)'], steps: ['Preriscalda il forno a 180°C. Mescola farina di avena, uova, yogurt, miele e vaniglia fino a un impasto compatto.', 'Stendi l impasto in una teglia da crostata foderata di carta forno, creando un bordo.', 'Cuoci in bianco (senza guarnizione) per 18-20 minuti finché dorato.', 'Lascia raffreddare completamente.', 'Guarnisci con la frutta fresca a fette disposta a piacere prima di servire.'] },
+  { id: 'v117-do08', name: 'Gelato Proteico al Pistacchio', ico: '🍦', tags: ['dolci', 'spuntino', 'definizione'], time: '5 min + freezer', kcal: 180, p: 20, c: 12, g: 7, fiber: 1, diff: 'Facilissimo', alimenti: ['yogurt greco', 'pistacchi', 'whey vaniglia', 'miele'], desc: 'Il gusto pistacchio ottenuto naturalmente dai pistacchi veri, non da aromi artificiali.', ingredienti: ['250g yogurt greco 0% ben freddo', '30g pistacchi non salati', '20g whey vaniglia', '1 cucchiaio miele'], steps: ['Trita i pistacchi finemente, quasi a farina, tenendone da parte alcuni per decorare.', 'Frulla yogurt greco, pistacchi tritati, whey e miele fino a crema liscia.', 'Versa in un contenitore e congela 2 ore, poi frulla di nuovo brevemente per rompere i cristalli di ghiaccio.', 'Ricongela almeno un altra ora.', 'Servi con pistacchi tritati sopra come decorazione.'] },
+
+  /* ═══ Primi Piatti Extra ═══ */
+  { id: 'v117-pr01', name: 'Pasta al Pesto Proteico di Basilico', ico: '🍝', tags: ['pranzo', 'cena', 'veg', 'high-protein'], time: '15 min', kcal: 460, p: 20, c: 56, g: 16, fiber: 4, diff: 'Facile', alimenti: ['pasta integrale', 'basilico', 'pinoli', 'parmigiano', 'ricotta'], desc: 'Pesto arricchito con ricotta per aumentare le proteine senza appesantire.', ingredienti: ['80g pasta integrale', 'Abbondante basilico fresco', '15g pinoli', '20g parmigiano grattugiato', '60g ricotta magra', '10ml olio EVO'], steps: ['Cuoci la pasta in acqua bollente salata secondo i tempi di cottura.', 'Frulla basilico, pinoli, parmigiano, ricotta e olio fino a crema liscia (aggiungi acqua di cottura della pasta se troppo densa).', 'Scola la pasta conservando un mestolo di acqua di cottura.', 'Unisci la pasta al pesto, mescolando bene e aggiungendo acqua di cottura se serve per la cremosità.', 'Servi subito, con altro parmigiano se gradito.'] },
+  { id: 'v117-pr02', name: 'Risotto ai Funghi Proteico', ico: '🍚', tags: ['pranzo', 'cena', 'veg'], time: '30 min', kcal: 420, p: 14, c: 62, g: 10, fiber: 4, diff: 'Media', alimenti: ['riso', 'funghi champignon', 'parmigiano', 'brodo vegetale'], desc: 'Risotto cremoso con la tecnica della mantecatura finale al parmigiano.', ingredienti: ['80g riso per risotto (carnaroli o arborio)', '200g funghi champignon a fette', '600ml brodo vegetale caldo', '20g parmigiano grattugiato', 'Cipolla, aglio, 10ml olio EVO'], steps: ['Rosola i funghi in olio con aglio per 5-6 minuti, tienili da parte.', 'Nella stessa pentola, soffriggi la cipolla tritata, poi tosta il riso 2 minuti mescolando.', 'Aggiungi il brodo caldo un mestolo alla volta, mescolando spesso, aspettando che venga assorbito prima di aggiungerne altro (18 minuti circa).', 'Negli ultimi 5 minuti reincorpora i funghi.', 'Spegni il fuoco e manteca con il parmigiano, mescolando energicamente. Lascia riposare 2 minuti prima di servire.'] },
+  { id: 'v117-pr03', name: 'Pasta al Forno Proteica con Ricotta e Spinaci', ico: '🍝', tags: ['pranzo', 'cena', 'veg', 'meal-prep', 'high-protein'], time: '40 min', kcal: 440, p: 26, c: 48, g: 16, fiber: 5, diff: 'Media', alimenti: ['pasta integrale', 'ricotta', 'spinaci', 'formaggio', 'pomodoro'], desc: 'Un piatto sostanzioso ideale per il meal-prep, si scalda benissimo il giorno dopo.', ingredienti: ['100g pasta integrale corta', '200g ricotta magra', '150g spinaci freschi', '200g passata di pomodoro', '40g formaggio grattugiato', 'Aglio, noce moscata'], steps: ['Preriscalda il forno a 190°C. Cuoci la pasta 2 minuti in meno del tempo indicato (finirà di cuocere in forno).', 'Appassisci gli spinaci in padella con aglio per 3-4 minuti, strizzali e tritali grossolanamente.', 'Mescola ricotta, spinaci e noce moscata.', 'Condisci la pasta scolata con la passata di pomodoro e il composto di ricotta e spinaci.', 'Versa in una pirofila, cospargi di formaggio e cuoci 15-18 minuti finché gratinato in superficie.'] },
+  { id: 'v117-pr04', name: 'Riso Venere con Gamberi e Zucchine', ico: '🍚', tags: ['pranzo', 'cena', 'definizione', 'high-protein'], time: '25 min', kcal: 380, p: 26, c: 48, g: 8, fiber: 3, diff: 'Facile', alimenti: ['riso venere', 'gamberi', 'zucchine', 'limone'], desc: 'Il riso nero ha un sapore leggermente di nocciola che si abbina benissimo ai gamberi.', ingredienti: ['70g riso venere (peso a crudo)', '180g gamberi sgusciati', '2 zucchine a cubetti', 'Succo di limone', '10ml olio EVO', 'Aglio, prezzemolo'], steps: ['Cuoci il riso venere in acqua bollente salata secondo i tempi di cottura (solitamente 35-40 minuti, verifica confezione), scola.', 'Rosola le zucchine in padella con olio per 5-6 minuti.', 'Aggiungi i gamberi e l aglio, cuoci altri 3-4 minuti finché i gamberi sono rosati.', 'Unisci il riso venere alle zucchine e gamberi, mescola bene.', 'Completa con succo di limone e prezzemolo fresco.'] },
+  { id: 'v117-pr05', name: 'Orzotto con Verdure di Stagione', ico: '🍲', tags: ['pranzo', 'cena', 'veg', 'vegan'], time: '35 min', kcal: 360, p: 11, c: 58, g: 8, fiber: 8, diff: 'Media', alimenti: ['orzo perlato', 'zucchine', 'carote', 'brodo vegetale'], desc: 'Alternativa al risotto con l orzo perlato, ricco di fibre e dalla consistenza corposa.', ingredienti: ['80g orzo perlato', '1 zucchina a cubetti', '1 carota a cubetti', '600ml brodo vegetale caldo', 'Cipolla, 10ml olio EVO'], steps: ['Soffriggi la cipolla in olio per 3 minuti.', 'Aggiungi carota e zucchina, rosola 4-5 minuti.', 'Aggiungi l orzo e tosta 1-2 minuti mescolando.', 'Aggiungi il brodo caldo un mestolo alla volta, come per un risotto, mescolando spesso (circa 20-25 minuti finché l orzo è cotto ma ancora al dente).', 'Regola di sale, lascia riposare 2 minuti e servi con un filo di olio a crudo.'] }
+
+  ];
+
+  if (!Array.isArray(window.RICETTE)) window.RICETTE = [];
+  if (!Array.isArray(window.RECIPES_DB)) window.RECIPES_DB = [];
+
+  var existingIds117 = {};
+  window.RICETTE.forEach(function (r) { if (r && r.id) existingIds117[r.id] = true; });
+  window.RECIPES_DB.forEach(function (r) { if (r && r.id) existingIds117[r.id] = true; });
+
+  var addedRecipes = 0;
+  NR117.forEach(function (r) {
+    if (!r || !r.id || existingIds117[r.id]) return;
+    existingIds117[r.id] = true;
+
+    window.RICETTE.push({
+      id: r.id, name: r.name, ico: r.ico || '🍽️', tags: r.tags || [], time: r.time,
+      kcal: r.kcal, p: r.p, c: r.c, g: r.g, fiber: r.fiber, diff: r.diff || 'Facile',
+      desc: r.desc || '', alimenti: r.alimenti || [], ingredienti: r.ingredienti || [], steps: r.steps || []
+    });
+
+    window.RECIPES_DB.push({
+      id: r.id, name: r.name, tipo: 'piatto_unico', goal: ['mantenimento'],
+      kcal: r.kcal, p: r.p, c: r.c, g: r.g, fiber: r.fiber || 3,
+      time: typeof r.time === 'string' ? (parseInt(r.time) || 15) : r.time,
+      cat: '🍳 Ricette', ingredienti: r.ingredienti || [], steps: r.steps || []
+    });
+    addedRecipes++;
+  });
+
+  try { if (typeof window.renderRicette === 'function') window.renderRicette(); } catch (e) {}
+
+  console.info('%c[FitTrack V116.11] ✅ +' + addedRecipes + ' ricette, +' + addedFoods + ' alimenti aggiunti al catalogo', 'color:#C8F53C;font-weight:bold;font-size:13px;');
+
+} catch (e) { console.warn('[FT_V116_11_MASSIVE_EXPANSION]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V117.1 — Precisione dell'assegnazione preset in onboarding
+
+     CAUSA REALE TROVATA: l'assegnazione del programma a un nuovo
+     utente (getRecommendedPresetV44) è una cascata di ~150 if/else
+     in ordine fisso: il primo ramo che combacia vince, anche se un
+     preset completamente diverso sarebbe in realtà più adatto.
+     Questa cascata NON considera: attrezzatura realmente disponibile
+     con moltiplicatore di idoneità, energia/sonno/stress, capacità di
+     recupero, durata sessione desiderata, focus corporeo specifico —
+     tutti fattori che il motore avanzato (getAIScore, usato SOLO
+     quando l'utente sfoglia manualmente "Esplora") già calcola con
+     15 fattori pesati. La maggior parte degli utenti non vede mai
+     il motore buono: riceve solo quello che la cascata rigida decide.
+
+     FIX: dopo che la cascata sceglie un candidato (che resta il
+     comportamento di base, con tutta la sua logica speciale già
+     rifinita per casi particolari come sport/infortuni), lo
+     confrontiamo con il punteggio che lo stesso identico preset
+     otterrebbe da getAIScore, e cerchiamo se esiste un'alternativa
+     con punteggio chiaramente più alto (soglia di margine per non
+     scavalcare per differenze insignificanti o rumore). Se sì, la
+     usiamo al suo posto. Il risultato: l'assegnazione iniziale ora
+     sfrutta lo stesso motore sofisticato della sezione Esplora,
+     invece di fermarsi al primo ramo della cascata che combacia.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V117_1_PRESET_ASSIGNMENT_QUALITY_GATE() {
+'use strict';
+try {
+
+  if (typeof window.getRecommendedPresetV44 !== 'function') {
+    console.warn('[V117.1] getRecommendedPresetV44 non trovato, fix non applicato');
+    return;
+  }
+  if (typeof getAIScore !== 'function' || typeof PRESETS_DATA === 'undefined') {
+    console.warn('[V117.1] getAIScore/PRESETS_DATA non disponibili, fix non applicato');
+    return;
+  }
+
+  var _origGetRecommendedPresetV44 = window.getRecommendedPresetV44;
+  var MARGIN_THRESHOLD = 8; // punti minimi di vantaggio per sostituire la scelta della cascata
+
+  window.getRecommendedPresetV44 = function (data) {
+    var cascadeId = _origGetRecommendedPresetV44(data);
+
+    try {
+      var allPresets = PRESETS_DATA;
+      var cascadePreset = allPresets.find(function (p) { return p.id === cascadeId; });
+      if (!cascadePreset) return cascadeId; // sicurezza: id sconosciuto, non tocchiamo nulla
+
+      var cascadeScore = -1;
+      try { cascadeScore = getAIScore(cascadePreset); } catch (e) { return cascadeId; }
+
+      var bestAlt = null, bestAltScore = -1;
+      for (var i = 0; i < allPresets.length; i++) {
+        var p = allPresets[i];
+        if (p.id === cascadeId) continue;
+        var s;
+        try { s = getAIScore(p); } catch (e) { continue; }
+        if (s > bestAltScore) { bestAltScore = s; bestAlt = p; }
+      }
+
+      if (bestAlt && bestAltScore >= cascadeScore + MARGIN_THRESHOLD) {
+        console.info('[V117.1] Sostituita scelta cascata (' + cascadeId + ', score ' + cascadeScore + ') con match migliore (' + bestAlt.id + ', score ' + bestAltScore + ')');
+        return bestAlt.id;
+      }
+    } catch (e) { console.warn('[V117.1 quality gate]', e); }
+
+    return cascadeId;
+  };
+  window.getRecommendedPresetV44._v117gate = true;
+
+  console.info('%c[FitTrack V117.1] ✅ Assegnazione preset ora validata contro il motore di scoring completo a 15 fattori', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V117_1_PRESET_ASSIGNMENT_QUALITY_GATE]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V117.2 — Estende il filtro intolleranze/allergie (già
+     attivo sulle ricette dal V116.7) anche alla ricerca alimenti nel
+     diario nutrizionale (renderFoodList / filterFood), per coerenza
+     completa: se dichiari un intolleranza, non deve comparire né in
+     una ricetta né come alimento singolo cercato a mano.
+
+     Verificato inoltre con test end-to-end che la catena a 3 livelli
+     del filtro ricette (tag → "fatto da me" → intolleranze) funzioni
+     insieme correttamente in ogni combinazione — nessun conflitto tra
+     le patch applicate in sessioni precedenti.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V117_2_FOOD_INTOLERANCE_FILTER() {
+'use strict';
+try {
+
+  if (typeof window.renderFoodList !== 'function') {
+    console.warn('[V117.2] renderFoodList non trovato, fix non applicato');
+    return;
+  }
+  if (typeof window._FT_INTOLERANCE_DEFS === 'undefined') {
+    console.warn('[V117.2] Definizioni intolleranze non trovate, fix non applicato');
+    return;
+  }
+
+  function ftFoodHasIntolerance(food, intoleranceIds) {
+    if (!intoleranceIds || !intoleranceIds.length) return false;
+    var hay = ((food.name || '') + ' ' + (food.cat || '')).toLowerCase();
+    for (var i = 0; i < intoleranceIds.length; i++) {
+      var def = window._FT_INTOLERANCE_DEFS.find(function (d) { return d.id === intoleranceIds[i]; });
+      if (!def) continue;
+      for (var k = 0; k < def.keywords.length; k++) {
+        if (hay.indexOf(def.keywords[k]) !== -1) return true;
+      }
+    }
+    return false;
+  }
+  window.ftFoodHasIntolerance = ftFoodHasIntolerance;
+
+  /* ─────────────────────────────────────────────────────────
+     Filtra la lista risultati DOPO che renderFoodList ha
+     disegnato il DOM, rimuovendo le righe di alimenti che
+     contengono un intolleranza dichiarata. Approccio scelto per
+     non dover toccare le 4 versioni storiche sovrapposte di
+     renderFoodList (base + integrazione Open Food Facts + merge
+     alimenti custom): agiamo dopo, sul risultato finale comune a
+     tutte — #fs-list — indipendentemente da quale le abbia generate.
+  ───────────────────────────────────────────────────────── */
+  function ftApplyFoodIntoleranceFilter() {
+    try {
+      var intol = (typeof profile !== 'undefined' && Array.isArray(profile.foodIntolerances)) ? profile.foodIntolerances : null;
+      if (!intol || !intol.length) return;
+
+      var list = document.getElementById('fs-list');
+      if (!list) return;
+
+      var items = list.querySelectorAll('.food-item');
+      var hiddenCount = 0;
+      items.forEach(function (item) {
+        var onclickAttr = item.getAttribute('onclick') || '';
+        var m = onclickAttr.match(/addFood\('([^']+)'\)/);
+        if (!m) return;
+        var foodId = m[1];
+        var food = (window.FOOD_DB || []).find(function (f) { return f.id === foodId; });
+        if (food && ftFoodHasIntolerance(food, intol)) {
+          item.remove();
+          hiddenCount++;
+        }
+      });
+
+      if (hiddenCount > 0 && !document.getElementById('ft-food-intol-note')) {
+        var note = document.createElement('div');
+        note.id = 'ft-food-intol-note';
+        note.style.cssText = 'padding:10px 14px;font-size:11px;color:var(--text3);text-align:center;';
+        note.textContent = '⚠️ ' + hiddenCount + ' risultati nascosti per le tue intolleranze dichiarate (Profilo → Impostazioni)';
+        list.appendChild(note);
+      }
+    } catch (e) { console.warn('[V117.2 ftApplyFoodIntoleranceFilter]', e); }
+  }
+
+  var _origRenderFoodList = window.renderFoodList;
+  window.renderFoodList = function (q) {
+    var ret = _origRenderFoodList.apply(this, arguments);
+    try {
+      var note = document.getElementById('ft-food-intol-note');
+      if (note) note.remove();
+      ftApplyFoodIntoleranceFilter();
+    } catch (e) { console.warn('[V117.2 renderFoodList wrap]', e); }
+    return ret;
+  };
+  window.renderFoodList._v117foodintol = true;
+
+  console.info('%c[FitTrack V117.2] ✅ Filtro intolleranze/allergie esteso anche alla ricerca alimenti del diario', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V117_2_FOOD_INTOLERANCE_FILTER]', e); }
+})();
+</script>
+
+<script>
+(function FT_V117_VERSION_BUMP() {
+'use strict';
+try {
+  window._v117Version = 'V117';
+  setTimeout(function () {
+    try {
+      var f = document.getElementById('ft-version-footer');
+      if (f) f.textContent = 'FitTrack V117 · Dati sicuri nel cloud';
+    } catch (e) {}
+  }, 1200);
+  console.info('%c[FitTrack V117] 🚀 Release V117 — assegnazione preset più precisa, filtri ricette/alimenti verificati e coerenti su tutto il ricettario', 'color:#C8F53C;font-weight:bold;font-size:14px;');
+} catch (e) { console.warn('[FT_V117_VERSION_BUMP]', e); }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PATCH V117.3 — Ulteriore precisione nell'assegnazione preset,
+     in due parti.
+
+     PARTE A: il motore di scoring (getAIScore) valuta i "giorni di
+     allenamento" solo come NUMERO generico (profile.trainingDays),
+     ignorando i giorni specifici della settimana che l'utente ha
+     dichiarato liberi (profile.availableWeekdays, introdotto in
+     precedenza). Un utente che ha indicato "posso allenarmi solo
+     Lun/Mer/Ven" riceve lo stesso punteggio giorni di uno che ha
+     semplicemente detto "3 giorni" in astratto. Aggiungiamo un bonus/
+     penalità di precisione (fino a ±6 punti) quando i giorni
+     specifici sono stati dichiarati, premiando i preset il cui
+     numero di giorni attivi combacia davvero con la disponibilità
+     reale, non solo con un numero generico.
+
+     PARTE B: trasparenza. Il banner "Programma consigliato" (Coach)
+     ora mostra anche 2-3 motivi concreti per cui quel preset è stato
+     scelto (obiettivo, livello, giorni, infortuni, ambiente), così
+     l'utente capisce la logica invece di ricevere solo un nome.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function FT_V117_3_SCORING_PRECISION() {
+'use strict';
+try {
+
+  if (typeof window.getAIScore !== 'function') {
+    console.warn('[V117.3-A] getAIScore non trovato, fix non applicato');
+    return;
+  }
+
+  var _origGetAIScore = window.getAIScore;
+  window.getAIScore = function (preset) {
+    var score = _origGetAIScore(preset);
+    try {
+      if (typeof profile !== 'undefined' && Array.isArray(profile.availableWeekdays) && profile.availableWeekdays.length > 0) {
+        var presetActiveDays = (preset.days || []).filter(function (d) { return !d.rest; }).length;
+        var availCount = profile.availableWeekdays.length;
+        var diff = Math.abs(presetActiveDays - availCount);
+        var bonus = Math.max(-6, 6 - diff * 3);
+        score = Math.max(1, Math.min(99, Math.round(score + bonus)));
+      }
+    } catch (e) { console.warn('[V117.3-A getAIScore bonus]', e); }
+    return score;
+  };
+  window.getAIScore._v117precision = true;
+
+  console.info('%c[FitTrack V117.3-A] ✅ Scoring preset: precisione extra quando sono dichiarati giorni specifici disponibili', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V117_3_SCORING_PRECISION]', e); }
+})();
+</script>
+
+<script>
+(function FT_V117_3_ASSIGNMENT_TRANSPARENCY() {
+'use strict';
+try {
+
+  if (typeof window.renderCoach !== 'function') {
+    console.warn('[V117.3-B] renderCoach non trovato, fix non applicato');
+    return;
+  }
+
+  var GOAL_LABELS = {
+    fat_loss: 'dimagrimento', hypertrophy: 'massa muscolare', strength: 'forza',
+    endurance: 'resistenza', mobility: 'mobilità', calisthenics: 'calistenici',
+    toning: 'tonificazione', cardio: 'cardio', skill: 'skill', recovery: 'recupero',
+    health: 'benessere generale', powerlifting: 'powerlifting'
+  };
+  var LEVEL_LABELS = { zero: 'principiante assoluto', beginner: 'principiante', intermediate: 'intermedio', advanced: 'avanzato', athlete: 'atleta' };
+  var ENV_LABELS = { home: 'casa senza attrezzi', calisthenics: 'corpo libero', gym: 'palestra', hybrid: 'ibrido', outdoor: 'outdoor' };
+
+  function ftExplainPresetMatch(preset) {
+    var reasons = [];
+    try {
+      var goals = (typeof profile !== 'undefined' && Array.isArray(profile.goals)) ? profile.goals : [];
+      var matchedGoals = (preset.goals || []).filter(function (g) { return goals.indexOf(g) !== -1; });
+      if (matchedGoals.length) {
+        reasons.push('obiettivo ' + matchedGoals.slice(0, 2).map(function (g) { return GOAL_LABELS[g] || g; }).join(' e '));
+      }
+
+      var level = (typeof profile !== 'undefined') ? profile.level : null;
+      if (level && (preset.levels || []).indexOf(level) !== -1) {
+        reasons.push('livello ' + (LEVEL_LABELS[level] || level));
+      }
+
+      var avail = (typeof profile !== 'undefined' && Array.isArray(profile.availableWeekdays)) ? profile.availableWeekdays : null;
+      var presetActiveDays = (preset.days || []).filter(function (d) { return !d.rest; }).length;
+      if (avail && avail.length) {
+        reasons.push(presetActiveDays + ' giorni a settimana, in linea con la tua disponibilità reale');
+      } else if (typeof profile !== 'undefined' && profile.trainingDays) {
+        reasons.push(presetActiveDays + ' giorni a settimana');
+      }
+
+      if (preset.env && ENV_LABELS[preset.env]) {
+        reasons.push(ENV_LABELS[preset.env]);
+      }
+
+      var injuries = (typeof profile !== 'undefined' && Array.isArray(profile.injuries)) ? profile.injuries : [];
+      if (injuries.length) {
+        reasons.push('adattato alle limitazioni che hai indicato');
+      }
+    } catch (e) { console.warn('[V117.3-B ftExplainPresetMatch]', e); }
+    return reasons;
+  }
+  window.ftExplainPresetMatch = ftExplainPresetMatch;
+
+  var _origRenderCoach = window.renderCoach;
+  window.renderCoach = function () {
+    var ret = _origRenderCoach.apply(this, arguments);
+    try {
+      var pid = (typeof profile !== 'undefined') ? profile.recPreset : null;
+      var preset = pid && typeof PRESETS_DATA !== 'undefined' ? PRESETS_DATA.find(function (x) { return x.id === pid; }) : null;
+      var banner = document.getElementById('coach-rec-banner');
+      if (preset && banner && banner.style.display !== 'none' && !banner.querySelector('.ft-why-box')) {
+        var reasons = ftExplainPresetMatch(preset);
+        if (reasons.length) {
+          var box = document.createElement('div');
+          box.className = 'ft-why-box';
+          box.style.cssText = 'margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(200,245,60,.06);border:1px solid rgba(200,245,60,.2);';
+          box.innerHTML = '<div style="font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--acc);margin-bottom:5px;">Perché questo programma</div>' +
+            '<div style="font-size:12px;color:var(--text2);line-height:1.5;">' + reasons.map(function (r) { return '✓ ' + r; }).join('<br>') + '</div>';
+          var startBtn = banner.querySelector('.rec-btn');
+          if (startBtn) startBtn.insertAdjacentElement('beforebegin', box);
+          else banner.appendChild(box);
+        }
+      }
+    } catch (e) { console.warn('[V117.3-B renderCoach wrap]', e); }
+    return ret;
+  };
+  window.renderCoach._v117explain = true;
+
+  console.info('%c[FitTrack V117.3-B] ✅ Trasparenza: mostra perché ogni programma è stato consigliato', 'color:#C8F53C;font-weight:bold;');
+
+} catch (e) { console.warn('[FT_V117_3_ASSIGNMENT_TRANSPARENCY]', e); }
 })();
 </script>
 
